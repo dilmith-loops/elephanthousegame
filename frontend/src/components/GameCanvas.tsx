@@ -141,6 +141,7 @@ export default function GameCanvas({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<{ rank?: number; personal_best?: number } | null>(null);
   const [showEndGameConfirm, setShowEndGameConfirm] = useState(false);
+  const [isTabHidden, setIsTabHidden] = useState(false);
 
   // Game Engine Refs
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
@@ -148,8 +149,8 @@ export default function GameCanvas({
   const lastVideoTimeRef = useRef<number>(-1);
   const lastDetectTimestampRef = useRef<number>(0);
   const pauseStartTimeRef = useRef<number>(0);
-  const isPausedRef = useRef(isPaused || showEndGameConfirm);
-  isPausedRef.current = isPaused || showEndGameConfirm;
+  const isPausedRef = useRef(isPaused || showEndGameConfirm || isTabHidden);
+  isPausedRef.current = isPaused || showEndGameConfirm || isTabHidden;
 
   const popsiclesRef = useRef<PopsicleItem[]>([]);
   const particlesRef = useRef<SplashParticle[]>([]);
@@ -460,11 +461,55 @@ export default function GameCanvas({
     setShowEndGameConfirm(false);
   };
 
+  // Resume Game from Browser Minimize / Auto-Pause
+  const handleResumeFromTab = () => {
+    if (pauseStartTimeRef.current > 0) {
+      const pausedDuration = Date.now() - pauseStartTimeRef.current;
+      setGameStartTime((prev) => prev + pausedDuration);
+      pauseStartTimeRef.current = 0;
+    }
+    if (videoRef.current && videoRef.current.paused) {
+      videoRef.current.play().catch(() => {});
+    }
+    setIsTabHidden(false);
+  };
+
   // Confirm End Game & Submit Score
   const handleConfirmEndGame = () => {
     setShowEndGameConfirm(false);
     endGame();
   };
+
+  // Auto-pause when browser tab is minimized, switched, or window blurred
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden || document.visibilityState === 'hidden') {
+        if (countdown === null && !isGameOver) {
+          if (pauseStartTimeRef.current === 0) {
+            pauseStartTimeRef.current = Date.now();
+          }
+          setIsTabHidden(true);
+        }
+      }
+    };
+
+    const handleWindowBlur = () => {
+      if (countdown === null && !isGameOver) {
+        if (pauseStartTimeRef.current === 0) {
+          pauseStartTimeRef.current = Date.now();
+        }
+        setIsTabHidden(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, [countdown, isGameOver]);
 
   // Main AR Canvas Game Loop
   useEffect(() => {
@@ -480,7 +525,7 @@ export default function GameCanvas({
     if (!ctx) return;
 
     const renderLoop = (timestamp: number) => {
-      const dt = (timestamp - lastTime) / 1000;
+      const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
       lastTime = timestamp;
 
       // Check if paused
@@ -498,6 +543,9 @@ export default function GameCanvas({
 
       const width = canvas.width;
       const height = canvas.height;
+
+      // Always clear the canvas before drawing frame to eliminate any streaking/trails
+      ctx.clearRect(0, 0, width, height);
 
       // Calculate object-fit: cover transform for camera feed
       const videoW = video.videoWidth || 1280;
@@ -1010,12 +1058,32 @@ export default function GameCanvas({
         )}
 
         {/* Paused Overlay Pill */}
-        {isPaused && countdown === null && !isGameOver && (
+        {isPaused && !isTabHidden && countdown === null && !isGameOver && (
           <div className="absolute top-20 inset-x-0 z-30 flex justify-center pointer-events-none px-4 animate-fade-in">
             <div className="px-5 py-2.5 rounded-full bg-black/80 backdrop-blur-md text-amber-300 border border-amber-500/40 text-xs font-black flex items-center space-x-2 shadow-xl">
               <Pause className="w-4 h-4 fill-amber-400 text-amber-400" />
               <span>Game Paused — Resume when dialog closes</span>
             </div>
+          </div>
+        )}
+
+        {/* Auto-Paused Overlay (When Browser Minimized / Switched) */}
+        {isTabHidden && countdown === null && !isGameOver && !showEndGameConfirm && (
+          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md text-white p-6 text-center animate-fade-in pointer-events-auto">
+            <div className="w-16 h-16 rounded-3xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mb-4 shadow-2xl shadow-amber-500/30">
+              <Pause className="w-8 h-8 fill-amber-400" />
+            </div>
+            <h2 className="text-xl md:text-2xl font-black text-white mb-2">Game Paused</h2>
+            <p className="text-xs text-slate-300 max-w-xs mb-6 leading-relaxed">
+              Gameplay automatically paused while the browser was minimized. Ready to continue?
+            </p>
+            <button
+              onClick={handleResumeFromTab}
+              className="px-8 py-3.5 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-2xl text-sm shadow-xl shadow-pink-500/30 flex items-center space-x-2 cursor-pointer transition-all active:scale-95"
+            >
+              <Play className="w-4 h-4 fill-white" />
+              <span>Resume Game</span>
+            </button>
           </div>
         )}
 
