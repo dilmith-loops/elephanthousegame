@@ -823,49 +823,46 @@ export default function GameCanvas({
       />
 
       {/* Top HUD Header */}
-      <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between pt-2.5 pb-3 px-2.5 sm:px-4 bg-gradient-to-b from-black/85 via-black/50 to-transparent pointer-events-auto select-none">
-        {/* Left: Player Profile & Live Score */}
-        <div className="flex items-center space-x-2">
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-pink-500 to-amber-400 p-0.5 shadow-md flex items-center justify-center flex-shrink-0">
-            <div className="w-full h-full bg-slate-900 rounded-[13px] flex items-center justify-center text-white font-black text-xs sm:text-sm">
+      <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between pt-3 pb-4 px-3 sm:px-5 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-auto select-none">
+        {/* Left: Player Profile & Live Score Capsule */}
+        <div className="flex items-center space-x-2.5 bg-slate-950/75 backdrop-blur-xl border border-white/20 shadow-xl shadow-black/40 rounded-2xl py-1 pl-1.5 pr-3.5">
+          {/* Avatar Ring */}
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-400 p-0.5 shadow-md flex items-center justify-center flex-shrink-0">
+            <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center text-white font-black text-xs sm:text-sm">
               {player.name.charAt(0).toUpperCase()}
             </div>
           </div>
-          <div className="flex flex-col min-w-0">
-            <div className="flex items-center space-x-1">
-              <span className="text-xs sm:text-sm font-extrabold text-white max-w-[80px] sm:max-w-[140px] truncate">
-                {player.name}
-              </span>
-            </div>
+
+          {/* Name & Live Score Info */}
+          <div className="flex flex-col">
+            <span className="text-[11px] sm:text-xs font-bold text-slate-300 max-w-[85px] sm:max-w-[130px] truncate leading-tight">
+              {player.name}
+            </span>
             <div className="flex items-center space-x-1.5 mt-0.5">
-              <span className="text-xs sm:text-sm font-black text-amber-400 tracking-wide flex items-center space-x-1">
+              <span className="text-sm sm:text-base font-black bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-sm leading-none flex items-center">
                 <span>{score}</span>
-                <span className="text-[10px] uppercase font-bold text-amber-300">pts</span>
+                <span className="text-[10px] uppercase font-extrabold text-amber-300/90 ml-1">pts</span>
               </span>
-              {initialScore > 0 && (
-                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
-                  +{initialScore}
-                </span>
-              )}
+              <span className="text-xs">🍦</span>
             </div>
           </div>
         </div>
 
         {/* Center: Active Multiplier/Combo Indicator (Floating below top bar) */}
         {combo > 1 && (
-          <div className="absolute top-14 left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300">
-            <span className="inline-flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white animate-bounce bg-gradient-to-r from-rose-600/90 to-amber-600/90 backdrop-blur-md px-3.5 py-1 rounded-full border border-rose-400/50 shadow-xl shadow-rose-500/30">
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300 animate-bounce">
+            <span className="inline-flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-rose-600 to-amber-500 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/30 shadow-xl shadow-rose-600/40">
               <Flame className="w-4 h-4 fill-amber-300 text-amber-300 animate-pulse" />
               <span className="tracking-wide">{combo}x Combo!</span>
             </span>
           </div>
         )}
 
-        {/* Right: Sound, Leaderboard & End Game Controls */}
-        <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
+        {/* Right: Sound, Leaderboard & End Game Controls Capsule */}
+        <div className="flex items-center space-x-1.5 bg-slate-950/75 backdrop-blur-xl border border-white/20 shadow-xl shadow-black/40 rounded-2xl p-1 flex-shrink-0">
           <button
             onClick={toggleMute}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-all cursor-pointer"
+            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 active:scale-95 text-white flex items-center justify-center transition-all cursor-pointer"
             title={isMuted ? 'Unmute' : 'Mute'}
           >
             {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
@@ -873,7 +870,7 @@ export default function GameCanvas({
 
           <button
             onClick={onOpenLeaderboard}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 text-amber-300 backdrop-blur-md border border-amber-500/30 flex items-center justify-center transition-all cursor-pointer"
+            className="w-8 h-8 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 text-amber-300 flex items-center justify-center transition-all cursor-pointer"
             title="Leaderboard"
           >
             <Trophy className="w-4 h-4" />
@@ -882,11 +879,10 @@ export default function GameCanvas({
           <button
             onClick={handleRequestEndGame}
             disabled={countdown !== null || isGameOver}
-            className="px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white text-[11px] sm:text-xs font-black flex items-center space-x-1 shadow-md shadow-red-600/30 border border-red-400/30 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white text-xs font-black flex items-center space-x-1 shadow-md shadow-red-600/30 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <StopCircle className="w-3.5 h-3.5 fill-white" />
-            <span className="hidden xs:inline">End</span>
-            <span className="xs:hidden">End</span>
+            <span>End</span>
           </button>
         </div>
       </header>
