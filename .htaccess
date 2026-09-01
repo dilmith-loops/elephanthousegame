@@ -1,37 +1,41 @@
-# Hostinger Apache / LiteSpeed Configuration for Elephant House AR Game
+# Unified Hostinger Configuration for Elephant House AR Game (Frontend + Backend)
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /ElephantHouseGame/
 
     # Prevent directory browsing
     Options -Indexes
 
     # Custom 404 Error Document
-    ErrorDocument 404 /ElephantHouseGame/out/404.html
+    ErrorDocument 404 /ElephantHouseGame/frontend/out/404.html
 
-    # If already requesting /out, let it pass
-    RewriteRule ^out/ - [L]
+    # 1. Forward all API requests directly to Laravel Backend
+    RewriteCond %{REQUEST_URI} api/ [NC]
+    RewriteRule ^(.*)$ index.php [L]
 
-    # Serve index.html if root of subfolder is requested
-    RewriteRule ^$ out/index.html [L]
+    # 2. If requesting frontend/out/ directory directly, pass through
+    RewriteRule ^frontend/out/ - [L]
 
-    # Route static Next.js assets to out/
-    RewriteRule ^_next/(.*)$ out/_next/$1 [L]
-    RewriteRule ^models/(.*)$ out/models/$1 [L]
-    RewriteRule ^wasm/(.*)$ out/wasm/$1 [L]
-    RewriteRule ^eh-portal/?$ out/eh-portal/index.html [L]
-    RewriteRule ^eh-portal/(.*)$ out/eh-portal/$1 [L]
-    RewriteRule ^(logo\.png|icon\.png|favicon\.ico|favicon\.png|file\.svg|globe\.svg|window\.svg)$ out/$1 [L]
+    # 3. Route static Next.js assets to frontend/out/
+    RewriteRule ^_next/(.*)$ frontend/out/_next/$1 [L]
+    RewriteRule ^models/(.*)$ frontend/out/models/$1 [L]
+    RewriteRule ^wasm/(.*)$ frontend/out/wasm/$1 [L]
+    RewriteRule ^eh-portal/?$ frontend/out/eh-portal/index.html [L]
+    RewriteRule ^eh-portal/(.*)$ frontend/out/eh-portal/$1 [L]
+    RewriteRule ^(logo\.png|icon\.png|favicon\.ico|favicon\.png|file\.svg|globe\.svg|window\.svg)$ frontend/out/$1 [L]
 
-    # General fallback: if requested file exists inside out/, serve it
-    RewriteCond %{DOCUMENT_ROOT}/ElephantHouseGame/out/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/public_html/ElephantHouseGame/out/$1 -f
-    RewriteRule ^(.*)$ out/$1 [L]
+    # 4. Serve root to frontend/out/index.html
+    RewriteRule ^$ frontend/out/index.html [L]
 
-    # Fallback to out/index.html for any unhandled routes
+    # 5. General fallback: if file exists inside frontend/out/, serve it
+    RewriteCond %{DOCUMENT_ROOT}/ElephantHouseGame/frontend/out/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/public_html/ElephantHouseGame/frontend/out/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/frontend/out/$1 -f
+    RewriteRule ^(.*)$ frontend/out/$1 [L]
+
+    # 6. Fallback to frontend/out/index.html for any unhandled routes
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ out/index.html [L]
+    RewriteRule ^(.*)$ frontend/out/index.html [L]
 </IfModule>
 
 # MIME types for AR MediaPipe WASM and AI models
@@ -43,10 +47,12 @@
     AddType font/woff2 .woff2
 </IfModule>
 
-# Security & CORS Headers
+# Security & CORS Headers for Live Mobile/Web APIs
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
     Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept"
 </IfModule>
 
 # Enable Gzip / Deflate Compression

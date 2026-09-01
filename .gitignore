@@ -1,40 +1,35 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies (ignore anywhere)
+node_modules/
+vendor/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Next.js build cache (ignore anywhere)
+.next/
+*.tsbuildinfo
 
-# testing
-/coverage
+# Environment variables & secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.production.backend.example
+!.env.production.example
 
-# next.js
-/.next/
+# Laravel storage cache and sessions
+storage/framework/cache/data/*
+!storage/framework/cache/data/.gitignore
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+storage/logs/*
+!storage/logs/.gitignore
+*.key
 
-# production
-/build
-
-# misc
+# OS / IDE / Logs
 .DS_Store
 *.pem
-
-# debug
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
