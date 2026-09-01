@@ -9,6 +9,7 @@ import {
   Trophy,
   Activity,
   Download,
+  FileText,
   Search,
   LogOut,
   Lock,
@@ -21,6 +22,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
+import { exportToPDF } from '../../lib/pdfExport';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -112,10 +114,25 @@ export default function AdminPage() {
     }
   }, [isAuthenticated, loadStats, loadTabData]);
 
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
   // Handle Export CSV
   const handleExport = (type: 'users' | 'scores') => {
     const url = api.getExportUrl(type);
     window.open(url, '_blank');
+  };
+
+  // Handle Export PDF
+  const handleExportPDF = async (type: 'users' | 'scores') => {
+    try {
+      setIsExportingPDF(true);
+      await exportToPDF(type, stats);
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsExportingPDF(false);
+    }
   };
 
   // Login Screen
@@ -370,6 +387,15 @@ export default function AdminPage() {
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Export CSV</span>
+              </button>
+
+              <button
+                onClick={() => handleExportPDF(activeTab)}
+                disabled={isExportingPDF}
+                className="px-3.5 py-2 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md transition-all cursor-pointer flex-shrink-0 disabled:opacity-50"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>{isExportingPDF ? 'Generating...' : 'Export PDF'}</span>
               </button>
             </div>
           </div>
