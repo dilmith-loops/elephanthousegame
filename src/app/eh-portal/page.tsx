@@ -130,6 +130,13 @@ export default function AdminPage() {
   // Score Delete State
   const [deletingScoreId, setDeletingScoreId] = useState<number | null>(null);
 
+  // Custom Delete Confirmation Modal States
+  const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
+  const [scoreToDelete, setScoreToDelete] = useState<ScoreRecord | null>(null);
+  const [adminToDelete, setAdminToDelete] = useState<AdminUser | null>(null);
+  const [deleteDialogError, setDeleteDialogError] = useState<string | null>(null);
+  const [isDeletingTarget, setIsDeletingTarget] = useState(false);
+
   // Export PDF Loading State
   const [isExportingPDF, setIsExportingPDF] = useState(false);
 
@@ -284,20 +291,25 @@ export default function AdminPage() {
     }
   };
 
-  // Handle Delete Admin User
-  const handleDeleteAdmin = async (adminUser: AdminUser) => {
-    if (!window.confirm(`Are you sure you want to remove administrator "${adminUser.name}" (${adminUser.email})?`)) {
-      return;
-    }
+  // Handle Trigger Delete Admin User
+  const handleDeleteAdmin = (adminUser: AdminUser) => {
+    setDeleteDialogError(null);
+    setAdminToDelete(adminUser);
+  };
 
+  // Confirm Delete Admin User
+  const confirmDeleteAdmin = async () => {
+    if (!adminToDelete) return;
     try {
-      setDeletingAdminId(adminUser.id);
-      await api.deleteAdminUser(adminUser.id);
+      setIsDeletingTarget(true);
+      setDeleteDialogError(null);
+      await api.deleteAdminUser(adminToDelete.id);
       await loadAdminAccounts();
+      setAdminToDelete(null);
     } catch (err: any) {
-      alert(err.message || 'Failed to delete admin account.');
+      setDeleteDialogError(err.message || 'Failed to delete admin account.');
     } finally {
-      setDeletingAdminId(null);
+      setIsDeletingTarget(false);
     }
   };
 
@@ -431,21 +443,26 @@ export default function AdminPage() {
     }
   };
 
-  // Handle Delete Player
-  const handleDeletePlayer = async (player: Player) => {
-    if (!window.confirm(`Are you sure you want to permanently delete player "${player.name}" (${player.mobile}) and all associated game score records?`)) {
-      return;
-    }
+  // Handle Trigger Delete Player
+  const handleDeletePlayer = (player: Player) => {
+    setDeleteDialogError(null);
+    setPlayerToDelete(player);
+  };
 
+  // Confirm Delete Player
+  const confirmDeletePlayer = async () => {
+    if (!playerToDelete) return;
     try {
-      setDeletingPlayerId(player.id);
-      await api.deletePlayerUser(player.id);
+      setIsDeletingTarget(true);
+      setDeleteDialogError(null);
+      await api.deletePlayerUser(playerToDelete.id);
       loadTabData();
       loadStats();
+      setPlayerToDelete(null);
     } catch (err: any) {
-      alert(err.message || 'Failed to delete player.');
+      setDeleteDialogError(err.message || 'Failed to delete player.');
     } finally {
-      setDeletingPlayerId(null);
+      setIsDeletingTarget(false);
     }
   };
 
@@ -490,22 +507,26 @@ export default function AdminPage() {
     }
   };
 
-  // Handle Delete Score Record
-  const handleDeleteScore = async (score: ScoreRecord) => {
-    const playerName = score.user?.name || `Player #${score.user_id}`;
-    if (!window.confirm(`Are you sure you want to permanently delete Score Log #${score.id} (${score.score} marks by ${playerName})?`)) {
-      return;
-    }
+  // Handle Trigger Delete Score Record
+  const handleDeleteScore = (score: ScoreRecord) => {
+    setDeleteDialogError(null);
+    setScoreToDelete(score);
+  };
 
+  // Confirm Delete Score Record
+  const confirmDeleteScore = async () => {
+    if (!scoreToDelete) return;
     try {
-      setDeletingScoreId(score.id);
-      await api.deleteScoreRecord(score.id);
+      setIsDeletingTarget(true);
+      setDeleteDialogError(null);
+      await api.deleteScoreRecord(scoreToDelete.id);
       loadTabData();
       loadStats();
+      setScoreToDelete(null);
     } catch (err: any) {
-      alert(err.message || 'Failed to delete score record.');
+      setDeleteDialogError(err.message || 'Failed to delete score record.');
     } finally {
-      setDeletingScoreId(null);
+      setIsDeletingTarget(false);
     }
   };
 
@@ -2148,6 +2169,212 @@ export default function AdminPage() {
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Player Confirmation Dialog */}
+      {playerToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl">
+            <button
+              onClick={() => { setPlayerToDelete(null); setDeleteDialogError(null); }}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex flex-col items-center text-center mb-5">
+              <div className="w-16 h-16 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center mb-3.5 shadow-lg shadow-rose-500/10">
+                <Trash2 className="w-8 h-8" />
+              </div>
+
+              <h2 className="text-xl font-black text-white">
+                Delete Player Account?
+              </h2>
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                Are you sure you want to permanently delete player{' '}
+                <strong className="text-white">"{playerToDelete.name}"</strong>{' '}
+                <span className="font-mono text-slate-400">({playerToDelete.mobile})</span>?
+              </p>
+            </div>
+
+            <div className="p-3.5 bg-rose-950/40 rounded-2xl border border-rose-800/50 text-rose-300 text-xs flex items-start space-x-2.5 mb-5">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span className="leading-relaxed text-[11px]">
+                This action is irreversible. All high score records, played game logs, and leaderboard rankings associated with this player will be wiped immediately.
+              </span>
+            </div>
+
+            {deleteDialogError && (
+              <div className="mb-4 p-3 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-xl flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <span>{deleteDialogError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => { setPlayerToDelete(null); setDeleteDialogError(null); }}
+                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmDeletePlayer}
+                disabled={isDeletingTarget}
+                className="py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-xs shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center space-x-1.5 disabled:opacity-50"
+              >
+                {isDeletingTarget ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Player</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Score Log Confirmation Dialog */}
+      {scoreToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl">
+            <button
+              onClick={() => { setScoreToDelete(null); setDeleteDialogError(null); }}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex flex-col items-center text-center mb-5">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mb-3.5 shadow-lg shadow-amber-500/10">
+                <Trash2 className="w-8 h-8" />
+              </div>
+
+              <h2 className="text-xl font-black text-white">
+                Delete Score Record #{scoreToDelete.id}?
+              </h2>
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                Delete the game log of <strong className="text-amber-300">{scoreToDelete.score} marks</strong> achieved by{' '}
+                <strong className="text-white">{scoreToDelete.user?.name || `User #${scoreToDelete.user_id}`}</strong>?
+              </p>
+            </div>
+
+            <div className="p-3.5 bg-slate-800/60 rounded-2xl border border-slate-700/60 text-slate-300 text-xs flex items-start space-x-2.5 mb-5">
+              <Gamepad2 className="w-4 h-4 text-pink-400 flex-shrink-0 mt-0.5" />
+              <span className="leading-relaxed text-[11px]">
+                The player's leaderboard high score will automatically recalculate to their next best score.
+              </span>
+            </div>
+
+            {deleteDialogError && (
+              <div className="mb-4 p-3 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-xl flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <span>{deleteDialogError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => { setScoreToDelete(null); setDeleteDialogError(null); }}
+                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmDeleteScore}
+                disabled={isDeletingTarget}
+                className="py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-xs shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center space-x-1.5 disabled:opacity-50"
+              >
+                {isDeletingTarget ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Record</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Admin Confirmation Dialog */}
+      {adminToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl">
+            <button
+              onClick={() => { setAdminToDelete(null); setDeleteDialogError(null); }}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex flex-col items-center text-center mb-5">
+              <div className="w-16 h-16 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center mb-3.5 shadow-lg shadow-rose-500/10">
+                <Trash2 className="w-8 h-8" />
+              </div>
+
+              <h2 className="text-xl font-black text-white">
+                Remove Administrator?
+              </h2>
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                Are you sure you want to remove administrator{' '}
+                <strong className="text-white">"{adminToDelete.name}"</strong>{' '}
+                <span className="font-mono text-slate-400">({adminToDelete.email})</span>?
+              </p>
+            </div>
+
+            <div className="p-3.5 bg-rose-950/40 rounded-2xl border border-rose-800/50 text-rose-300 text-xs flex items-start space-x-2.5 mb-5">
+              <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span className="leading-relaxed text-[11px]">
+                This administrator will immediately lose access to the Elephant House Control Center.
+              </span>
+            </div>
+
+            {deleteDialogError && (
+              <div className="mb-4 p-3 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-xl flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <span>{deleteDialogError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => { setAdminToDelete(null); setDeleteDialogError(null); }}
+                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmDeleteAdmin}
+                disabled={isDeletingTarget}
+                className="py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-xs shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center space-x-1.5 disabled:opacity-50"
+              >
+                {isDeletingTarget ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Remove Admin</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
