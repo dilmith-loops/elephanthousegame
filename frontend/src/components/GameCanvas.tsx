@@ -58,26 +58,52 @@ async function getFaceLandmarker(): Promise<FaceLandmarker> {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
   if (!globalLandmarkerPromise) {
     globalLandmarkerPromise = (async () => {
-      const vision = await FilesetResolver.forVisionTasks(`${basePath}/wasm`);
+      let vision;
       try {
-        globalLandmarker = await FaceLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: `${basePath}/models/face_landmarker.task`,
-            delegate: 'GPU'
-          },
-          runningMode: 'VIDEO',
-          numFaces: 1
-        });
-      } catch (gpuErr) {
-        console.warn('GPU fallback to CPU:', gpuErr);
-        globalLandmarker = await FaceLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: `${basePath}/models/face_landmarker.task`,
-            delegate: 'CPU'
-          },
-          runningMode: 'VIDEO',
-          numFaces: 1
-        });
+        vision = await FilesetResolver.forVisionTasks(`${basePath}/wasm`);
+      } catch (localWasmErr) {
+        console.warn('Local WASM fallback to CDN:', localWasmErr);
+        vision = await FilesetResolver.forVisionTasks(
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm'
+        );
+      }
+
+      const modelUrls = [
+        `${basePath}/models/face_landmarker.task`,
+        'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'
+      ];
+
+      for (const modelPath of modelUrls) {
+        try {
+          globalLandmarker = await FaceLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: modelPath,
+              delegate: 'GPU'
+            },
+            runningMode: 'VIDEO',
+            numFaces: 1
+          });
+          if (globalLandmarker) return globalLandmarker;
+        } catch (gpuErr) {
+          console.warn(`GPU delegate failed for ${modelPath}, trying CPU:`, gpuErr);
+          try {
+            globalLandmarker = await FaceLandmarker.createFromOptions(vision, {
+              baseOptions: {
+                modelAssetPath: modelPath,
+                delegate: 'CPU'
+              },
+              runningMode: 'VIDEO',
+              numFaces: 1
+            });
+            if (globalLandmarker) return globalLandmarker;
+          } catch (cpuErr) {
+            console.warn(`CPU delegate failed for ${modelPath}:`, cpuErr);
+          }
+        }
+      }
+
+      if (!globalLandmarker) {
+        throw new Error('Could not initialize FaceLandmarker on this device.');
       }
       return globalLandmarker;
     })();

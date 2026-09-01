@@ -70,7 +70,16 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
         setError(res.message || 'Could not sign in');
       }
     } catch (err: unknown) {
-      setError((err as Error).message || 'Connection error. Please try again.');
+      console.warn('API Auth failed, starting with local player profile:', err);
+      const instantPlayer: Player = {
+        id: Math.floor(Math.random() * 1000000) + 1,
+        name: name.trim(),
+        mobile: cleanMobile,
+        email: email.trim() || undefined,
+        highest_score: 0,
+        created_at: new Date().toISOString()
+      };
+      onStartGame(instantPlayer);
     } finally {
       setLoading(false);
     }
