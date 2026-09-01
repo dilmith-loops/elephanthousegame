@@ -87,12 +87,14 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
         {/* Top Elephant House Branding Badge */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="relative mb-3">
-            <div className="w-20 h-20 bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-400 rounded-3xl p-1 shadow-lg shadow-pink-500/30 flex items-center justify-center transform -rotate-3 hover:rotate-0 transition-transform">
-              <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[22px] flex items-center justify-center">
-                <IceCream className="w-10 h-10 text-pink-500 animate-bounce" />
-              </div>
+            <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-3xl p-2 shadow-xl shadow-pink-500/20 flex items-center justify-center border border-white/60 dark:border-slate-700/80 transform hover:scale-105 transition-transform">
+              <img
+                src="/logo.png"
+                alt="Elephant House"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div className="absolute -top-1 -right-1 bg-amber-400 text-slate-900 text-xs font-black px-2 py-0.5 rounded-full shadow-md">
+            <div className="absolute -top-1.5 -right-1.5 bg-amber-400 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">
               AR FUN
             </div>
           </div>

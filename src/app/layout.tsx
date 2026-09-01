@@ -12,10 +12,16 @@ export const metadata: Metadata = {
   title: 'Elephant House Ice Cream | AR Tongue Catch Game',
   description: 'Catch delicious Elephant House ice cream popsicles with your mouth and tongue! Score marks and climb the leaderboard in this interactive AR camera game.',
   keywords: ['Elephant House', 'Ice Cream', 'Popsicle Game', 'AR Game', 'Tongue Catch', 'Sri Lanka'],
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
   openGraph: {
     title: 'Elephant House AR Tongue Catch Game',
     description: 'Catch delicious falling popsicles with your tongue and win marks!',
-    type: 'website'
+    type: 'website',
+    images: ['/logo.png'],
   }
 };
 

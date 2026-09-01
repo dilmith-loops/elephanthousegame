@@ -124,10 +124,12 @@ export default function AdminPage() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 text-white">
         <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl">
           <div className="flex flex-col items-center text-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-tr from-pink-500 to-amber-400 rounded-2xl p-0.5 mb-3 shadow-lg shadow-pink-500/20">
-              <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center">
-                <ShieldCheck className="w-8 h-8 text-pink-400" />
-              </div>
+            <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl p-2 mb-3 shadow-xl shadow-pink-500/20 flex items-center justify-center border border-white/60 dark:border-slate-700/80">
+              <img
+                src="/logo.png"
+                alt="Elephant House"
+                className="w-full h-full object-contain"
+              />
             </div>
             <h1 className="text-2xl font-black bg-gradient-to-r from-pink-400 to-amber-400 bg-clip-text text-transparent">
               Admin Portal
@@ -216,10 +218,12 @@ export default function AdminPage() {
       {/* Top Navbar */}
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30 px-4 md:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-500 to-amber-400 p-0.5 shadow-md">
-            <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center font-black text-pink-400">
-              EH
-            </div>
+          <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 p-1 shadow-md border border-slate-700/60 flex items-center justify-center">
+            <img
+              src="/logo.png"
+              alt="Elephant House"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
             <h1 className="font-black text-base md:text-lg bg-gradient-to-r from-pink-400 to-amber-300 bg-clip-text text-transparent">
