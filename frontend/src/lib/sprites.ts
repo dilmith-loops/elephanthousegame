@@ -104,10 +104,22 @@ export function drawPopsicle(
   if (customImageUrl && imageCache.has(customImageUrl)) {
     const img = imageCache.get(customImageUrl);
     if (img && img.complete && img.naturalWidth > 0) {
-      // Draw with soft glow
-      ctx.shadowColor = customPrimaryColor || '#FF4081';
-      ctx.shadowBlur = 10;
-      ctx.drawImage(img, -30, -35, 60, 70);
+      // Crisp rendering without halo/background glare
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+
+      const imgAspect = img.naturalWidth / img.naturalHeight;
+      let drawW = 60;
+      let drawH = 70;
+      if (imgAspect > 1) {
+        drawW = 65;
+        drawH = 65 / imgAspect;
+      } else {
+        drawH = 70;
+        drawW = 70 * imgAspect;
+      }
+
+      ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
       ctx.restore();
       return;
     }
