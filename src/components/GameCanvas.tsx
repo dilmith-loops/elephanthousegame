@@ -17,14 +17,34 @@ import {
   Camera,
   AlertTriangle,
   Flame,
-  Award
+  Award,
+  Pause
 } from 'lucide-react';
 
 interface Props {
   player: Player;
+  isPaused?: boolean;
   onEndGame: (finalScore: number) => void;
   onOpenLeaderboard: () => void;
   onChangePlayer: () => void;
+}
+
+// Intercept C++ WASM INFO logs so Next.js dev overlay does not mistake them for JavaScript runtime errors
+if (typeof window !== 'undefined') {
+  const origError = console.error;
+  console.error = (...args: any[]) => {
+    if (
+      typeof args[0] === 'string' &&
+      (args[0].startsWith('INFO:') ||
+        args[0].includes('TensorFlow Lite') ||
+        args[0].includes('XNNPACK') ||
+        args[0].includes('face_landmarker'))
+    ) {
+      console.info(...args);
+      return;
+    }
+    origError.apply(console, args);
+  };
 }
 
 // Global Singleton for FaceLandmarker to avoid React StrictMode double-mount destruction
@@ -62,7 +82,13 @@ async function getFaceLandmarker(): Promise<FaceLandmarker> {
   return globalLandmarkerPromise;
 }
 
-export default function GameCanvas({ player, onEndGame, onOpenLeaderboard, onChangePlayer }: Props) {
+export default function GameCanvas({
+  player,
+  isPaused = false,
+  onEndGame,
+  onOpenLeaderboard,
+  onChangePlayer
+}: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -87,6 +113,11 @@ export default function GameCanvas({ player, onEndGame, onOpenLeaderboard, onCha
   // Game Engine Refs
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
+  const lastVideoTimeRef = useRef<number>(-1);
+  const lastDetectTimestampRef = useRef<number>(0);
+  const isPausedRef = useRef(isPaused);
+  isPausedRef.current = isPaused;
+
   const popsiclesRef = useRef<PopsicleItem[]>([]);
   const particlesRef = useRef<SplashParticle[]>([]);
   const scorePopupsRef = useRef<ScorePopup[]>([]);
@@ -188,7 +219,7 @@ export default function GameCanvas({ player, onEndGame, onOpenLeaderboard, onCha
 
   // Countdown Loop before game start
   useEffect(() => {
-    if (loadingAI || loadingCamera || cameraError) return;
+    if (loadingAI || loadingCamera || cameraError || isPaused) return;
 
     if (countdown !== null && countdown > 0) {
       sound.playCountdown(false);
@@ -205,7 +236,7 @@ export default function GameCanvas({ player, onEndGame, onOpenLeaderboard, onCha
       }, 700);
       return () => clearTimeout(timer);
     }
-  }, [countdown, loadingAI, loadingCamera, cameraError]);
+  }, [countdown, loadingAI, loadingCamera, cameraError, isPaused]);
 
   // Handle Score & Particles on Catch
   const handleCatch = useCallback((popsicle: PopsicleItem, mouthPos: { x: number; y: number }) => {
@@ -314,6 +345,9 @@ export default function GameCanvas({ player, onEndGame, onOpenLeaderboard, onCha
       const dt = (timestamp - lastTime) / 1000;
       lastTime = timestamp;
 
+      // Check if paused
+      const currentlyPaused = isPausedRef.current;
+
       // Dynamic screen-adaptive canvas sizing
       const rect = container.getBoundingClientRect();
       const screenW = rect.width || window.innerWidth;
@@ -357,9 +391,18 @@ export default function GameCanvas({ player, onEndGame, onOpenLeaderboard, onCha
       ctx.drawImage(video, -(offsetX + renderW - width), offsetY, renderW, renderH);
       ctx.restore();
 
-      // Run Face Landmarker
+      // Run Face Landmarker only on new video frames when not paused
       const landmarker = faceLandmarkerRef.current || globalLandmarker;
-      if (landmarker && video.readyState >= 2) {
+      if (
+        !currentlyPaused &&
+        landmarker &&
+        video.readyState >= 2 &&
+        video.currentTime !== lastVideoTimeRef.current &&
+        timestamp > lastDetectTimestampRef.current
+      ) {
+        lastVideoTimeRef.current = video.currentTime;
+        lastDetectTimestampRef.current = timestamp;
+
         try {
           const results = landmarker.detectForVideo(video, timestamp);
           if (results.faceLandmarks && results.faceLandmarks.length > 0) {
@@ -392,46 +435,56 @@ export default function GameCanvas({ player, onEndGame, onOpenLeaderboard, onCha
               mar: mar,
               isTongueOut: open
             };
-
-            // Draw Mouth Target / Catch Glow Aura
-            ctx.save();
-            if (open) {
-              const grad = ctx.createRadialGradient(mouthX, mouthY + 8, 4, mouthX, mouthY + 8, 48);
-              grad.addColorStop(0, 'rgba(255, 64, 129, 0.7)');
-              grad.addColorStop(0.5, 'rgba(255, 171, 0, 0.45)');
-              grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-              ctx.fillStyle = grad;
-              ctx.beginPath();
-              ctx.arc(mouthX, mouthY + 8, 48, 0, Math.PI * 2);
-              ctx.fill();
-
-              ctx.font = '28px sans-serif';
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText('👅', mouthX, mouthY + 12);
-            } else {
-              ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
-              ctx.lineWidth = 2;
-              ctx.setLineDash([4, 4]);
-              ctx.beginPath();
-              ctx.arc(mouthX, mouthY + 6, 28, 0, Math.PI * 2);
-              ctx.stroke();
-              ctx.setLineDash([]);
-            }
-            ctx.restore();
           } else {
             mouthStateRef.current.isDetected = false;
             setIsMouthOpen(false);
           }
         } catch {
-          // frame drops ignored
+          // frame drops handled
         }
       }
 
-      // Spawn Falling Popsicles
+      // Draw Mouth Target / Catch Glow Aura if detected
+      const mouth = mouthStateRef.current;
+      if (mouth.isDetected && !currentlyPaused) {
+        ctx.save();
+        if (mouth.isTongueOut) {
+          const grad = ctx.createRadialGradient(
+            mouth.mouthCenter.x,
+            mouth.mouthCenter.y + 8,
+            4,
+            mouth.mouthCenter.x,
+            mouth.mouthCenter.y + 8,
+            48
+          );
+          grad.addColorStop(0, 'rgba(255, 64, 129, 0.7)');
+          grad.addColorStop(0.5, 'rgba(255, 171, 0, 0.45)');
+          grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(mouth.mouthCenter.x, mouth.mouthCenter.y + 8, 48, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.font = '28px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('👅', mouth.mouthCenter.x, mouth.mouthCenter.y + 12);
+        } else {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.arc(mouth.mouthCenter.x, mouth.mouthCenter.y + 6, 28, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.restore();
+      }
+
+      // Spawn Falling Popsicles (Only when NOT paused)
       const now = timestamp;
       const spawnInterval = Math.max(650, 1400 - scoreRef.current * 20);
-      if (now - lastSpawnTimeRef.current > spawnInterval) {
+      if (!currentlyPaused && now - lastSpawnTimeRef.current > spawnInterval) {
         lastSpawnTimeRef.current = now;
 
         const rand = Math.random();
@@ -465,35 +518,37 @@ export default function GameCanvas({ player, onEndGame, onOpenLeaderboard, onCha
       }
 
       // Update & Draw Popsicles
-      const mouth = mouthStateRef.current;
       const catchRadius = Math.max(42, (mouth.mouthWidth || 35) * 0.75);
 
       for (let i = popsiclesRef.current.length - 1; i >= 0; i--) {
         const item = popsiclesRef.current[i];
-        item.y += item.speed * dt;
-        item.rotation += item.rotationSpeed * dt;
 
-        // Collision Check with Mouth/Tongue
-        if (!item.caught && mouth.isDetected && mouth.isTongueOut) {
-          const popsicleTipY = item.y + 20;
-          const dist = Math.hypot(item.x - mouth.mouthCenter.x, popsicleTipY - mouth.mouthCenter.y);
+        if (!currentlyPaused) {
+          item.y += item.speed * dt;
+          item.rotation += item.rotationSpeed * dt;
 
-          if (dist < catchRadius + 28) {
-            item.caught = true;
-            handleCatch(item, mouth.mouthCenter);
+          // Collision Check with Mouth/Tongue
+          if (!item.caught && mouth.isDetected && mouth.isTongueOut) {
+            const popsicleTipY = item.y + 20;
+            const dist = Math.hypot(item.x - mouth.mouthCenter.x, popsicleTipY - mouth.mouthCenter.y);
+
+            if (dist < catchRadius + 28) {
+              item.caught = true;
+              handleCatch(item, mouth.mouthCenter);
+              popsiclesRef.current.splice(i, 1);
+              continue;
+            }
+          }
+
+          // Check if missed
+          if (item.y > height + 80) {
+            if (comboRef.current > 0) {
+              comboRef.current = 0;
+              setCombo(0);
+            }
             popsiclesRef.current.splice(i, 1);
             continue;
           }
-        }
-
-        // Check if missed
-        if (item.y > height + 80) {
-          if (comboRef.current > 0) {
-            comboRef.current = 0;
-            setCombo(0);
-          }
-          popsiclesRef.current.splice(i, 1);
-          continue;
         }
 
         drawPopsicle(ctx, item.type, item.x, item.y, item.size, item.rotation, item.opacity);
@@ -502,14 +557,16 @@ export default function GameCanvas({ player, onEndGame, onOpenLeaderboard, onCha
       // Update & Draw Splash Particles
       for (let i = particlesRef.current.length - 1; i >= 0; i--) {
         const p = particlesRef.current[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.18;
-        p.alpha -= p.decay;
+        if (!currentlyPaused) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.18;
+          p.alpha -= p.decay;
 
-        if (p.alpha <= 0) {
-          particlesRef.current.splice(i, 1);
-          continue;
+          if (p.alpha <= 0) {
+            particlesRef.current.splice(i, 1);
+            continue;
+          }
         }
 
         ctx.save();
@@ -524,12 +581,14 @@ export default function GameCanvas({ player, onEndGame, onOpenLeaderboard, onCha
       // Update & Draw Score Popups
       for (let i = scorePopupsRef.current.length - 1; i >= 0; i--) {
         const sp = scorePopupsRef.current[i];
-        sp.y += sp.vy;
-        sp.alpha -= 0.025;
+        if (!currentlyPaused) {
+          sp.y += sp.vy;
+          sp.alpha -= 0.025;
 
-        if (sp.alpha <= 0) {
-          scorePopupsRef.current.splice(i, 1);
-          continue;
+          if (sp.alpha <= 0) {
+            scorePopupsRef.current.splice(i, 1);
+            continue;
+          }
         }
 
         ctx.save();
@@ -683,8 +742,18 @@ export default function GameCanvas({ player, onEndGame, onOpenLeaderboard, onCha
           </div>
         )}
 
+        {/* Paused Overlay Pill */}
+        {isPaused && countdown === null && !isGameOver && (
+          <div className="absolute top-20 inset-x-0 z-30 flex justify-center pointer-events-none px-4 animate-fade-in">
+            <div className="px-5 py-2.5 rounded-full bg-black/80 backdrop-blur-md text-amber-300 border border-amber-500/40 text-xs font-black flex items-center space-x-2 shadow-xl">
+              <Pause className="w-4 h-4 fill-amber-400 text-amber-400" />
+              <span>Game Paused — Resume when dialog closes</span>
+            </div>
+          </div>
+        )}
+
         {/* Bottom Live Tongue Guidance Pill */}
-        {countdown === null && !isGameOver && (
+        {countdown === null && !isGameOver && !isPaused && (
           <div className="absolute bottom-6 inset-x-0 z-20 flex justify-center pointer-events-none px-4">
             <div
               className={`px-4 py-2 rounded-full backdrop-blur-md text-xs font-black flex items-center space-x-2 border transition-all duration-300 ${
