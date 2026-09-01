@@ -1,4 +1,4 @@
-import { Player, ScoreSubmission, ScoreRecord, AdminStats, AdminLogRecord } from '../types/game';
+import { Player, ScoreSubmission, ScoreRecord, AdminStats, AdminLogRecord, AdminUser } from '../types/game';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8008/api';
 
@@ -210,6 +210,78 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to delete admin user');
+    return data;
+  },
+
+  // Admin: Update an admin account
+  async updateAdminUser(id: number, payload: {
+    name: string;
+    email: string;
+    password?: string;
+  }): Promise<{ success: boolean; message: string; admin: AdminUser }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${API_BASE_URL}/admin/admins/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update admin user');
+    return data;
+  },
+
+  // Admin: Update Registered Player
+  async updatePlayerUser(id: number, payload: {
+    name: string;
+    mobile: string;
+    email?: string | null;
+  }): Promise<{ success: boolean; message: string; user: Player }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update player');
+    return data;
+  },
+
+  // Admin: Delete Registered Player
+  async deletePlayerUser(id: number): Promise<{ success: boolean; message: string }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to delete player');
+    return data;
+  },
+
+  // Admin: Delete Score Record
+  async deleteScoreRecord(id: number): Promise<{ success: boolean; message: string }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${API_BASE_URL}/admin/scores/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to delete score record');
     return data;
   },
 

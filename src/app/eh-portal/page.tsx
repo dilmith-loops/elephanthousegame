@@ -41,7 +41,9 @@ import {
   UserPlus,
   Trash2,
   Shield,
-  UserCog
+  UserCog,
+  Pencil,
+  Phone
 } from 'lucide-react';
 import Link from 'next/link';
 import { exportToPDF } from '../../lib/pdfExport';
@@ -103,6 +105,27 @@ export default function AdminPage() {
   const [createAdminMsg, setCreateAdminMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   const [deletingAdminId, setDeletingAdminId] = useState<number | null>(null);
+
+  // Admin Edit Modal States
+  const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
+  const [editAdminName, setEditAdminName] = useState('');
+  const [editAdminEmail, setEditAdminEmail] = useState('');
+  const [editAdminPassword, setEditAdminPassword] = useState('');
+  const [showEditAdminPass, setShowEditAdminPass] = useState(false);
+  const [isUpdatingAdmin, setIsUpdatingAdmin] = useState(false);
+  const [adminEditMsg, setAdminEditMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Player Edit & Delete States
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [editPlayerName, setEditPlayerName] = useState('');
+  const [editPlayerMobile, setEditPlayerMobile] = useState('');
+  const [editPlayerEmail, setEditPlayerEmail] = useState('');
+  const [isUpdatingPlayer, setIsUpdatingPlayer] = useState(false);
+  const [playerEditMsg, setPlayerEditMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [deletingPlayerId, setDeletingPlayerId] = useState<number | null>(null);
+
+  // Score Delete State
+  const [deletingScoreId, setDeletingScoreId] = useState<number | null>(null);
 
   // Export PDF Loading State
   const [isExportingPDF, setIsExportingPDF] = useState(false);
@@ -358,6 +381,120 @@ export default function AdminPage() {
       setPasswordMsg({ type: 'error', text: err.message || 'Failed to update password.' });
     } finally {
       setIsUpdatingPassword(false);
+    }
+  };
+
+  // Open Edit Player Modal
+  const handleOpenEditPlayer = (player: Player) => {
+    setEditingPlayer(player);
+    setEditPlayerName(player.name);
+    setEditPlayerMobile(player.mobile);
+    setEditPlayerEmail(player.email || '');
+    setPlayerEditMsg(null);
+  };
+
+  // Handle Save Player Edit
+  const handleUpdatePlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPlayer) return;
+    setPlayerEditMsg(null);
+
+    try {
+      setIsUpdatingPlayer(true);
+      const res = await api.updatePlayerUser(editingPlayer.id, {
+        name: editPlayerName.trim(),
+        mobile: editPlayerMobile.trim(),
+        email: editPlayerEmail.trim() || null
+      });
+      setPlayerEditMsg({ type: 'success', text: res.message || 'Player updated successfully!' });
+      loadTabData();
+      loadStats();
+      setTimeout(() => {
+        setEditingPlayer(null);
+        setPlayerEditMsg(null);
+      }, 1200);
+    } catch (err: any) {
+      setPlayerEditMsg({ type: 'error', text: err.message || 'Failed to update player.' });
+    } finally {
+      setIsUpdatingPlayer(false);
+    }
+  };
+
+  // Handle Delete Player
+  const handleDeletePlayer = async (player: Player) => {
+    if (!window.confirm(`Are you sure you want to permanently delete player "${player.name}" (${player.mobile}) and all associated game score records?`)) {
+      return;
+    }
+
+    try {
+      setDeletingPlayerId(player.id);
+      await api.deletePlayerUser(player.id);
+      loadTabData();
+      loadStats();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete player.');
+    } finally {
+      setDeletingPlayerId(null);
+    }
+  };
+
+  // Open Edit Admin Modal
+  const handleOpenEditAdmin = (admin: AdminUser) => {
+    setEditingAdmin(admin);
+    setEditAdminName(admin.name);
+    setEditAdminEmail(admin.email);
+    setEditAdminPassword('');
+    setShowEditAdminPass(false);
+    setAdminEditMsg(null);
+  };
+
+  // Handle Save Admin Edit
+  const handleUpdateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAdmin) return;
+    setAdminEditMsg(null);
+
+    if (editAdminPassword && editAdminPassword.length < 6) {
+      setAdminEditMsg({ type: 'error', text: 'New password must be at least 6 characters.' });
+      return;
+    }
+
+    try {
+      setIsUpdatingAdmin(true);
+      const res = await api.updateAdminUser(editingAdmin.id, {
+        name: editAdminName.trim(),
+        email: editAdminEmail.trim(),
+        password: editAdminPassword.trim() || undefined
+      });
+      setAdminEditMsg({ type: 'success', text: res.message || 'Admin updated successfully!' });
+      loadAdminAccounts();
+      setTimeout(() => {
+        setEditingAdmin(null);
+        setAdminEditMsg(null);
+      }, 1200);
+    } catch (err: any) {
+      setAdminEditMsg({ type: 'error', text: err.message || 'Failed to update admin.' });
+    } finally {
+      setIsUpdatingAdmin(false);
+    }
+  };
+
+  // Handle Delete Score Record
+  const handleDeleteScore = async (score: ScoreRecord) => {
+    const playerName = score.user?.name || `Player #${score.user_id}`;
+    if (!window.confirm(`Are you sure you want to permanently delete Score Log #${score.id} (${score.score} marks by ${playerName})?`)) {
+      return;
+    }
+
+    try {
+      setDeletingScoreId(score.id);
+      await api.deleteScoreRecord(score.id);
+      loadTabData();
+      loadStats();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete score record.');
+    } finally {
+      setDeletingScoreId(null);
     }
   };
 
@@ -784,22 +921,23 @@ export default function AdminPage() {
                   No active users found matching your search.
                 </div>
               ) : (
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-xs min-w-[750px]">
                   <thead className="bg-slate-800/50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                     <tr>
-                      <th className="py-3 px-4 rounded-l-xl">Status</th>
-                      <th className="py-3 px-4">Player Name</th>
-                      <th className="py-3 px-4">Mobile</th>
-                      <th className="py-3 px-4">Client IP Address</th>
-                      <th className="py-3 px-4 text-center">High Score</th>
-                      <th className="py-3 px-4 text-center">Games</th>
-                      <th className="py-3 px-4 rounded-r-xl">Last Active Time</th>
+                      <th className="py-3 px-4 rounded-l-xl whitespace-nowrap">Status</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Player Name</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Mobile</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Client IP Address</th>
+                      <th className="py-3 px-4 text-center whitespace-nowrap">High Score</th>
+                      <th className="py-3 px-4 text-center whitespace-nowrap">Games</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Last Active Time</th>
+                      <th className="py-3 px-4 text-right rounded-r-xl whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {activeUsersList.map((u) => (
                       <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
-                        <td className="py-3.5 px-4">
+                        <td className="py-3.5 px-4 whitespace-nowrap">
                           <span className={`inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             u.status === 'online'
                               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse'
@@ -813,19 +951,38 @@ export default function AdminPage() {
                             <span className="capitalize">{u.status || 'Offline'}</span>
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 font-extrabold text-white">{u.name}</td>
-                        <td className="py-3.5 px-4 font-mono text-slate-300">{u.mobile}</td>
-                        <td className="py-3.5 px-4">
+                        <td className="py-3.5 px-4 font-extrabold text-white whitespace-nowrap">{u.name}</td>
+                        <td className="py-3.5 px-4 font-mono text-slate-300 whitespace-nowrap">{u.mobile}</td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
                           <span className="font-mono text-xs px-2 py-1 rounded bg-slate-800 text-cyan-300 border border-slate-700">
                             {u.last_ip_address || '127.0.0.1'}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-center font-bold text-pink-400">
+                        <td className="py-3.5 px-4 text-center font-bold text-pink-400 whitespace-nowrap">
                           {u.highest_score || 0} pts
                         </td>
-                        <td className="py-3.5 px-4 text-center text-slate-300">{u.total_games || 0}</td>
-                        <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400">
+                        <td className="py-3.5 px-4 text-center text-slate-300 whitespace-nowrap">{u.total_games || 0}</td>
+                        <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">
                           {u.last_active_at ? new Date(u.last_active_at).toLocaleString() : 'Just now'}
+                        </td>
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end space-x-1.5">
+                            <button
+                              onClick={() => handleOpenEditPlayer(u)}
+                              className="p-1.5 rounded-lg bg-blue-950/40 hover:bg-blue-900/60 text-blue-300 border border-blue-800/40 hover:border-blue-600 transition-colors cursor-pointer"
+                              title="Edit Player"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeletePlayer(u)}
+                              disabled={deletingPlayerId === u.id}
+                              className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 hover:border-red-600 transition-colors disabled:opacity-40 cursor-pointer"
+                              title="Delete Player"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -900,33 +1057,53 @@ export default function AdminPage() {
                   <p className="text-xs text-slate-400">Loading players...</p>
                 </div>
               ) : (
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-xs min-w-[750px]">
                   <thead className="bg-slate-800/50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                     <tr>
-                      <th className="py-3 px-4 rounded-l-xl">ID</th>
-                      <th className="py-3 px-4">Player Name</th>
-                      <th className="py-3 px-4">Mobile Number</th>
-                      <th className="py-3 px-4">Email Address</th>
-                      <th className="py-3 px-4 text-center">Highest Score</th>
-                      <th className="py-3 px-4 text-center">Total Games</th>
-                      <th className="py-3 px-4 rounded-r-xl">Registered At</th>
+                      <th className="py-3 px-4 rounded-l-xl whitespace-nowrap">ID</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Player Name</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Mobile Number</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Email Address</th>
+                      <th className="py-3 px-4 text-center whitespace-nowrap">Highest Score</th>
+                      <th className="py-3 px-4 text-center whitespace-nowrap">Total Games</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Registered At</th>
+                      <th className="py-3 px-4 text-right rounded-r-xl whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {usersList.map((u) => (
                       <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
-                        <td className="py-3.5 px-4 font-mono text-slate-400">#{u.id}</td>
-                        <td className="py-3.5 px-4 font-extrabold text-white">{u.name}</td>
-                        <td className="py-3.5 px-4 font-mono text-slate-300">{u.mobile}</td>
-                        <td className="py-3.5 px-4 text-slate-400">{u.email || '—'}</td>
-                        <td className="py-3.5 px-4 text-center">
+                        <td className="py-3.5 px-4 font-mono text-slate-400 whitespace-nowrap">#{u.id}</td>
+                        <td className="py-3.5 px-4 font-extrabold text-white whitespace-nowrap">{u.name}</td>
+                        <td className="py-3.5 px-4 font-mono text-slate-300 whitespace-nowrap">{u.mobile}</td>
+                        <td className="py-3.5 px-4 text-slate-400 whitespace-nowrap">{u.email || '—'}</td>
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
                           <span className="px-2.5 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-black">
                             {u.highest_score || 0} pts
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-center text-slate-300">{u.total_games || 0}</td>
-                        <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
+                        <td className="py-3.5 px-4 text-center text-slate-300 whitespace-nowrap">{u.total_games || 0}</td>
+                        <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px] whitespace-nowrap">
                           {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                        </td>
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end space-x-1.5">
+                            <button
+                              onClick={() => handleOpenEditPlayer(u)}
+                              className="p-1.5 rounded-lg bg-blue-950/40 hover:bg-blue-900/60 text-blue-300 border border-blue-800/40 hover:border-blue-600 transition-colors cursor-pointer"
+                              title="Edit Player"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeletePlayer(u)}
+                              disabled={deletingPlayerId === u.id}
+                              className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 hover:border-red-600 transition-colors disabled:opacity-40 cursor-pointer"
+                              title="Delete Player"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1001,39 +1178,50 @@ export default function AdminPage() {
                   <p className="text-xs text-slate-400">Loading scores...</p>
                 </div>
               ) : (
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-xs min-w-[800px]">
                   <thead className="bg-slate-800/50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                     <tr>
-                      <th className="py-3 px-4 rounded-l-xl">Log ID</th>
-                      <th className="py-3 px-4">Player</th>
-                      <th className="py-3 px-4">Mobile</th>
-                      <th className="py-3 px-4">Player IP</th>
-                      <th className="py-3 px-4 text-center">Marks (Score)</th>
-                      <th className="py-3 px-4 text-center">Caught</th>
-                      <th className="py-3 px-4 text-center">Duration</th>
-                      <th className="py-3 px-4 rounded-r-xl">Played At</th>
+                      <th className="py-3 px-4 rounded-l-xl whitespace-nowrap">Log ID</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Player</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Mobile</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Player IP</th>
+                      <th className="py-3 px-4 text-center whitespace-nowrap">Marks (Score)</th>
+                      <th className="py-3 px-4 text-center whitespace-nowrap">Caught</th>
+                      <th className="py-3 px-4 text-center whitespace-nowrap">Duration</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Played At</th>
+                      <th className="py-3 px-4 text-right rounded-r-xl whitespace-nowrap">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {scoresList.map((s) => (
                       <tr key={s.id} className="hover:bg-slate-800/40 transition-colors">
-                        <td className="py-3.5 px-4 font-mono text-slate-400">#{s.id}</td>
-                        <td className="py-3.5 px-4 font-extrabold text-white">{s.user?.name || `User #${s.user_id}`}</td>
-                        <td className="py-3.5 px-4 font-mono text-slate-300">{s.user?.mobile || '—'}</td>
-                        <td className="py-3.5 px-4 font-mono text-slate-400">{s.user?.last_ip_address || '127.0.0.1'}</td>
-                        <td className="py-3.5 px-4 text-center">
+                        <td className="py-3.5 px-4 font-mono text-slate-400 whitespace-nowrap">#{s.id}</td>
+                        <td className="py-3.5 px-4 font-extrabold text-white whitespace-nowrap">{s.user?.name || `User #${s.user_id}`}</td>
+                        <td className="py-3.5 px-4 font-mono text-slate-300 whitespace-nowrap">{s.user?.mobile || '—'}</td>
+                        <td className="py-3.5 px-4 font-mono text-slate-400 whitespace-nowrap">{s.user?.last_ip_address || '127.0.0.1'}</td>
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
                           <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-black">
                             {s.score} marks
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-center font-bold text-slate-300">
+                        <td className="py-3.5 px-4 text-center font-bold text-slate-300 whitespace-nowrap">
                           {s.popsicles_caught} 🍦
                         </td>
-                        <td className="py-3.5 px-4 text-center text-slate-400">
+                        <td className="py-3.5 px-4 text-center text-slate-400 whitespace-nowrap">
                           {s.duration_seconds}s
                         </td>
-                        <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
+                        <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px] whitespace-nowrap">
                           {s.created_at ? new Date(s.created_at).toLocaleString() : '—'}
+                        </td>
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          <button
+                            onClick={() => handleDeleteScore(s)}
+                            disabled={deletingScoreId === s.id}
+                            className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 hover:border-red-600 transition-colors disabled:opacity-40 cursor-pointer inline-flex items-center justify-center"
+                            title="Delete Score Record"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1323,20 +1511,29 @@ export default function AdminPage() {
                               {admin.created_at ? new Date(admin.created_at).toLocaleDateString('en-GB') : 'System Default'}
                             </td>
                             <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                              {isSelf ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-lg bg-slate-800/80 text-slate-400 text-[10px] font-semibold border border-slate-700/50 whitespace-nowrap">
-                                  Active Session
-                                </span>
-                              ) : (
+                              <div className="flex items-center justify-end space-x-1.5">
                                 <button
-                                  onClick={() => handleDeleteAdmin(admin)}
-                                  disabled={deletingAdminId === admin.id || adminAccounts.length <= 1}
-                                  className="p-1.5 rounded-lg bg-red-950/30 hover:bg-red-900/50 text-red-300 border border-red-800/30 hover:border-red-600 transition-all disabled:opacity-40 cursor-pointer inline-flex items-center justify-center"
-                                  title="Delete Admin Account"
+                                  onClick={() => handleOpenEditAdmin(admin)}
+                                  className="p-1.5 rounded-lg bg-blue-950/30 hover:bg-blue-900/50 text-blue-300 border border-blue-800/30 hover:border-blue-600 transition-all cursor-pointer inline-flex items-center justify-center"
+                                  title="Edit Admin Account"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                              )}
+                                {isSelf ? (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-lg bg-slate-800/80 text-slate-400 text-[10px] font-semibold border border-slate-700/50 whitespace-nowrap">
+                                    Active Session
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={() => handleDeleteAdmin(admin)}
+                                    disabled={deletingAdminId === admin.id || adminAccounts.length <= 1}
+                                    className="p-1.5 rounded-lg bg-red-950/30 hover:bg-red-900/50 text-red-300 border border-red-800/30 hover:border-red-600 transition-all disabled:opacity-40 cursor-pointer inline-flex items-center justify-center"
+                                    title="Delete Admin Account"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -1586,6 +1783,219 @@ export default function AdminPage() {
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   ) : (
                     <span>Create Admin</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Player */}
+      {editingPlayer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl">
+            <button
+              onClick={() => { setEditingPlayer(null); setPlayerEditMsg(null); }}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center space-x-3 mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <Pencil className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white">Edit Player Profile</h3>
+                <p className="text-xs text-slate-400">Player ID #{editingPlayer.id}</p>
+              </div>
+            </div>
+
+            {playerEditMsg && (
+              <div className={`mb-4 p-3 rounded-xl border text-xs font-semibold flex items-center space-x-2 ${
+                playerEditMsg.type === 'success'
+                  ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
+                  : 'bg-rose-950/60 border-rose-800 text-rose-300'
+              }`}>
+                {playerEditMsg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                <span>{playerEditMsg.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleUpdatePlayer} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Player Name
+                </label>
+                <input
+                  type="text"
+                  value={editPlayerName}
+                  onChange={(e) => setEditPlayerName(e.target.value)}
+                  required
+                  placeholder="Player Full Name"
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Mobile Number
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="tel"
+                    value={editPlayerMobile}
+                    onChange={(e) => setEditPlayerMobile(e.target.value)}
+                    required
+                    placeholder="07XXXXXXXX"
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Email Address (Optional)
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="email"
+                    value={editPlayerEmail}
+                    onChange={(e) => setEditPlayerEmail(e.target.value)}
+                    placeholder="player@example.com"
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => { setEditingPlayer(null); setPlayerEditMsg(null); }}
+                  className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingPlayer}
+                  className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-extrabold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-1.5"
+                >
+                  {isUpdatingPlayer ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Administrator */}
+      {editingAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl">
+            <button
+              onClick={() => { setEditingAdmin(null); setAdminEditMsg(null); }}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center space-x-3 mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <Pencil className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white">Edit Administrator</h3>
+                <p className="text-xs text-slate-400">Update account details</p>
+              </div>
+            </div>
+
+            {adminEditMsg && (
+              <div className={`mb-4 p-3 rounded-xl border text-xs font-semibold flex items-center space-x-2 ${
+                adminEditMsg.type === 'success'
+                  ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
+                  : 'bg-rose-950/60 border-rose-800 text-rose-300'
+              }`}>
+                {adminEditMsg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                <span>{adminEditMsg.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateAdmin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={editAdminName}
+                  onChange={(e) => setEditAdminName(e.target.value)}
+                  required
+                  placeholder="Admin Name"
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Admin Email Address
+                </label>
+                <input
+                  type="email"
+                  value={editAdminEmail}
+                  onChange={(e) => setEditAdminEmail(e.target.value)}
+                  required
+                  placeholder="admin@elephanthouse.lk"
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  New Password (leave blank to keep unchanged)
+                </label>
+                <div className="relative">
+                  <input
+                    type={showEditAdminPass ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={editAdminPassword}
+                    onChange={(e) => setEditAdminPassword(e.target.value)}
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditAdminPass(!showEditAdminPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 cursor-pointer"
+                  >
+                    {showEditAdminPass ? <EyeOff className="w-4 h-4 text-blue-400" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => { setEditingAdmin(null); setAdminEditMsg(null); }}
+                  className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingAdmin}
+                  className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-extrabold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-1.5"
+                >
+                  {isUpdatingAdmin ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <span>Save Changes</span>
                   )}
                 </button>
               </div>
