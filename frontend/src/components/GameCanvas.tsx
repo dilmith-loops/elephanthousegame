@@ -189,14 +189,28 @@ export default function GameCanvas({
       try {
         setLoadingCamera(true);
         setCameraError(null);
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'user',
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          },
-          audio: false
-        });
+
+        // Check if mediaDevices is supported (requires HTTPS on mobile)
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Camera requires HTTPS. Please access via secure https:// domain.');
+        }
+
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: 'user',
+              width: { ideal: 1280, min: 480 },
+              height: { ideal: 720, min: 360 }
+            },
+            audio: false
+          });
+        } catch {
+          // Fallback to basic user camera constraint for all mobile devices
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' },
+            audio: false
+          });
+        }
 
         if (!isMounted) {
           stream.getTracks().forEach((track) => track.stop());
@@ -204,9 +218,16 @@ export default function GameCanvas({
         }
 
         if (videoRef.current) {
+          videoRef.current.setAttribute('playsinline', 'true');
+          videoRef.current.setAttribute('webkit-playsinline', 'true');
+          videoRef.current.muted = true;
           videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play().catch(() => {});
+          videoRef.current.onloadedmetadata = async () => {
+            try {
+              await videoRef.current?.play();
+            } catch (playErr) {
+              console.warn('Video auto-play handled:', playErr);
+            }
             if (isMounted) {
               setLoadingCamera(false);
             }
@@ -215,8 +236,11 @@ export default function GameCanvas({
       } catch (err: unknown) {
         console.error('Camera access error:', err);
         if (isMounted) {
+          const errMsg = err instanceof Error ? err.message : '';
           setCameraError(
-            'Please allow front camera access in your browser settings to play the Tongue Catch game.'
+            errMsg.includes('HTTPS')
+              ? errMsg
+              : 'Please allow front camera access in your browser settings to play the Tongue Catch game.'
           );
           setLoadingCamera(false);
         }
@@ -657,13 +681,13 @@ export default function GameCanvas({
 
   return (
     <div className="relative w-full h-[100dvh] max-h-[100dvh] flex flex-col bg-slate-950 overflow-hidden select-none">
-      {/* Hidden Video for Camera Stream */}
+      {/* Hidden Video for Camera Stream (Invisible without display:none for iOS Safari decoding) */}
       <video
         ref={videoRef}
         playsInline
         muted
         autoPlay
-        className="hidden"
+        className="fixed top-0 left-0 -z-50 opacity-0 pointer-events-none w-1 h-1"
       />
 
       {/* Top HUD Header */}
