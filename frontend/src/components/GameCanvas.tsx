@@ -128,7 +128,8 @@ export default function GameCanvas({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(3);
   const [isGameOver, setIsGameOver] = useState(false);
-  const [score, setScore] = useState(0);
+  const initialScore = player.highest_score || 0;
+  const [score, setScore] = useState(initialScore);
   const [catches, setCatches] = useState(0);
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
@@ -161,7 +162,7 @@ export default function GameCanvas({
     mar: 0,
     isTongueOut: false
   });
-  const scoreRef = useRef(0);
+  const scoreRef = useRef(initialScore);
   const catchesRef = useRef(0);
   const comboRef = useRef(0);
   const isGameOverRef = useRef(false);
@@ -762,6 +763,11 @@ export default function GameCanvas({
                 <span>{score}</span>
                 <span className="text-[11px] uppercase font-bold text-amber-300">Marks</span>
               </span>
+              {initialScore > 0 && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">
+                  +{initialScore} loaded
+                </span>
+              )}
               {combo > 1 && (
                 <span className="inline-flex items-center space-x-1 text-xs font-black text-rose-400 animate-pulse bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-500/40">
                   <Flame className="w-3.5 h-3.5 fill-rose-500" />
