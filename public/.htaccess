@@ -1,0 +1,46 @@
+# Hostinger Apache / LiteSpeed Configuration for Elephant House AR Game
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Prevent directory listing
+    Options -Indexes
+
+    # Custom 404 Error Document
+    ErrorDocument 404 /404.html
+
+    # Ensure trailing slash for directory requests like /eh-portal/
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^(.*[^/])$ /$1/ [L,R=301]
+
+    # Serve index.html if request is a directory
+    RewriteCond %{REQUEST_FILENAME}/index.html -f
+    RewriteRule ^(.*)$ $1/index.html [L]
+
+    # Static file fallback for HTML routes (e.g. /eh-portal -> /eh-portal/index.html)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}/index.html -f
+    RewriteRule ^(.*)$ /$1/index.html [L]
+</IfModule>
+
+# MIME types for AR MediaPipe WASM and TensorFlow/TFLite models
+<IfModule mod_mime.c>
+    AddType application/wasm .wasm
+    AddType application/octet-stream .task
+    AddType application/octet-stream .tflite
+    AddType image/svg+xml .svg
+    AddType font/woff2 .woff2
+</IfModule>
+
+# Security & CORS Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
+# Enable Gzip / Deflate Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/wasm image/svg+xml
+</IfModule>
