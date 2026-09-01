@@ -822,7 +822,7 @@ export default function AdminPage() {
 
       {/* Responsive Sidebar Navigation */}
       <aside
-        className={`fixed md:sticky top-0 inset-y-0 left-0 z-40 w-64 bg-slate-900/95 md:bg-slate-900/80 backdrop-blur-xl border-r border-slate-800 flex flex-col justify-between p-4 transition-transform duration-300 ${
+        className={`fixed md:sticky top-0 inset-y-0 left-0 z-40 w-64 h-screen max-h-screen overflow-y-auto bg-slate-900/95 md:bg-slate-900/90 backdrop-blur-xl border-r border-slate-800 flex flex-col justify-between p-4 transition-transform duration-300 ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
