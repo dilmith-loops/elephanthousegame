@@ -67,7 +67,7 @@ export default function HomePage() {
           {/* Brand Logo Badge */}
           <div className="w-24 h-24 mx-auto mb-6 bg-white dark:bg-slate-800 rounded-3xl p-2 shadow-2xl shadow-rose-500/20 flex items-center justify-center border border-white/60 dark:border-slate-700/80 transform hover:scale-105 transition-transform">
             <img
-              src="/logo.png"
+              src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`}
               alt="Elephant House"
               className="w-full h-full object-contain"
             />

@@ -51,7 +51,8 @@ export async function exportToPDF(type: 'users' | 'scores', stats?: AdminStats |
   // Try Embedding Logo
   let textStartX = 30;
   try {
-    const logoBase64 = await getBase64ImageFromUrl('/logo.png');
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    const logoBase64 = await getBase64ImageFromUrl(`${basePath}/logo.png`);
     // White background badge for logo
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(25, 12, 64, 56, 8, 8, 'F');

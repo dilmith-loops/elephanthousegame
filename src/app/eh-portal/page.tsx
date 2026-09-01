@@ -538,7 +538,7 @@ export default function AdminPage() {
           <div className="flex flex-col items-center text-center mb-6">
             <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl p-2 mb-3 shadow-xl shadow-pink-500/20 flex items-center justify-center border border-white/60 dark:border-slate-700/80">
               <img
-                src="/logo.png"
+                src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`}
                 alt="Elephant House"
                 className="w-full h-full object-contain"
               />
@@ -637,7 +637,7 @@ export default function AdminPage() {
       {/* Mobile Top Header */}
       <div className="md:hidden bg-slate-900 border-b border-slate-800 p-3.5 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center space-x-2.5">
-          <img src="/logo.png" alt="Elephant House" className="w-8 h-8 object-contain" />
+          <img src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`} alt="Elephant House" className="w-8 h-8 object-contain" />
           <span className="font-extrabold text-sm text-pink-400">EH Admin</span>
         </div>
         <button
@@ -659,7 +659,7 @@ export default function AdminPage() {
           <div className="flex items-center space-x-3 px-2 py-3 mb-4 border-b border-slate-800/80">
             <div className="w-10 h-10 rounded-xl bg-white p-1 shadow-md border border-slate-700/60 flex items-center justify-center flex-shrink-0">
               <img
-                src="/logo.png"
+                src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`}
                 alt="Elephant House"
                 className="w-full h-full object-contain"
               />

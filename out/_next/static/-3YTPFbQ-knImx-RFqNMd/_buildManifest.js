@@ -1,7 +1,12 @@
 self.__BUILD_MANIFEST = {
   "__rewrites": {
     "afterFiles": [],
-    "beforeFiles": [],
+    "beforeFiles": [
+      {
+        "source": "/ElephantHouseGame//_next/:path+",
+        "destination": "/ElephantHouseGame/_next/:path+"
+      }
+    ],
     "fallback": []
   },
   "sortedPages": [

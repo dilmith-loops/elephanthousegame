@@ -89,7 +89,7 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
           <div className="relative mb-3">
             <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-3xl p-2 shadow-xl shadow-pink-500/20 flex items-center justify-center border border-white/60 dark:border-slate-700/80 transform hover:scale-105 transition-transform">
               <img
-                src="/logo.png"
+                src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`}
                 alt="Elephant House"
                 className="w-full h-full object-contain"
               />

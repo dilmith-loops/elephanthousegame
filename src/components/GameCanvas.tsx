@@ -55,13 +55,14 @@ let globalLandmarkerPromise: Promise<FaceLandmarker> | null = null;
 
 async function getFaceLandmarker(): Promise<FaceLandmarker> {
   if (globalLandmarker) return globalLandmarker;
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
   if (!globalLandmarkerPromise) {
     globalLandmarkerPromise = (async () => {
-      const vision = await FilesetResolver.forVisionTasks('/wasm');
+      const vision = await FilesetResolver.forVisionTasks(`${basePath}/wasm`);
       try {
         globalLandmarker = await FaceLandmarker.createFromOptions(vision, {
           baseOptions: {
-            modelAssetPath: '/models/face_landmarker.task',
+            modelAssetPath: `${basePath}/models/face_landmarker.task`,
             delegate: 'GPU'
           },
           runningMode: 'VIDEO',
@@ -71,7 +72,7 @@ async function getFaceLandmarker(): Promise<FaceLandmarker> {
         console.warn('GPU fallback to CPU:', gpuErr);
         globalLandmarker = await FaceLandmarker.createFromOptions(vision, {
           baseOptions: {
-            modelAssetPath: '/models/face_landmarker.task',
+            modelAssetPath: `${basePath}/models/face_landmarker.task`,
             delegate: 'CPU'
           },
           runningMode: 'VIDEO',

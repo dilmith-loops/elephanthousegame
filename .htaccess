@@ -1,23 +1,37 @@
 # Hostinger Apache / LiteSpeed Configuration for Elephant House AR Game
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /ElephantHouseGame/
 
     # Prevent directory browsing
     Options -Indexes
 
     # Custom 404 Error Document
-    ErrorDocument 404 /out/404.html
+    ErrorDocument 404 /ElephantHouseGame/out/404.html
 
     # If already requesting /out, let it pass
     RewriteRule ^out/ - [L]
 
-    # If root URL (e.g. yourdomain.com/ or yourdomain.com/ElephantHouseGame/)
+    # Serve index.html if root of subfolder is requested
     RewriteRule ^$ out/index.html [L]
 
-    # If file exists in out/ folder, serve it
-    RewriteCond %{REQUEST_URI} !^/out/
-    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
+    # Route static Next.js assets to out/
+    RewriteRule ^_next/(.*)$ out/_next/$1 [L]
+    RewriteRule ^models/(.*)$ out/models/$1 [L]
+    RewriteRule ^wasm/(.*)$ out/wasm/$1 [L]
+    RewriteRule ^eh-portal/?$ out/eh-portal/index.html [L]
+    RewriteRule ^eh-portal/(.*)$ out/eh-portal/$1 [L]
+    RewriteRule ^(logo\.png|icon\.png|favicon\.ico|favicon\.png|file\.svg|globe\.svg|window\.svg)$ out/$1 [L]
+
+    # General fallback: if requested file exists inside out/, serve it
+    RewriteCond %{DOCUMENT_ROOT}/ElephantHouseGame/out/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/public_html/ElephantHouseGame/out/$1 -f
     RewriteRule ^(.*)$ out/$1 [L]
+
+    # Fallback to out/index.html for any unhandled routes
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ out/index.html [L]
 </IfModule>
 
 # MIME types for AR MediaPipe WASM and AI models
@@ -29,9 +43,10 @@
     AddType font/woff2 .woff2
 </IfModule>
 
-# Security Headers
+# Security & CORS Headers
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
+    Header set Access-Control-Allow-Origin "*"
 </IfModule>
 
 # Enable Gzip / Deflate Compression
