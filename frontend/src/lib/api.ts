@@ -38,7 +38,7 @@ export const api = {
   // Player: Authenticate or Register
   async authenticatePlayer(data: {
     name: string;
-    mobile: string;
+    mobile?: string;
     email?: string;
   }): Promise<{ success: boolean; isNewUser: boolean; message: string; player: Player }> {
     const res = await fetch(`${getApiBaseUrl()}/player/auth`, {
@@ -57,7 +57,7 @@ export const api = {
     return result;
   },
 
-  async authPlayer(data: { name: string; mobile: string; email?: string }) {
+  async authPlayer(data: { name: string; mobile?: string; email?: string }) {
     return this.authenticatePlayer(data);
   },
 

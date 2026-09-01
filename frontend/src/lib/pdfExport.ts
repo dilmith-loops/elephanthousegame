@@ -148,7 +148,7 @@ export async function exportToPDF(type: 'users' | 'scores', stats?: AdminStats |
     const tableRows = users.map((u, idx) => [
       idx + 1,
       u.name,
-      u.mobile,
+      u.mobile || '—',
       u.email || '—',
       `${u.highest_score || 0} pts`,
       u.total_games || 0,

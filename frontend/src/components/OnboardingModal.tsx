@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Player } from '../types/game';
 import { api } from '../lib/api';
-import { Sparkles, Phone, User, Mail, Play, Trophy, IceCream, AlertCircle, ArrowRight } from 'lucide-react';
+import { Sparkles, User, Play, Trophy, AlertCircle, ArrowRight } from 'lucide-react';
 
 interface Props {
   onStartGame: (player: Player) => void;
@@ -11,10 +11,7 @@ interface Props {
 }
 
 export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Props) {
-  const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [name, setName] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cachedPlayer, setCachedPlayer] = useState<Player | null>(null);
@@ -25,10 +22,9 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
       if (stored) {
         const player = JSON.parse(stored);
         setCachedPlayer(player);
-        setName(player.name || '');
-        setMobile(player.mobile || '');
-        setEmail(player.email || '');
-        setMode('existing');
+        if (player.name) {
+          setName(player.name);
+        }
       }
     } catch {
       // ignore
@@ -39,46 +35,33 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
     e.preventDefault();
     setError(null);
 
-    // Validation
-    const cleanMobile = mobile.trim().replace(/[\s-]/g, '');
-    if (!name.trim()) {
-      setError('Please enter your full name');
+    const cleanName = name.trim();
+    if (!cleanName) {
+      setError('Please enter your name');
       return;
-    }
-    if (!cleanMobile || cleanMobile.length < 8) {
-      setError('Please enter a valid mobile number');
-      return;
-    }
-    if (mode === 'new') {
-      if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setError('Please enter a valid email address');
-        return;
-      }
     }
 
     setLoading(true);
     try {
       const res = await api.authPlayer({
-        name: name.trim(),
-        mobile: cleanMobile,
-        email: mode === 'new' ? email.trim() : (email.trim() || undefined)
+        name: cleanName
       });
 
       if (res.player) {
+        localStorage.setItem('eh_player', JSON.stringify(res.player));
         onStartGame(res.player);
       } else {
-        setError(res.message || 'Could not sign in');
+        setError(res.message || 'Could not start game');
       }
     } catch (err: unknown) {
-      console.warn('API Auth failed, starting with local player profile:', err);
+      console.warn('API Auth fallback, starting local player profile:', err);
       const instantPlayer: Player = {
-        id: Math.floor(Math.random() * 1000000) + 1,
-        name: name.trim(),
-        mobile: cleanMobile,
-        email: email.trim() || undefined,
-        highest_score: 0,
+        id: cachedPlayer?.id || Math.floor(Math.random() * 1000000) + 1,
+        name: cleanName,
+        highest_score: cachedPlayer?.highest_score || 0,
         created_at: new Date().toISOString()
       };
+      localStorage.setItem('eh_player', JSON.stringify(instantPlayer));
       onStartGame(instantPlayer);
     } finally {
       setLoading(false);
@@ -119,54 +102,28 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
           </p>
         </div>
 
-        {/* Quick Profile Pill if cached */}
+        {/* Quick Resume Profile Pill if cached */}
         {cachedPlayer && (
           <div className="mb-4 bg-pink-50 dark:bg-pink-950/40 border border-pink-200 dark:border-pink-800/50 rounded-2xl p-3 flex items-center justify-between text-xs">
             <div className="flex items-center space-x-2 truncate">
-              <div className="w-7 h-7 rounded-full bg-pink-500 text-white font-bold flex items-center justify-center text-xs">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-amber-400 text-white font-bold flex items-center justify-center text-xs shadow-sm flex-shrink-0">
                 {cachedPlayer.name.charAt(0).toUpperCase()}
               </div>
               <div className="truncate">
-                <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">Welcome, {cachedPlayer.name}</p>
+                <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">Welcome back, {cachedPlayer.name}</p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">High Score: <span className="font-bold text-pink-600 dark:text-pink-400">{cachedPlayer.highest_score || 0} pts</span></p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => onStartGame(cachedPlayer)}
-              className="px-3 py-1.5 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-xl text-xs flex items-center space-x-1 shadow-sm transition-all active:scale-95"
+              className="px-3 py-1.5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1 shadow-sm transition-all active:scale-95 flex-shrink-0 cursor-pointer"
             >
-              <span>Instant Play</span>
+              <span>Play Now</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
-
-        {/* Tab Switcher */}
-        <div className="flex bg-slate-100 dark:bg-slate-800/70 p-1 rounded-2xl mb-5">
-          <button
-            type="button"
-            onClick={() => { setMode('new'); setError(null); }}
-            className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-xl transition-all duration-200 ${
-              mode === 'new'
-                ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-300 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-            }`}
-          >
-            New Player
-          </button>
-          <button
-            type="button"
-            onClick={() => { setMode('existing'); setError(null); }}
-            className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-xl transition-all duration-200 ${
-              mode === 'existing'
-                ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-300 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-            }`}
-          >
-            Existing Player
-          </button>
-        </div>
 
         {/* Error Alert */}
         {error && (
@@ -176,72 +133,38 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
           </div>
         )}
 
-        {/* Player Form */}
-        <form onSubmit={handleSubmit} className="space-y-3.5">
+        {/* Single Input Player Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Full Name
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              Enter Your Name
             </label>
             <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <User className="w-4 h-4 text-pink-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="e.g. Kasun Perera"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                maxLength={40}
                 required
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all placeholder:text-slate-400"
+                autoFocus
+                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm md:text-base font-semibold focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all placeholder:text-slate-400 placeholder:font-normal"
               />
             </div>
           </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Mobile Number
-            </label>
-            <div className="relative">
-              <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="tel"
-                placeholder="e.g. 0771234567"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                required
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all placeholder:text-slate-400"
-              />
-            </div>
-          </div>
-
-          {mode === 'new' && (
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="email"
-                  placeholder="e.g. kasun@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all placeholder:text-slate-400"
-                />
-              </div>
-            </div>
-          )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 px-6 mt-2 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-2xl shadow-lg shadow-pink-500/30 flex items-center justify-center space-x-2 transition-all transform active:scale-98 disabled:opacity-70 disabled:cursor-not-allowed text-sm md:text-base cursor-pointer"
+            className="w-full py-3.5 px-6 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-2xl shadow-lg shadow-pink-500/30 flex items-center justify-center space-x-2 transition-all transform active:scale-98 disabled:opacity-70 disabled:cursor-not-allowed text-sm md:text-base cursor-pointer"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <>
                 <Play className="w-5 h-5 fill-current" />
-                <span>{mode === 'new' ? 'Register & Play Game' : 'Sign In & Play Game'}</span>
+                <span>Start Game</span>
                 <Sparkles className="w-4 h-4" />
               </>
             )}

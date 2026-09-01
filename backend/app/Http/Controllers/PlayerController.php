@@ -68,7 +68,7 @@ class PlayerController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'mobile' => 'required|string|max:20',
+            'mobile' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:255',
         ]);
 
@@ -80,15 +80,21 @@ class PlayerController extends Controller
             ], 422);
         }
 
-        $mobile = preg_replace('/[\s-]/', '', $request->mobile);
-        $user = User::where('mobile', $mobile)->first();
+        $name = trim($request->name);
+        $mobile = $request->filled('mobile') ? preg_replace('/[\s-]/', '', $request->mobile) : null;
+        $email = $request->filled('email') ? trim($request->email) : null;
+
+        // Find existing user by mobile (if supplied) or by name
+        if ($mobile) {
+            $user = User::where('mobile', $mobile)->first();
+        } else {
+            $user = User::where('name', $name)->first();
+        }
 
         if ($user) {
-            // Existing user: Update name or email if provided + capture IP & active timestamp
-            $user->name = $request->name;
-            if ($request->filled('email')) {
-                $user->email = $request->email;
-            }
+            $user->name = $name;
+            if ($email) $user->email = $email;
+            if ($mobile) $user->mobile = $mobile;
             $user->last_ip_address = $request->ip();
             $user->last_user_agent = $request->userAgent();
             $user->last_active_at = now();
@@ -113,40 +119,33 @@ class PlayerController extends Controller
                     'created_at' => $user->created_at,
                 ],
             ]);
-        } else {
-            // New user registration
-            if (!$request->filled('email')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Email address is required for new registration.',
-                ], 422);
-            }
-
-            $user = User::create([
-                'name' => $request->name,
-                'mobile' => $mobile,
-                'email' => $request->email,
-                'last_ip_address' => $request->ip(),
-                'last_user_agent' => $request->userAgent(),
-                'last_active_at' => now(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'isNewUser' => true,
-                'message' => 'Registration successful! Welcome to Elephant House AR Game.',
-                'player' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'mobile' => $user->mobile,
-                    'email' => $user->email,
-                    'last_ip_address' => $user->last_ip_address,
-                    'last_active_at' => $user->last_active_at,
-                    'highest_score' => 0,
-                    'total_games' => 0,
-                    'created_at' => $user->created_at,
-                ],
-            ]);
         }
+
+        // New user
+        $user = User::create([
+            'name' => $name,
+            'mobile' => $mobile,
+            'email' => $email,
+            'last_ip_address' => $request->ip(),
+            'last_user_agent' => $request->userAgent(),
+            'last_active_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'isNewUser' => true,
+            'message' => 'Welcome to Elephant House AR Game, ' . $user->name . '!',
+            'player' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'mobile' => $user->mobile,
+                'email' => $user->email,
+                'last_ip_address' => $user->last_ip_address,
+                'last_active_at' => $user->last_active_at,
+                'highest_score' => 0,
+                'total_games' => 0,
+                'created_at' => $user->created_at,
+            ],
+        ]);
     }
 }

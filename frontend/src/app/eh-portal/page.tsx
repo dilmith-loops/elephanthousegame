@@ -411,7 +411,7 @@ export default function AdminPage() {
   const handleOpenEditPlayer = (player: Player) => {
     setEditingPlayer(player);
     setEditPlayerName(player.name);
-    setEditPlayerMobile(player.mobile);
+    setEditPlayerMobile(player.mobile || '');
     setEditPlayerEmail(player.email || '');
     setPlayerEditMsg(null);
   };
