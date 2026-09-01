@@ -391,13 +391,23 @@ export default function GameCanvas({
         rank: res.rank,
         personal_best: res.personal_best
       });
+      const newHigh = Math.max(player.highest_score || 0, scoreRef.current);
+      localStorage.setItem(
+        'eh_player',
+        JSON.stringify({ ...player, highest_score: newHigh })
+      );
       onEndGame(scoreRef.current);
     } catch (err) {
       console.error('Failed to submit score:', err);
+      const newHigh = Math.max(player.highest_score || 0, scoreRef.current);
+      localStorage.setItem(
+        'eh_player',
+        JSON.stringify({ ...player, highest_score: newHigh })
+      );
     } finally {
       setIsSubmitting(false);
     }
-  }, [gameStartTime, onEndGame, player.id]);
+  }, [gameStartTime, onEndGame, player]);
 
   // Request End Game (Pauses gameplay & opens custom confirmation dialog)
   const handleRequestEndGame = () => {

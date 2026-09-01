@@ -111,7 +111,15 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
               </div>
               <div className="truncate">
                 <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">Welcome back, {cachedPlayer.name}</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">High Score: <span className="font-bold text-pink-600 dark:text-pink-400">{cachedPlayer.highest_score || 0} pts</span></p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {(cachedPlayer.highest_score || 0) > 0 ? (
+                    <>
+                      High Score: <span className="font-bold text-pink-600 dark:text-pink-400">{cachedPlayer.highest_score} pts</span>
+                    </>
+                  ) : (
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">Ready to set your first high score! 🎯</span>
+                  )}
+                </p>
               </div>
             </div>
             <button
