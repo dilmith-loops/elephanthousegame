@@ -6,9 +6,15 @@ export function getApiBaseUrl(): string {
   }
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
+    // Localhost on desktop
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://127.0.0.1:8008/api';
     }
+    // Local LAN / Wi-Fi IP from mobile devices (e.g., 192.168.x.x)
+    if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(hostname)) {
+      return `http://${hostname}:8008/api`;
+    }
+    // Production domain on Hostinger (e.g., ai.loopsintegrated.co)
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
     return `${window.location.origin}${basePath}/api`;
   }
