@@ -20,7 +20,8 @@ import {
   Award,
   Pause,
   Play,
-  X
+  X,
+  CheckCircle2
 } from 'lucide-react';
 
 interface Props {
@@ -314,6 +315,13 @@ export default function GameCanvas({
   // Countdown Loop before game start
   useEffect(() => {
     if (loadingAI || loadingCamera || cameraError || isPaused) return;
+
+    if (countdown !== null) {
+      popsiclesRef.current = [];
+      particlesRef.current = [];
+      scorePopupsRef.current = [];
+      lastSpawnTimeRef.current = 0;
+    }
 
     if (countdown !== null && countdown > 0) {
       sound.playCountdown(false);
@@ -892,14 +900,69 @@ export default function GameCanvas({
 
         {/* Loading Overlay */}
         {(loadingAI || loadingCamera) && !cameraError && (
-          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md text-white p-6 text-center">
-            <div className="w-16 h-16 relative mb-4">
-              <div className="w-full h-full border-4 border-pink-500/20 border-t-pink-500 rounded-full animate-spin"></div>
-              <Camera className="w-6 h-6 text-pink-400 absolute inset-0 m-auto animate-pulse" />
+          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-xl text-white p-6 text-center animate-fade-in">
+            {/* Animated Brand Pulse Badge */}
+            <div className="relative mb-6">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-pink-500/30 to-amber-500/30 border border-pink-500/40 p-3 shadow-2xl shadow-pink-500/25 flex items-center justify-center animate-pulse">
+                <img
+                  src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`}
+                  alt="Elephant House"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-slate-900 border-2 border-pink-500 flex items-center justify-center shadow-lg">
+                <div className="w-4 h-4 border-2 border-pink-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
             </div>
-            <h2 className="text-xl font-black text-pink-400 mb-1">Starting Elephant House AR Camera</h2>
-            <p className="text-xs text-slate-400 max-w-xs">
-              {loadingAI ? 'Initializing Face & Tongue AI Tracking...' : 'Accessing front camera...'}
+
+            <h2 className="text-xl md:text-2xl font-black bg-gradient-to-r from-pink-400 via-rose-300 to-amber-300 bg-clip-text text-transparent mb-1.5">
+              Preparing AR Game
+            </h2>
+            <p className="text-xs text-slate-400 max-w-xs mb-6 leading-relaxed">
+              Elephant House AR Experience is initializing camera and AI tongue tracking.
+            </p>
+
+            {/* Checklist Progress Card */}
+            <div className="w-full max-w-xs bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-2.5 shadow-xl text-left">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-300 font-semibold flex items-center space-x-2">
+                  <Camera className="w-3.5 h-3.5 text-pink-400" />
+                  <span>Camera Stream</span>
+                </span>
+                {!loadingCamera ? (
+                  <span className="text-emerald-400 font-bold flex items-center space-x-1 text-[11px]">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Ready</span>
+                  </span>
+                ) : (
+                  <span className="text-amber-400 text-[11px] font-bold flex items-center space-x-1">
+                    <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Connecting...</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-800/80">
+                <span className="text-slate-300 font-semibold flex items-center space-x-2">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Face & Tongue AI</span>
+                </span>
+                {!loadingAI ? (
+                  <span className="text-emerald-400 font-bold flex items-center space-x-1 text-[11px]">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Ready</span>
+                  </span>
+                ) : (
+                  <span className="text-amber-400 text-[11px] font-bold flex items-center space-x-1">
+                    <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Loading Models...</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-500 mt-6 max-w-xs">
+              💡 Tip: Ensure good lighting and center your face in the camera.
             </p>
           </div>
         )}
@@ -924,16 +987,28 @@ export default function GameCanvas({
           </div>
         )}
 
-        {/* Countdown Overlay */}
+        {/* Countdown Overlay (Clear camera background so player can see face and position themselves!) */}
         {countdown !== null && !loadingAI && !loadingCamera && !cameraError && (
-          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-none">
-            <div className="text-center animate-bounce">
-              <div className="text-8xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-400 to-amber-400 drop-shadow-2xl">
-                {countdown === 0 ? 'GO!' : countdown}
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none p-4 animate-fade-in">
+            {/* Center Animated Countdown Ring Pill */}
+            <div className="flex flex-col items-center">
+              <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-slate-950/80 backdrop-blur-md border-2 border-pink-500/80 shadow-2xl shadow-pink-500/40 flex items-center justify-center transform animate-pulse mb-4">
+                <span className="text-6xl md:text-7xl font-black bg-gradient-to-tr from-pink-500 via-rose-400 to-amber-300 bg-clip-text text-transparent drop-shadow-lg">
+                  {countdown === 0 ? 'GO!' : countdown}
+                </span>
               </div>
-              <p className="text-white text-sm md:text-base font-extrabold mt-3 drop-shadow-md">
-                Open your mouth & stick out your tongue to catch popsicles! 👅🍦
-              </p>
+
+              {/* Floating Guidance Badge */}
+              <div className="px-5 py-2.5 rounded-2xl bg-slate-900/90 backdrop-blur-md border border-pink-500/40 shadow-2xl text-center max-w-xs">
+                <p className="text-white text-xs md:text-sm font-extrabold flex items-center justify-center space-x-1.5">
+                  <span>👅</span>
+                  <span>Stick out your tongue to catch!</span>
+                  <span>🍦</span>
+                </p>
+                <p className="text-[10px] text-slate-300 mt-0.5 font-medium">
+                  Center your face in the camera
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -1033,10 +1108,15 @@ export default function GameCanvas({
                 onClick={() => {
                   setIsGameOver(false);
                   isGameOverRef.current = false;
-                  scoreRef.current = 0;
+                  popsiclesRef.current = [];
+                  particlesRef.current = [];
+                  scorePopupsRef.current = [];
+                  lastSpawnTimeRef.current = 0;
+                  const prevHighScore = player.highest_score || 0;
+                  scoreRef.current = prevHighScore;
                   catchesRef.current = 0;
                   comboRef.current = 0;
-                  setScore(0);
+                  setScore(prevHighScore);
                   setCatches(0);
                   setCombo(0);
                   setCountdown(3);

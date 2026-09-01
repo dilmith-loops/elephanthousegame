@@ -1,2 +1,2 @@
-:HL["/ElephantHouseGame/_next/static/chunks/3bxnjeex-gak8.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":4176,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":4192,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4256,"slots":null}}}}},"staleTime":300,"buildId":"ZkDk1Yjobes9qXucoHqBd"}
+:HL["/ElephantHouseGame/_next/static/chunks/1xh9tb8o9j08x.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":4176,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":4192,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4256,"slots":null}}}}},"staleTime":300,"buildId":"wohULXF95ge3TBnEsY6vI"}
