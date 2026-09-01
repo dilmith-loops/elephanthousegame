@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Player } from '../types/game';
 import { api } from '../lib/api';
-import { Sparkles, User, Play, Trophy, AlertCircle, ArrowRight } from 'lucide-react';
+import { Sparkles, User, Phone, Play, Trophy, AlertCircle, ArrowRight } from 'lucide-react';
 
 interface Props {
   onStartGame: (player: Player) => void;
@@ -12,6 +12,7 @@ interface Props {
 
 export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Props) {
   const [name, setName] = useState('');
+  const [mobile, setMobile] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cachedPlayer, setCachedPlayer] = useState<Player | null>(null);
@@ -22,9 +23,8 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
       if (stored) {
         const player = JSON.parse(stored);
         setCachedPlayer(player);
-        if (player.name) {
-          setName(player.name);
-        }
+        if (player.name) setName(player.name);
+        if (player.mobile) setMobile(player.mobile);
       }
     } catch {
       // ignore
@@ -36,15 +36,22 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
     setError(null);
 
     const cleanName = name.trim();
+    const cleanMobile = mobile.trim().replace(/[\s-]/g, '');
+
     if (!cleanName) {
-      setError('Please enter your name');
+      setError('Please enter your full name');
+      return;
+    }
+    if (!cleanMobile || cleanMobile.length < 8) {
+      setError('Please enter a valid mobile number');
       return;
     }
 
     setLoading(true);
     try {
       const res = await api.authPlayer({
-        name: cleanName
+        name: cleanName,
+        mobile: cleanMobile
       });
 
       if (res.player) {
@@ -58,6 +65,7 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
       const instantPlayer: Player = {
         id: cachedPlayer?.id || Math.floor(Math.random() * 1000000) + 1,
         name: cleanName,
+        mobile: cleanMobile,
         highest_score: cachedPlayer?.highest_score || 0,
         created_at: new Date().toISOString()
       };
@@ -141,11 +149,11 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
           </div>
         )}
 
-        {/* Single Input Player Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Name & Mobile Player Form */}
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Enter Your Name
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Full Name
             </label>
             <div className="relative">
               <User className="w-4 h-4 text-pink-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -156,8 +164,25 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
                 onChange={(e) => setName(e.target.value)}
                 maxLength={40}
                 required
-                autoFocus
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm md:text-base font-semibold focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all placeholder:text-slate-400 placeholder:font-normal"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all placeholder:text-slate-400 placeholder:font-normal"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Mobile Number
+            </label>
+            <div className="relative">
+              <Phone className="w-4 h-4 text-pink-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="tel"
+                placeholder="e.g. 0771234567"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                maxLength={20}
+                required
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all placeholder:text-slate-400 placeholder:font-normal"
               />
             </div>
           </div>
@@ -165,7 +190,7 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 px-6 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-2xl shadow-lg shadow-pink-500/30 flex items-center justify-center space-x-2 transition-all transform active:scale-98 disabled:opacity-70 disabled:cursor-not-allowed text-sm md:text-base cursor-pointer"
+            className="w-full py-3.5 px-6 mt-2 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-2xl shadow-lg shadow-pink-500/30 flex items-center justify-center space-x-2 transition-all transform active:scale-98 disabled:opacity-70 disabled:cursor-not-allowed text-sm md:text-base cursor-pointer"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
