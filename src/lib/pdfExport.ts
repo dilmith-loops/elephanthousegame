@@ -3,6 +3,27 @@ import autoTable from 'jspdf-autotable';
 import { api } from './api';
 import { AdminStats, Player, ScoreRecord } from '../types/game';
 
+function getBase64ImageFromUrl(imageUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth || img.width || 200;
+      canvas.height = img.naturalHeight || img.height || 200;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } else {
+        reject(new Error('Canvas context failed'));
+      }
+    };
+    img.onerror = (e) => reject(e);
+    img.src = imageUrl;
+  });
+}
+
 export async function exportToPDF(type: 'users' | 'scores', stats?: AdminStats | null) {
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -21,32 +42,46 @@ export async function exportToPDF(type: 'users' | 'scores', stats?: AdminStats |
 
   // 1. Header Banner
   doc.setFillColor(216, 27, 96); // #D81B60 Elephant House Pink
-  doc.rect(0, 0, pageWidth, 75, 'F');
+  doc.rect(0, 0, pageWidth, 80, 'F');
 
   // Gold accent line
   doc.setFillColor(255, 179, 0); // #FFB300 Amber Gold
-  doc.rect(0, 75, pageWidth, 4, 'F');
+  doc.rect(0, 80, pageWidth, 4, 'F');
+
+  // Try Embedding Logo
+  let textStartX = 30;
+  try {
+    const logoBase64 = await getBase64ImageFromUrl('/logo.png');
+    // White background badge for logo
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(25, 12, 64, 56, 8, 8, 'F');
+    // Add Logo Image
+    doc.addImage(logoBase64, 'PNG', 28, 15, 58, 50);
+    textStartX = 100;
+  } catch (err) {
+    console.warn('Could not embed logo in PDF:', err);
+  }
 
   // Header Titles
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
+  doc.setFontSize(17);
   doc.setTextColor(255, 255, 255);
-  doc.text('ELEPHANT HOUSE ICE CREAM', 30, 34);
+  doc.text('ELEPHANT HOUSE ICE CREAM', textStartX, 36);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(11);
+  doc.setFontSize(10.5);
   doc.setTextColor(255, 240, 245);
   const title =
     type === 'users'
       ? 'AR Tongue Catch Game — Registered Players Report'
       : 'AR Tongue Catch Game — Session Score Logs Report';
-  doc.text(title, 30, 54);
+  doc.text(title, textStartX, 56);
 
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(255, 255, 255);
-  doc.text(`Generated: ${today}`, pageWidth - 30, 54, { align: 'right' });
+  doc.text(`Generated: ${today}`, pageWidth - 30, 56, { align: 'right' });
 
-  let startY = 100;
+  let startY = 106;
 
   // 2. Summary KPI Box if available
   if (stats) {
@@ -102,7 +137,6 @@ export async function exportToPDF(type: 'users' | 'scores', stats?: AdminStats |
 
   // 3. Fetch Data & Build Table
   if (type === 'users') {
-    // Fetch all users with high limit
     const res = await api.getAdminUsers({ limit: 1000 });
     const users: Player[] = res.users?.data || [];
 
@@ -149,7 +183,6 @@ export async function exportToPDF(type: 'users' | 'scores', stats?: AdminStats |
         fillColor: [253, 242, 248] // soft pink tint
       },
       didDrawPage: (data) => {
-        // Page Footer
         const pageCount = doc.internal.pages.length - 1;
         doc.setFontSize(8);
         doc.setTextColor(150);
