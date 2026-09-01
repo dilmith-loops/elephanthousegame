@@ -1,12 +1,25 @@
 import { Player, ScoreSubmission, ScoreRecord, AdminStats, AdminLogRecord, AdminUser } from '../types/game';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8008/api';
+export function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://127.0.0.1:8008/api';
+    }
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    return `${window.location.origin}${basePath}/api`;
+  }
+  return 'http://127.0.0.1:8008/api';
+}
 
 export const api = {
   // Public: Send heartbeat ping for active player session
   async sendPlayerPing(userId: number): Promise<void> {
     try {
-      await fetch(`${API_BASE_URL}/player/ping`, {
+      await fetch(`${getApiBaseUrl()}/player/ping`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId })
@@ -22,7 +35,7 @@ export const api = {
     mobile: string;
     email?: string;
   }): Promise<{ success: boolean; isNewUser: boolean; message: string; player: Player }> {
-    const res = await fetch(`${API_BASE_URL}/player/auth`, {
+    const res = await fetch(`${getApiBaseUrl()}/player/auth`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -49,7 +62,7 @@ export const api = {
     popsicles_caught: number;
     duration_seconds: number;
   }): Promise<{ success: boolean; message: string; score: ScoreRecord; rank: number; personal_best: number }> {
-    const res = await fetch(`${API_BASE_URL}/game/score`, {
+    const res = await fetch(`${getApiBaseUrl()}/game/score`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -70,7 +83,7 @@ export const api = {
     success: boolean;
     leaderboard: Array<{ id: number; name: string; mobile: string; highest_score: number; total_games: number }>;
   }> {
-    const res = await fetch(`${API_BASE_URL}/leaderboard?limit=${limit}`, {
+    const res = await fetch(`${getApiBaseUrl()}/leaderboard?limit=${limit}`, {
       headers: { Accept: 'application/json' }
     });
 
@@ -87,7 +100,7 @@ export const api = {
     token: string;
     admin: { id: number; name: string; email: string };
   }> {
-    const res = await fetch(`${API_BASE_URL}/admin/login`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -107,7 +120,7 @@ export const api = {
   // Admin: Get Analytics Stats
   async getAdminStats(): Promise<{ success: boolean; stats: AdminStats }> {
     const token = localStorage.getItem('eh_admin_token');
-    const res = await fetch(`${API_BASE_URL}/admin/stats`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/stats`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token}`
@@ -126,7 +139,7 @@ export const api = {
     if (params.search) query.set('search', params.search);
     if (params.limit) query.set('limit', params.limit.toString());
 
-    const res = await fetch(`${API_BASE_URL}/admin/active-users?${query.toString()}`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/active-users?${query.toString()}`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token}`
@@ -144,7 +157,7 @@ export const api = {
     new_password_confirmation: string;
   }): Promise<{ success: boolean; message: string }> {
     const token = localStorage.getItem('eh_admin_token');
-    const res = await fetch(`${API_BASE_URL}/admin/password`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -165,7 +178,7 @@ export const api = {
     admins: Array<{ id: number; name: string; email: string; created_at?: string }>;
   }> {
     const token = localStorage.getItem('eh_admin_token');
-    const res = await fetch(`${API_BASE_URL}/admin/admins`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/admins`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token}`
@@ -184,7 +197,7 @@ export const api = {
     password_confirmation: string;
   }): Promise<{ success: boolean; message: string; admin: { id: number; name: string; email: string } }> {
     const token = localStorage.getItem('eh_admin_token');
-    const res = await fetch(`${API_BASE_URL}/admin/admins`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/admins`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -201,7 +214,7 @@ export const api = {
   // Admin: Delete an admin account
   async deleteAdminUser(id: number): Promise<{ success: boolean; message: string }> {
     const token = localStorage.getItem('eh_admin_token');
-    const res = await fetch(`${API_BASE_URL}/admin/admins/${id}`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/admins/${id}`, {
       method: 'DELETE',
       headers: {
         Accept: 'application/json',
@@ -220,7 +233,7 @@ export const api = {
     password?: string;
   }): Promise<{ success: boolean; message: string; admin: AdminUser }> {
     const token = localStorage.getItem('eh_admin_token');
-    const res = await fetch(`${API_BASE_URL}/admin/admins/${id}`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/admins/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -241,7 +254,7 @@ export const api = {
     email?: string | null;
   }): Promise<{ success: boolean; message: string; user: Player }> {
     const token = localStorage.getItem('eh_admin_token');
-    const res = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/users/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -258,7 +271,7 @@ export const api = {
   // Admin: Delete Registered Player
   async deletePlayerUser(id: number): Promise<{ success: boolean; message: string }> {
     const token = localStorage.getItem('eh_admin_token');
-    const res = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/users/${id}`, {
       method: 'DELETE',
       headers: {
         Accept: 'application/json',
@@ -273,7 +286,7 @@ export const api = {
   // Admin: Delete Score Record
   async deleteScoreRecord(id: number): Promise<{ success: boolean; message: string }> {
     const token = localStorage.getItem('eh_admin_token');
-    const res = await fetch(`${API_BASE_URL}/admin/scores/${id}`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/scores/${id}`, {
       method: 'DELETE',
       headers: {
         Accept: 'application/json',
@@ -295,7 +308,7 @@ export const api = {
     if (params.page) query.set('page', params.page.toString());
     if (params.limit) query.set('limit', params.limit.toString());
 
-    const res = await fetch(`${API_BASE_URL}/admin/logs?${query.toString()}`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/logs?${query.toString()}`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token}`
@@ -314,7 +327,7 @@ export const api = {
     if (params.search) query.set('search', params.search);
     if (params.limit) query.set('limit', params.limit.toString());
 
-    const res = await fetch(`${API_BASE_URL}/admin/users?${query.toString()}`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/users?${query.toString()}`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token}`
@@ -333,7 +346,7 @@ export const api = {
     if (params.search) query.set('search', params.search);
     if (params.limit) query.set('limit', params.limit.toString());
 
-    const res = await fetch(`${API_BASE_URL}/admin/scores?${query.toString()}`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/scores?${query.toString()}`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token}`
@@ -347,7 +360,7 @@ export const api = {
   // Public: Get Game Status / Maintenance Check
   async getGameStatus(): Promise<{ success: boolean; maintenance_mode: boolean; maintenance_message?: string }> {
     try {
-      const res = await fetch(`${API_BASE_URL}/game/status`, {
+      const res = await fetch(`${getApiBaseUrl()}/game/status`, {
         cache: 'no-store',
         headers: { Accept: 'application/json' }
       });
@@ -360,7 +373,7 @@ export const api = {
   // Admin: Toggle Maintenance Mode
   async toggleMaintenance(enabled: boolean, message?: string): Promise<{ success: boolean; message: string; maintenance_mode: boolean; maintenance_message?: string }> {
     const token = localStorage.getItem('eh_admin_token');
-    const res = await fetch(`${API_BASE_URL}/admin/maintenance`, {
+    const res = await fetch(`${getApiBaseUrl()}/admin/maintenance`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -377,6 +390,6 @@ export const api = {
   // Admin: Export CSV
   getExportUrl(type: 'users' | 'scores' = 'users') {
     const token = localStorage.getItem('eh_admin_token');
-    return `${API_BASE_URL}/admin/export?type=${type}&token=${token}`;
+    return `${getApiBaseUrl()}/admin/export?type=${type}&token=${token}`;
   }
 };

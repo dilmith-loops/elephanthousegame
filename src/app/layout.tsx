@@ -8,20 +8,26 @@ const outfit = Outfit({
   weight: ['400', '500', '600', '700', '800', '900']
 });
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 export const metadata: Metadata = {
   title: 'Elephant House Ice Cream | AR Tongue Catch Game',
   description: 'Catch delicious Elephant House ice cream popsicles with your mouth and tongue! Score marks and climb the leaderboard in this interactive AR camera game.',
   keywords: ['Elephant House', 'Ice Cream', 'Popsicle Game', 'AR Game', 'Tongue Catch', 'Sri Lanka'],
   icons: {
-    icon: '/logo.png',
-    shortcut: '/logo.png',
-    apple: '/logo.png',
+    icon: [
+      { url: `${basePath}/favicon.ico` },
+      { url: `${basePath}/favicon.png`, type: 'image/png' },
+      { url: `${basePath}/logo.png`, type: 'image/png' },
+    ],
+    shortcut: `${basePath}/favicon.ico`,
+    apple: `${basePath}/logo.png`,
   },
   openGraph: {
     title: 'Elephant House AR Tongue Catch Game',
     description: 'Catch delicious falling popsicles with your tongue and win marks!',
     type: 'website',
-    images: ['/logo.png'],
+    images: [`${basePath}/logo.png`],
   }
 };
 
