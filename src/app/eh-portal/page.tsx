@@ -81,6 +81,9 @@ export default function AdminPage() {
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [maintenanceMsgInput, setMaintenanceMsgInput] = useState('');
 
+  // Logout Confirmation Modal State
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
   // Password Change States
   const [currentPasswordInput, setCurrentPasswordInput] = useState('');
   const [newPasswordInput, setNewPasswordInput] = useState('');
@@ -154,10 +157,18 @@ export default function AdminPage() {
     }
   };
 
-  // Handle Logout
+  // Handle Logout Trigger
   const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  // Confirm Logout
+  const confirmLogout = () => {
     localStorage.removeItem('eh_admin_token');
     setIsAuthenticated(false);
+    setShowLogoutModal(false);
+    setLoginEmail('');
+    setLoginPassword('');
   };
 
   // Load KPI Stats
@@ -2088,6 +2099,55 @@ export default function AdminPage() {
                     ? 'Bring Live'
                     : 'Lock Game'}
                 </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Logout Confirmation Dialog */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-sm bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl">
+            {/* Close button */}
+            <button
+              onClick={() => setShowLogoutModal(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Icon Header */}
+            <div className="flex flex-col items-center text-center mb-5">
+              <div className="w-16 h-16 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center mb-3.5 shadow-lg shadow-rose-500/10">
+                <LogOut className="w-7 h-7 ml-0.5" />
+              </div>
+
+              <h2 className="text-xl font-black text-white">
+                Sign Out of Portal?
+              </h2>
+              <p className="text-xs text-slate-400 mt-1.5 leading-relaxed max-w-xs">
+                Are you sure you want to end your administrative session? You will need your credentials to log in again.
+              </p>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(false)}
+                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmLogout}
+                className="py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-extrabold text-xs shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
               </button>
             </div>
           </div>
