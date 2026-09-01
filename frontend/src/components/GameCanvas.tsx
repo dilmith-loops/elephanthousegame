@@ -834,12 +834,12 @@ export default function GameCanvas({
           </div>
 
           {/* Name & Live Score Info */}
-          <div className="flex flex-col">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-300 max-w-[85px] sm:max-w-[130px] truncate leading-tight">
+          <div className="flex flex-col min-w-0 pr-1">
+            <span className="text-xs sm:text-sm font-extrabold text-white max-w-[150px] sm:max-w-[220px] truncate leading-tight drop-shadow-sm">
               {player.name}
             </span>
             <div className="flex items-center space-x-1.5 mt-0.5">
-              <span className="text-sm sm:text-base font-black bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-sm leading-none flex items-center">
+              <span className="text-xs sm:text-sm font-black bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-sm leading-none flex items-center">
                 <span>{score}</span>
                 <span className="text-[10px] uppercase font-extrabold text-amber-300/90 ml-1">pts</span>
               </span>
