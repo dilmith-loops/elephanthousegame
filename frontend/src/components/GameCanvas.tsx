@@ -221,12 +221,17 @@ export default function GameCanvas({
           throw new Error('Camera requires HTTPS. Please access via secure https:// domain.');
         }
 
+        const isMobile = typeof window !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const idealW = isMobile ? 640 : 1280;
+        const idealH = isMobile ? 480 : 720;
+
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: 'user',
-              width: { ideal: 1280, min: 480 },
-              height: { ideal: 720, min: 360 }
+              width: { ideal: idealW, max: 1280 },
+              height: { ideal: idealH, max: 720 },
+              frameRate: { ideal: 30, max: 60 }
             },
             audio: false
           });
@@ -480,17 +485,17 @@ export default function GameCanvas({
       ctx.drawImage(video, -(offsetX + renderW - width), offsetY, renderW, renderH);
       ctx.restore();
 
-      // Run Face Landmarker only on new video frames when not paused
+      // Run Face Landmarker throttled to ~26 FPS to eliminate mobile CPU/GPU lag while maintaining 60 FPS camera canvas
       const landmarker = faceLandmarkerRef.current || globalLandmarker;
+      const detectInterval = 38; // 38ms interval = ~26 detections/sec (smooth & lag-free)
       if (
         !currentlyPaused &&
         landmarker &&
         video.readyState >= 2 &&
-        video.currentTime !== lastVideoTimeRef.current &&
-        timestamp > lastDetectTimestampRef.current
+        timestamp - lastDetectTimestampRef.current >= detectInterval
       ) {
-        lastVideoTimeRef.current = video.currentTime;
         lastDetectTimestampRef.current = timestamp;
+        lastVideoTimeRef.current = video.currentTime;
 
         try {
           const results = landmarker.detectForVideo(video, timestamp);
@@ -505,8 +510,8 @@ export default function GameCanvas({
 
             const rawVx = (upperLip.x + lowerLip.x) / 2;
             const rawVy = (upperLip.y + lowerLip.y) / 2;
-            const mouthX = (1 - rawVx) * renderW + offsetX;
-            const mouthY = rawVy * renderH + offsetY;
+            const targetMouthX = (1 - rawVx) * renderW + offsetX;
+            const targetMouthY = rawVy * renderH + offsetY + 10;
 
             const lipDistanceY = Math.abs(lowerLip.y - upperLip.y) * renderH;
             const lipDistanceX = Math.abs(rightCorner.x - leftCorner.x) * renderW;
@@ -516,9 +521,18 @@ export default function GameCanvas({
             const open = mar > 0.22 || lipDistanceY > 16;
             setIsMouthOpen(open);
 
+            // Smooth linear interpolation (LERP) for jitter-free tracking
+            const prevMouth = mouthStateRef.current;
+            const smoothX = prevMouth.isDetected
+              ? prevMouth.mouthCenter.x + (targetMouthX - prevMouth.mouthCenter.x) * 0.6
+              : targetMouthX;
+            const smoothY = prevMouth.isDetected
+              ? prevMouth.mouthCenter.y + (targetMouthY - prevMouth.mouthCenter.y) * 0.6
+              : targetMouthY;
+
             mouthStateRef.current = {
               isDetected: true,
-              mouthCenter: { x: mouthX, y: mouthY + 10 },
+              mouthCenter: { x: smoothX, y: smoothY },
               mouthWidth: lipDistanceX,
               mouthHeight: lipDistanceY,
               mar: mar,
@@ -529,7 +543,7 @@ export default function GameCanvas({
             setIsMouthOpen(false);
           }
         } catch {
-          // frame drops handled
+          // frame drops gracefully handled
         }
       }
 
