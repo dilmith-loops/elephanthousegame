@@ -649,9 +649,9 @@ export default function GameCanvas({
             assetId: chosen.id,
             type: (chosen.type_key as PopsicleType) || 'chocobar',
             x: spawnX,
-            y: -70,
+            y: -95,
             speed: baseSpeed * (chosen.speed_multiplier || 1.0),
-            size: 65,
+            size: 95,
             rotation: (Math.random() - 0.5) * 0.4,
             rotationSpeed: (Math.random() - 0.5) * 0.8,
             points: chosen.points || 1,
@@ -678,9 +678,9 @@ export default function GameCanvas({
             id: Math.random().toString(),
             type: flavorType,
             x: spawnX,
-            y: -70,
+            y: -95,
             speed: baseSpeed,
-            size: 65,
+            size: 95,
             rotation: (Math.random() - 0.5) * 0.4,
             rotationSpeed: (Math.random() - 0.5) * 0.8,
             points: flavor.points,
@@ -694,7 +694,7 @@ export default function GameCanvas({
       }
 
       // Update & Draw Popsicles
-      const catchRadius = Math.max(42, (mouth.mouthWidth || 35) * 0.75);
+      const catchRadius = Math.max(45, (mouth.mouthWidth || 35) * 0.8);
 
       for (let i = popsiclesRef.current.length - 1; i >= 0; i--) {
         const item = popsiclesRef.current[i];
@@ -705,10 +705,10 @@ export default function GameCanvas({
 
           // Collision Check with Mouth/Tongue
           if (!item.caught && mouth.isDetected && mouth.isTongueOut) {
-            const popsicleTipY = item.y + 20;
+            const popsicleTipY = item.y + (item.size * 0.28);
             const dist = Math.hypot(item.x - mouth.mouthCenter.x, popsicleTipY - mouth.mouthCenter.y);
 
-            if (dist < catchRadius + 28) {
+            if (dist < catchRadius + (item.size * 0.38)) {
               item.caught = true;
               handleCatch(item, mouth.mouthCenter);
               popsiclesRef.current.splice(i, 1);
@@ -717,7 +717,7 @@ export default function GameCanvas({
           }
 
           // Check if missed
-          if (item.y > height + 80) {
+          if (item.y > height + 100) {
             if (comboRef.current > 0) {
               comboRef.current = 0;
               setCombo(0);
