@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../lib/api';
-import { AdminStats, Player, ScoreRecord, AdminLogRecord, AdminUser } from '../../types/game';
+import { AdminStats, Player, ScoreRecord, AdminLogRecord, AdminUser, PopsicleAsset } from '../../types/game';
 import {
   Users,
   Gamepad2,
@@ -43,12 +43,19 @@ import {
   Shield,
   UserCog,
   Pencil,
-  Phone
+  Phone,
+  Sparkles,
+  Plus,
+  Upload,
+  Image as ImageIcon,
+  Zap,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { exportToPDF } from '../../lib/pdfExport';
 
-type SidebarTab = 'overview' | 'active_users' | 'users' | 'scores' | 'logs' | 'settings' | 'security';
+type SidebarTab = 'overview' | 'active_users' | 'users' | 'scores' | 'popsicles' | 'logs' | 'settings' | 'security';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -140,6 +147,31 @@ export default function AdminPage() {
   // Export PDF Loading State
   const [isExportingPDF, setIsExportingPDF] = useState(false);
 
+  // Popsicle Game Assets Management States
+  const [popsiclesList, setPopsiclesList] = useState<PopsicleAsset[]>([]);
+  const [popsicleStats, setPopsicleStats] = useState<any>(null);
+  const [loadingPopsicles, setLoadingPopsicles] = useState(false);
+  const [showPopsicleModal, setShowPopsicleModal] = useState(false);
+  const [editingPopsicle, setEditingPopsicle] = useState<PopsicleAsset | null>(null);
+  const [popsicleToDelete, setPopsicleToDelete] = useState<PopsicleAsset | null>(null);
+
+  // Popsicle Form Fields
+  const [pName, setPName] = useState('');
+  const [pFlavor, setPFlavor] = useState('');
+  const [pTypeKey, setPTypeKey] = useState<string>('chocobar');
+  const [pPoints, setPPoints] = useState(1);
+  const [pSpeedMultiplier, setPSpeedMultiplier] = useState(1.0);
+  const [pSpawnWeight, setPSpawnWeight] = useState(80);
+  const [pPrimaryColor, setPPrimaryColor] = useState('#E91E63');
+  const [pSecondaryColor, setPSecondaryColor] = useState('#FFD200');
+  const [pIsActive, setPIsActive] = useState(true);
+  const [pImageFile, setPImageFile] = useState<File | null>(null);
+  const [pImagePreview, setPImagePreview] = useState<string | null>(null);
+  const [pRemoveImage, setPRemoveImage] = useState(false);
+  const [popsicleFormMsg, setPopsicleFormMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isSavingPopsicle, setIsSavingPopsicle] = useState(false);
+  const [isTogglingPopsicleId, setIsTogglingPopsicleId] = useState<number | null>(null);
+
   // Check stored auth token on mount
   useEffect(() => {
     const token = localStorage.getItem('eh_admin_token');
@@ -217,6 +249,8 @@ export default function AdminPage() {
           setTotalPages(res.scores.last_page || 1);
           setTotalRecords(res.scores.total || 0);
         }
+      } else if (activeTab === 'popsicles') {
+        await loadPopsicles();
       } else if (activeTab === 'logs') {
         const res = await api.getAdminLogs({ page, limit: 20 });
         if (res.success) {
@@ -233,6 +267,145 @@ export default function AdminPage() {
       setLoadingData(false);
     }
   }, [activeTab, page, searchQuery, loadStats]);
+
+  // Load Popsicle Assets
+  const loadPopsicles = useCallback(async () => {
+    setLoadingPopsicles(true);
+    try {
+      const res = await api.getAdminPopsicles();
+      if (res.success) {
+        setPopsiclesList(res.popsicles || []);
+        setPopsicleStats(res.stats || null);
+      }
+    } catch (err) {
+      console.error('Failed to load popsicles:', err);
+    } finally {
+      setLoadingPopsicles(false);
+    }
+  }, []);
+
+  // Open Add Popsicle Modal
+  const handleOpenAddPopsicle = () => {
+    setEditingPopsicle(null);
+    setPName('');
+    setPFlavor('');
+    setPTypeKey('chocobar');
+    setPPoints(1);
+    setPSpeedMultiplier(1.0);
+    setPSpawnWeight(80);
+    setPPrimaryColor('#E91E63');
+    setPSecondaryColor('#FFD200');
+    setPIsActive(true);
+    setPImageFile(null);
+    setPImagePreview(null);
+    setPRemoveImage(false);
+    setPopsicleFormMsg(null);
+    setShowPopsicleModal(true);
+  };
+
+  // Open Edit Popsicle Modal
+  const handleOpenEditPopsicle = (p: PopsicleAsset) => {
+    setEditingPopsicle(p);
+    setPName(p.name);
+    setPFlavor(p.flavor || '');
+    setPTypeKey(p.type_key || 'chocobar');
+    setPPoints(p.points || 1);
+    setPSpeedMultiplier(p.speed_multiplier || 1.0);
+    setPSpawnWeight(p.spawn_weight || 80);
+    setPPrimaryColor(p.primary_color || '#E91E63');
+    setPSecondaryColor(p.secondary_color || '#FFD200');
+    setPIsActive(p.is_active);
+    setPImageFile(null);
+    setPImagePreview(p.image_url || null);
+    setPRemoveImage(false);
+    setPopsicleFormMsg(null);
+    setShowPopsicleModal(true);
+  };
+
+  // Handle Save Popsicle (Create or Update)
+  const handleSavePopsicle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pName.trim()) {
+      setPopsicleFormMsg({ type: 'error', text: 'Popsicle name is required.' });
+      return;
+    }
+
+    try {
+      setIsSavingPopsicle(true);
+      setPopsicleFormMsg(null);
+
+      const formData = new FormData();
+      formData.append('name', pName.trim());
+      formData.append('flavor', pFlavor.trim());
+      formData.append('type_key', pTypeKey);
+      formData.append('points', pPoints.toString());
+      formData.append('speed_multiplier', pSpeedMultiplier.toString());
+      formData.append('spawn_weight', pSpawnWeight.toString());
+      formData.append('primary_color', pPrimaryColor);
+      formData.append('secondary_color', pSecondaryColor);
+      formData.append('is_active', pIsActive ? '1' : '0');
+
+      if (pImageFile) {
+        formData.append('image', pImageFile);
+      }
+      if (pRemoveImage) {
+        formData.append('remove_image', '1');
+      }
+
+      let res;
+      if (editingPopsicle) {
+        res = await api.updatePopsicle(editingPopsicle.id, formData);
+      } else {
+        res = await api.createPopsicle(formData);
+      }
+
+      setPopsicleFormMsg({ type: 'success', text: res.message || 'Popsicle saved successfully!' });
+      await loadPopsicles();
+      setTimeout(() => {
+        setShowPopsicleModal(false);
+        setPopsicleFormMsg(null);
+      }, 1200);
+    } catch (err: any) {
+      setPopsicleFormMsg({ type: 'error', text: err.message || 'Failed to save popsicle.' });
+    } finally {
+      setIsSavingPopsicle(false);
+    }
+  };
+
+  // Handle Toggle Active Status
+  const handleTogglePopsicle = async (p: PopsicleAsset) => {
+    try {
+      setIsTogglingPopsicleId(p.id);
+      await api.togglePopsicle(p.id);
+      await loadPopsicles();
+    } catch (err: any) {
+      alert(err.message || 'Failed to toggle popsicle status');
+    } finally {
+      setIsTogglingPopsicleId(null);
+    }
+  };
+
+  // Handle Trigger Delete Popsicle
+  const handleDeletePopsicle = (p: PopsicleAsset) => {
+    setDeleteDialogError(null);
+    setPopsicleToDelete(p);
+  };
+
+  // Confirm Delete Popsicle
+  const confirmDeletePopsicle = async () => {
+    if (!popsicleToDelete) return;
+    try {
+      setIsDeletingTarget(true);
+      setDeleteDialogError(null);
+      await api.deletePopsicle(popsicleToDelete.id);
+      await loadPopsicles();
+      setPopsicleToDelete(null);
+    } catch (err: any) {
+      setDeleteDialogError(err.message || 'Failed to delete popsicle.');
+    } finally {
+      setIsDeletingTarget(false);
+    }
+  };
 
   // Load Admin Accounts
   const loadAdminAccounts = useCallback(async () => {
@@ -726,6 +899,25 @@ export default function AdminPage() {
             >
               <Gamepad2 className="w-4 h-4" />
               <span>Game Score Logs</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('popsicles'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'popsicles'
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/20'
+                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>Game Popsicles</span>
+              </div>
+              {popsiclesList.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-pink-500/20 text-pink-300 text-[10px] font-black border border-pink-500/30">
+                  {popsiclesList.length}
+                </span>
+              )}
             </button>
 
             <button
@@ -1284,7 +1476,235 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 5. ADMIN AUDIT LOGS TAB */}
+        {/* 5. POPSICLE GAME ASSETS TAB */}
+        {activeTab === 'popsicles' && (
+          <div className="space-y-6">
+            {/* Top Overview Stats Bar */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 flex items-center space-x-3.5 shadow-lg">
+                <div className="w-10 h-10 rounded-xl bg-pink-500/20 text-pink-400 border border-pink-500/30 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Assets</p>
+                  <p className="text-xl font-black text-white">{popsiclesList.length}</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 flex items-center space-x-3.5 shadow-lg">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active in Game</p>
+                  <p className="text-xl font-black text-emerald-400">
+                    {popsiclesList.filter((p) => p.is_active).length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 flex items-center space-x-3.5 shadow-lg">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+                  <Trophy className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Highest Points</p>
+                  <p className="text-xl font-black text-amber-300">
+                    {Math.max(...popsiclesList.map((p) => p.points || 1), 1)} pts
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-slate-900/70 border border-slate-800/80 rounded-2xl p-4 flex items-center space-x-3.5 shadow-lg">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Custom Uploads</p>
+                  <p className="text-xl font-black text-blue-300">
+                    {popsiclesList.filter((p) => p.image_path).length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Assets Table Container */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-4 md:p-6 shadow-xl space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2">
+                <div>
+                  <h2 className="text-lg font-black text-white flex items-center space-x-2">
+                    <span>Popsicle Collectibles Directory</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-bold border border-pink-500/30">
+                      Live Spawner
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Configure point rewards, fall speed, drop probability weight, and custom ice cream visuals.
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-2 w-full sm:w-auto">
+                  <button
+                    onClick={loadPopsicles}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    title="Refresh Assets"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingPopsicles ? 'animate-spin' : ''}`} />
+                  </button>
+                  <button
+                    onClick={handleOpenAddPopsicle}
+                    className="px-4 py-2 bg-gradient-to-r from-pink-600 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-xl text-xs flex items-center space-x-1.5 shadow-lg shadow-pink-600/25 transition-all cursor-pointer flex-shrink-0"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add New Popsicle</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Table */}
+              <div className="overflow-x-auto py-2">
+                {loadingPopsicles ? (
+                  <div className="py-16 text-center">
+                    <div className="w-8 h-8 border-3 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                    <p className="text-xs text-slate-400">Loading game assets...</p>
+                  </div>
+                ) : popsiclesList.length === 0 ? (
+                  <div className="py-16 text-center text-slate-400 text-xs">
+                    No popsicle assets found. Click "Add New Popsicle" to create one.
+                  </div>
+                ) : (
+                  <table className="w-full text-left text-xs min-w-[720px]">
+                    <thead className="bg-slate-800/50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4 rounded-l-xl whitespace-nowrap">Asset</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Name & Flavor</th>
+                        <th className="py-3 px-4 text-center whitespace-nowrap">Points</th>
+                        <th className="py-3 px-4 text-center whitespace-nowrap">Drop Chance</th>
+                        <th className="py-3 px-4 text-center whitespace-nowrap">Fall Speed</th>
+                        <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
+                        <th className="py-3 px-4 text-right rounded-r-xl whitespace-nowrap">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {popsiclesList.map((p) => {
+                        const totalWeight = popsiclesList
+                          .filter((x) => x.is_active)
+                          .reduce((s, x) => s + (x.spawn_weight || 1), 0);
+                        const dropPercentage = p.is_active && totalWeight > 0
+                          ? ((p.spawn_weight / totalWeight) * 100).toFixed(1)
+                          : '0.0';
+
+                        return (
+                          <tr key={p.id} className="hover:bg-slate-800/40 transition-colors">
+                            {/* Visual Asset Thumbnail */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div
+                                className="w-12 h-12 rounded-xl flex items-center justify-center border shadow-sm relative overflow-hidden"
+                                style={{
+                                  backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                  borderColor: p.primary_color || '#FF4081'
+                                }}
+                              >
+                                {p.image_url ? (
+                                  <img
+                                    src={p.image_url}
+                                    alt={p.name}
+                                    className="w-9 h-9 object-contain"
+                                  />
+                                ) : (
+                                  <div
+                                    className="w-5 h-8 rounded-t-md shadow-sm"
+                                    style={{
+                                      backgroundColor: p.primary_color || '#E91E63',
+                                      borderBottom: `4px solid ${p.secondary_color || '#FFD200'}`
+                                    }}
+                                  ></div>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Name & Flavor */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <p className="font-extrabold text-white text-sm">{p.name}</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">{p.flavor || 'Elephant House Classic'}</p>
+                            </td>
+
+                            {/* Points */}
+                            <td className="py-3 px-4 text-center whitespace-nowrap">
+                              <span
+                                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full font-black text-xs shadow-sm"
+                                style={{
+                                  backgroundColor: p.points >= 3 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(236, 72, 153, 0.2)',
+                                  color: p.points >= 3 ? '#FCD34D' : '#F472B6',
+                                  border: `1px solid ${p.points >= 3 ? 'rgba(245, 158, 11, 0.4)' : 'rgba(236, 72, 153, 0.4)'}`
+                                }}
+                              >
+                                <span>+{p.points} {p.points === 1 ? 'pt' : 'pts'}</span>
+                              </span>
+                            </td>
+
+                            {/* Drop Weight & % */}
+                            <td className="py-3 px-4 text-center whitespace-nowrap">
+                              <div className="flex flex-col items-center">
+                                <span className="font-bold text-slate-200">{dropPercentage}%</span>
+                                <span className="text-[10px] text-slate-400 font-mono">Weight: {p.spawn_weight}</span>
+                              </div>
+                            </td>
+
+                            {/* Fall Speed Multiplier */}
+                            <td className="py-3 px-4 text-center whitespace-nowrap">
+                              <span className="font-mono text-xs px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60">
+                                {p.speed_multiplier || 1.0}x
+                              </span>
+                            </td>
+
+                            {/* Active Toggle Switch */}
+                            <td className="py-3 px-4 text-center whitespace-nowrap">
+                              <button
+                                onClick={() => handleTogglePopsicle(p)}
+                                disabled={isTogglingPopsicleId === p.id}
+                                className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                                  p.is_active
+                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'
+                                    : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700'
+                                }`}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${p.is_active ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`}></span>
+                                <span>{p.is_active ? 'In Game' : 'Disabled'}</span>
+                              </button>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="py-3 px-4 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end space-x-1.5">
+                                <button
+                                  onClick={() => handleOpenEditPopsicle(p)}
+                                  className="p-1.5 rounded-lg bg-blue-950/40 hover:bg-blue-900/60 text-blue-300 border border-blue-800/40 hover:border-blue-600 transition-colors cursor-pointer"
+                                  title="Edit Popsicle"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePopsicle(p)}
+                                  className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 hover:border-red-600 transition-colors cursor-pointer"
+                                  title="Delete Popsicle"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 6. ADMIN AUDIT LOGS TAB */}
         {activeTab === 'logs' && (
           <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-4 md:p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
@@ -2354,6 +2774,365 @@ export default function AdminPage() {
                   <>
                     <Trash2 className="w-4 h-4" />
                     <span>Remove Admin</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Edit Popsicle Modal */}
+      {showPopsicleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl my-8">
+            <button
+              onClick={() => { setShowPopsicleModal(false); setPopsicleFormMsg(null); }}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-500/20 to-amber-500/20 border border-pink-500/30 text-pink-400 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-white">
+                  {editingPopsicle ? 'Edit Popsicle Asset' : 'Add New Popsicle Asset'}
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Configure collectible ice cream reward points, rarity, and custom graphics.
+                </p>
+              </div>
+            </div>
+
+            {popsicleFormMsg && (
+              <div
+                className={`mb-5 p-3.5 rounded-2xl text-xs flex items-center space-x-2.5 ${
+                  popsicleFormMsg.type === 'success'
+                    ? 'bg-emerald-950/60 border border-emerald-800 text-emerald-300'
+                    : 'bg-rose-950/60 border border-rose-800 text-rose-300'
+                }`}
+              >
+                {popsicleFormMsg.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+                )}
+                <span>{popsicleFormMsg.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSavePopsicle} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Popsicle Name <span className="text-pink-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={pName}
+                    onChange={(e) => setPName(e.target.value)}
+                    required
+                    placeholder="e.g. Wonderbar Wonder"
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Flavor Subtitle
+                  </label>
+                  <input
+                    type="text"
+                    value={pFlavor}
+                    onChange={(e) => setPFlavor(e.target.value)}
+                    placeholder="e.g. Chocolate Crunch"
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                  />
+                </div>
+              </div>
+
+              {/* Point Value & Drop Speed */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Catch Points Reward
+                  </label>
+                  <select
+                    value={pPoints}
+                    onChange={(e) => setPPoints(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 font-bold"
+                  >
+                    <option value="1">1 Point (Standard)</option>
+                    <option value="2">2 Points (Bonus)</option>
+                    <option value="3">3 Points (Rare Star)</option>
+                    <option value="5">5 Points (Super Star)</option>
+                    <option value="10">10 Points (Jackpot Mega)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Fall Speed Multiplier
+                  </label>
+                  <select
+                    value={pSpeedMultiplier}
+                    onChange={(e) => setPSpeedMultiplier(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 font-bold"
+                  >
+                    <option value="0.85">0.85x (Slow & Easy)</option>
+                    <option value="1.00">1.00x (Standard Normal)</option>
+                    <option value="1.15">1.15x (Fast & Agile)</option>
+                    <option value="1.30">1.30x (Super Fast)</option>
+                    <option value="1.50">1.50x (Ultra Lightning)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Spawn Probability Weight */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-slate-300">
+                    Spawn Frequency Weight
+                  </label>
+                  <span className="text-xs font-mono font-bold text-pink-400">
+                    {pSpawnWeight} {pSpawnWeight >= 80 ? '(Common)' : pSpawnWeight >= 40 ? '(Uncommon)' : '(Rare Drop)'}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="150"
+                  step="5"
+                  value={pSpawnWeight}
+                  onChange={(e) => setPSpawnWeight(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                />
+              </div>
+
+              {/* 2D Preset Vector Style or Custom Upload */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Vector Preset Style
+                  </label>
+                  <select
+                    value={pTypeKey}
+                    onChange={(e) => setPTypeKey(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  >
+                    <option value="chocobar">🍫 Choco Crunch Bar</option>
+                    <option value="berry_rocket">🚀 Berry Rocket Pop</option>
+                    <option value="mango_pop">🥭 Mango Blast</option>
+                    <option value="twister">🌀 Rainbow Twister</option>
+                    <option value="wonder_cone">🍦 Wonder Cone</option>
+                    <option value="golden_star">⭐ Golden Star</option>
+                    <option value="custom">🎨 Custom Upload / Style</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Splash Particle Colors
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex-1 flex items-center space-x-1.5 bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5">
+                      <input
+                        type="color"
+                        value={pPrimaryColor}
+                        onChange={(e) => setPPrimaryColor(e.target.value)}
+                        className="w-7 h-7 rounded-lg border-0 bg-transparent cursor-pointer"
+                        title="Primary Splash Color"
+                      />
+                      <span className="text-[11px] font-mono text-slate-300 uppercase">{pPrimaryColor}</span>
+                    </div>
+                    <div className="flex-1 flex items-center space-x-1.5 bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5">
+                      <input
+                        type="color"
+                        value={pSecondaryColor}
+                        onChange={(e) => setPSecondaryColor(e.target.value)}
+                        className="w-7 h-7 rounded-lg border-0 bg-transparent cursor-pointer"
+                        title="Secondary Accent Color"
+                      />
+                      <span className="text-[11px] font-mono text-slate-300 uppercase">{pSecondaryColor}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Custom Image Upload */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Custom Ice Cream Graphic (Optional PNG / SVG / WebP)
+                </label>
+                <div className="p-4 bg-slate-800/80 border-2 border-dashed border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center">
+                  {pImagePreview ? (
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className="w-16 h-16 rounded-xl bg-slate-900 border border-slate-700 p-2 flex items-center justify-center shadow-md">
+                        <img
+                          src={pImagePreview}
+                          alt="Popsicle Preview"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <label className="px-3 py-1.5 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 border border-blue-500/40 text-xs font-bold cursor-pointer transition-colors">
+                          <input
+                            type="file"
+                            accept="image/png,image/svg+xml,image/webp,image/jpeg"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                const file = e.target.files[0];
+                                setPImageFile(file);
+                                setPImagePreview(URL.createObjectURL(file));
+                                setPRemoveImage(false);
+                              }
+                            }}
+                            className="hidden"
+                          />
+                          Change Image
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPImageFile(null);
+                            setPImagePreview(null);
+                            setPRemoveImage(true);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/40 text-xs font-bold cursor-pointer transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center cursor-pointer py-2">
+                      <Upload className="w-7 h-7 text-pink-400 mb-1.5" />
+                      <span className="text-xs font-extrabold text-white">Click to upload custom PNG / SVG</span>
+                      <span className="text-[10px] text-slate-400 mt-0.5">Transparent background recommended (Max 5MB)</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/svg+xml,image/webp,image/jpeg"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            const file = e.target.files[0];
+                            setPImageFile(file);
+                            setPImagePreview(URL.createObjectURL(file));
+                            setPRemoveImage(false);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Active in Game Checkbox */}
+              <div className="flex items-center space-x-3 pt-2">
+                <input
+                  type="checkbox"
+                  id="pIsActiveCheck"
+                  checked={pIsActive}
+                  onChange={(e) => setPIsActive(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-pink-600 focus:ring-pink-500 cursor-pointer"
+                />
+                <label htmlFor="pIsActiveCheck" className="text-xs font-bold text-slate-200 cursor-pointer">
+                  Activate in Live AR Game Spawner immediately
+                </label>
+              </div>
+
+              {/* Buttons */}
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => { setShowPopsicleModal(false); setPopsicleFormMsg(null); }}
+                  className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingPopsicle}
+                  className="py-3 px-4 rounded-xl bg-gradient-to-r from-pink-600 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold text-xs shadow-lg shadow-pink-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-1.5"
+                >
+                  {isSavingPopsicle ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>{editingPopsicle ? 'Update Popsicle' : 'Create Popsicle'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Popsicle Confirmation Dialog */}
+      {popsicleToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl">
+            <button
+              onClick={() => { setPopsicleToDelete(null); setDeleteDialogError(null); }}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex flex-col items-center text-center mb-5">
+              <div className="w-16 h-16 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center mb-3.5 shadow-lg shadow-rose-500/10">
+                <Trash2 className="w-8 h-8" />
+              </div>
+
+              <h2 className="text-xl font-black text-white">
+                Delete Popsicle Asset?
+              </h2>
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                Are you sure you want to delete popsicle{' '}
+                <strong className="text-white">"{popsicleToDelete.name}"</strong>?
+              </p>
+            </div>
+
+            <div className="p-3.5 bg-rose-950/40 rounded-2xl border border-rose-800/50 text-rose-300 text-xs flex items-start space-x-2.5 mb-5">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span className="leading-relaxed text-[11px]">
+                This collectible will be permanently removed and will no longer drop in AR games.
+              </span>
+            </div>
+
+            {deleteDialogError && (
+              <div className="mb-4 p-3 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-xl flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <span>{deleteDialogError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => { setPopsicleToDelete(null); setDeleteDialogError(null); }}
+                className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmDeletePopsicle}
+                disabled={isDeletingTarget}
+                className="py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-xs shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center space-x-1.5 disabled:opacity-50"
+              >
+                {isDeletingTarget ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Asset</span>
                   </>
                 )}
               </button>

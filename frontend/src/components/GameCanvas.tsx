@@ -2,8 +2,8 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision';
-import { Player, PopsicleItem, SplashParticle, ScorePopup, FaceMouthState } from '../types/game';
-import { FLAVORS, drawPopsicle } from '../lib/sprites';
+import { Player, PopsicleItem, SplashParticle, ScorePopup, FaceMouthState, PopsicleAsset, PopsicleType } from '../types/game';
+import { FLAVORS, drawPopsicle, preloadPopsicleImage } from '../lib/sprites';
 import { sound } from '../lib/audio';
 import { api } from '../lib/api';
 import confetti from 'canvas-confetti';
@@ -166,12 +166,34 @@ export default function GameCanvas({
   const catchesRef = useRef(0);
   const comboRef = useRef(0);
   const isGameOverRef = useRef(false);
+  const popsicleAssetsRef = useRef<PopsicleAsset[]>([]);
 
   // Sound toggle
   const toggleMute = () => {
     sound.isMuted = !isMuted;
     setIsMuted(!isMuted);
   };
+
+  // Load Dynamic Popsicle Assets from Admin API
+  useEffect(() => {
+    let isMounted = true;
+    api.getPopsicles().then((res) => {
+      if (isMounted && res.success && res.popsicles && res.popsicles.length > 0) {
+        popsicleAssetsRef.current = res.popsicles;
+        // Preload any custom uploaded images into canvas cache
+        res.popsicles.forEach((p) => {
+          if (p.image_url) {
+            preloadPopsicleImage(p.image_url);
+          }
+        });
+      }
+    }).catch(() => {
+      // Graceful fallback to built-in presets
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Periodic Active Player Heartbeat Ping
   useEffect(() => {
@@ -322,7 +344,7 @@ export default function GameCanvas({
     setMaxCombo((prev) => Math.max(prev, comboRef.current));
 
     // Sound effect
-    if (popsicle.type === 'golden_star') {
+    if (popsicle.type === 'golden_star' || pts >= 3) {
       sound.playGoldenCatch();
     } else if (comboRef.current > 2 && comboRef.current % 3 === 0) {
       sound.playCombo(comboRef.current);
@@ -330,9 +352,10 @@ export default function GameCanvas({
       sound.playCatch(pts);
     }
 
-    // Spawn Juicy Particles
-    const flavor = FLAVORS[popsicle.type];
-    const particleColors = [flavor.primaryColor, flavor.secondaryColor, '#FFFFFF', '#FFEB3B'];
+    // Spawn Juicy Splash Particles using custom colors
+    const pColor = popsicle.color || '#E91E63';
+    const sColor = popsicle.secondaryColor || '#FFD200';
+    const particleColors = [pColor, sColor, '#FFFFFF', '#FFEB3B'];
     for (let i = 0; i < 18; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 2 + Math.random() * 6;
@@ -349,12 +372,13 @@ export default function GameCanvas({
     }
 
     // Spawn Score Popup
-    const popupText = pts > 1 ? `+${pts} ${flavor.name}!` : comboRef.current > 3 ? `+${pts} (${comboRef.current}x Combo!)` : `+${pts} Marks!`;
+    const nameLabel = popsicle.flavorName || 'Popsicle';
+    const popupText = pts > 1 ? `+${pts} ${nameLabel}!` : comboRef.current > 3 ? `+${pts} (${comboRef.current}x Combo!)` : `+${pts} Marks!`;
     scorePopupsRef.current.push({
       x: mouthPos.x,
       y: mouthPos.y - 20,
       text: popupText,
-      color: flavor.primaryColor,
+      color: pColor,
       alpha: 1,
       vy: -2.2
     });
@@ -601,34 +625,71 @@ export default function GameCanvas({
       if (!currentlyPaused && now - lastSpawnTimeRef.current > spawnInterval) {
         lastSpawnTimeRef.current = now;
 
-        const rand = Math.random();
-        let flavorType: keyof typeof FLAVORS = 'chocobar';
-        if (rand < 0.28) flavorType = 'chocobar';
-        else if (rand < 0.52) flavorType = 'berry_rocket';
-        else if (rand < 0.74) flavorType = 'mango_pop';
-        else if (rand < 0.88) flavorType = 'twister';
-        else if (rand < 0.96) flavorType = 'wonder_cone';
-        else flavorType = 'golden_star';
-
-        const flavor = FLAVORS[flavorType];
         const spawnX = Math.random() * (width - 100) + 50;
-        const fallSpeed = 130 + Math.random() * 80 + Math.min(110, scoreRef.current * 3);
+        const baseSpeed = 130 + Math.random() * 80 + Math.min(110, scoreRef.current * 3);
 
-        popsiclesRef.current.push({
-          id: Math.random().toString(),
-          type: flavorType,
-          x: spawnX,
-          y: -70,
-          speed: fallSpeed,
-          size: 65,
-          rotation: (Math.random() - 0.5) * 0.4,
-          rotationSpeed: (Math.random() - 0.5) * 0.8,
-          points: flavor.points,
-          caught: false,
-          opacity: 1,
-          flavorName: flavor.name,
-          color: flavor.primaryColor
-        });
+        const dynamicAssets = popsicleAssetsRef.current;
+        if (dynamicAssets && dynamicAssets.length > 0) {
+          // Weighted random selection
+          const totalWeight = dynamicAssets.reduce((sum, item) => sum + (item.spawn_weight || 1), 0);
+          let randomWeight = Math.random() * totalWeight;
+          let chosen = dynamicAssets[0];
+
+          for (const asset of dynamicAssets) {
+            randomWeight -= (asset.spawn_weight || 1);
+            if (randomWeight <= 0) {
+              chosen = asset;
+              break;
+            }
+          }
+
+          popsiclesRef.current.push({
+            id: Math.random().toString(),
+            assetId: chosen.id,
+            type: (chosen.type_key as PopsicleType) || 'chocobar',
+            x: spawnX,
+            y: -70,
+            speed: baseSpeed * (chosen.speed_multiplier || 1.0),
+            size: 65,
+            rotation: (Math.random() - 0.5) * 0.4,
+            rotationSpeed: (Math.random() - 0.5) * 0.8,
+            points: chosen.points || 1,
+            caught: false,
+            opacity: 1,
+            flavorName: chosen.name,
+            color: chosen.primary_color || '#E91E63',
+            secondaryColor: chosen.secondary_color || '#FFD200',
+            imageUrl: chosen.image_url
+          });
+        } else {
+          // Preset Fallback
+          const rand = Math.random();
+          let flavorType: keyof typeof FLAVORS = 'chocobar';
+          if (rand < 0.28) flavorType = 'chocobar';
+          else if (rand < 0.52) flavorType = 'berry_rocket';
+          else if (rand < 0.74) flavorType = 'mango_pop';
+          else if (rand < 0.88) flavorType = 'twister';
+          else if (rand < 0.96) flavorType = 'wonder_cone';
+          else flavorType = 'golden_star';
+
+          const flavor = FLAVORS[flavorType];
+          popsiclesRef.current.push({
+            id: Math.random().toString(),
+            type: flavorType,
+            x: spawnX,
+            y: -70,
+            speed: baseSpeed,
+            size: 65,
+            rotation: (Math.random() - 0.5) * 0.4,
+            rotationSpeed: (Math.random() - 0.5) * 0.8,
+            points: flavor.points,
+            caught: false,
+            opacity: 1,
+            flavorName: flavor.name,
+            color: flavor.primaryColor,
+            secondaryColor: flavor.secondaryColor
+          });
+        }
       }
 
       // Update & Draw Popsicles
@@ -665,7 +726,18 @@ export default function GameCanvas({
           }
         }
 
-        drawPopsicle(ctx, item.type, item.x, item.y, item.size, item.rotation, item.opacity);
+        drawPopsicle(
+          ctx,
+          item.type,
+          item.x,
+          item.y,
+          item.size,
+          item.rotation,
+          item.opacity,
+          item.imageUrl,
+          item.color,
+          item.secondaryColor
+        );
       }
 
       // Update & Draw Splash Particles

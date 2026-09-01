@@ -47,10 +47,28 @@ export interface AdminUser {
   created_at?: string;
 }
 
-export type PopsicleType = 'chocobar' | 'berry_rocket' | 'mango_pop' | 'twister' | 'wonder_cone' | 'golden_star';
+export interface PopsicleAsset {
+  id: number;
+  name: string;
+  flavor?: string | null;
+  type_key: PopsicleType | string;
+  points: number;
+  speed_multiplier: number;
+  spawn_weight: number;
+  image_path?: string | null;
+  image_url?: string | null;
+  primary_color: string;
+  secondary_color: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type PopsicleType = 'chocobar' | 'berry_rocket' | 'mango_pop' | 'twister' | 'wonder_cone' | 'golden_star' | 'custom';
 
 export interface PopsicleItem {
   id: string;
+  assetId?: number;
   type: PopsicleType;
   x: number; // 0 to 1 normalized or canvas pixels
   y: number;
@@ -63,6 +81,8 @@ export interface PopsicleItem {
   opacity: number;
   flavorName: string;
   color: string;
+  secondaryColor?: string;
+  imageUrl?: string | null;
 }
 
 export interface SplashParticle {

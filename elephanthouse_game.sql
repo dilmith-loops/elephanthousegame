@@ -34,7 +34,7 @@ CREATE TABLE `admin_logs` (
   PRIMARY KEY (`id`),
   KEY `admin_logs_admin_id_foreign` (`admin_id`),
   CONSTRAINT `admin_logs_admin_id_foreign` FOREIGN KEY (`admin_id`) REFERENCES `admins` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -43,7 +43,7 @@ CREATE TABLE `admin_logs` (
 
 LOCK TABLES `admin_logs` WRITE;
 /*!40000 ALTER TABLE `admin_logs` DISABLE KEYS */;
-INSERT INTO `admin_logs` VALUES (1,1,'admin@elephanthouse.lk','login','Admin logged in successfully (admin@elephanthouse.lk)','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-08-31 23:38:04'),(2,1,'admin@elephanthouse.lk','create_admin','Created new admin account: saman@elephanthouse.lk (Saman)','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-08-31 23:51:54'),(3,2,'saman@elephanthouse.lk','login','Admin logged in successfully (saman@elephanthouse.lk)','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:18'),(4,2,'saman@elephanthouse.lk','delete_player','Deleted player Dilmith Ranasinghe (07125536373) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:37'),(5,2,'saman@elephanthouse.lk','delete_player','Deleted player Dilmith Ranasinghe (071526272823) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:40'),(6,2,'saman@elephanthouse.lk','delete_player','Deleted player Dilmith Ranasinghe (0866544445) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:43'),(7,2,'saman@elephanthouse.lk','delete_player','Deleted player Kasun Perera (0771234567) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:46'),(8,2,'saman@elephanthouse.lk','delete_player','Deleted player Dilini Fernando (0719876543) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:48'),(9,2,'saman@elephanthouse.lk','delete_player','Deleted player Nimal Jayasuriya (0765554321) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:50'),(10,2,'saman@elephanthouse.lk','delete_player','Deleted player Sanduni Silva (0783332211) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:53'),(11,2,'saman@elephanthouse.lk','update_admin','Updated admin account details: admin@elephanthouse.lk','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:42:16');
+INSERT INTO `admin_logs` VALUES (1,1,'admin@elephanthouse.lk','login','Admin logged in successfully (admin@elephanthouse.lk)','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-08-31 23:38:04'),(2,1,'admin@elephanthouse.lk','create_admin','Created new admin account: saman@elephanthouse.lk (Saman)','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-08-31 23:51:54'),(3,2,'saman@elephanthouse.lk','login','Admin logged in successfully (saman@elephanthouse.lk)','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:18'),(4,2,'saman@elephanthouse.lk','delete_player','Deleted player Dilmith Ranasinghe (07125536373) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:37'),(5,2,'saman@elephanthouse.lk','delete_player','Deleted player Dilmith Ranasinghe (071526272823) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:40'),(6,2,'saman@elephanthouse.lk','delete_player','Deleted player Dilmith Ranasinghe (0866544445) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:43'),(7,2,'saman@elephanthouse.lk','delete_player','Deleted player Kasun Perera (0771234567) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:46'),(8,2,'saman@elephanthouse.lk','delete_player','Deleted player Dilini Fernando (0719876543) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:48'),(9,2,'saman@elephanthouse.lk','delete_player','Deleted player Nimal Jayasuriya (0765554321) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:50'),(10,2,'saman@elephanthouse.lk','delete_player','Deleted player Sanduni Silva (0783332211) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:41:53'),(11,2,'saman@elephanthouse.lk','update_admin','Updated admin account details: admin@elephanthouse.lk','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 00:42:16'),(12,2,'saman@elephanthouse.lk','delete_player','Deleted player Dilmith Ranasinghe (0717170333) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 02:51:50'),(13,2,'saman@elephanthouse.lk','delete_player','Deleted player test (0777726262) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 02:51:52'),(14,2,'saman@elephanthouse.lk','delete_player','Deleted player Test (07125536373) and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 02:51:54'),(15,2,'saman@elephanthouse.lk','delete_player','Deleted player Dilmith () and all score records','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 02:56:21'),(16,2,'saman@elephanthouse.lk','export_csv','Exported users CSV report','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 02:58:10');
 /*!40000 ALTER TABLE `admin_logs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -231,7 +231,7 @@ CREATE TABLE `migrations` (
   `migration` varchar(255) NOT NULL,
   `batch` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -240,8 +240,43 @@ CREATE TABLE `migrations` (
 
 LOCK TABLES `migrations` WRITE;
 /*!40000 ALTER TABLE `migrations` DISABLE KEYS */;
-INSERT INTO `migrations` VALUES (1,'0001_01_01_000000_create_users_table',1),(2,'0001_01_01_000001_create_cache_table',1),(3,'0001_01_01_000002_create_jobs_table',1),(4,'2026_09_01_045727_create_settings_table',2),(5,'2026_09_01_050447_add_ip_and_active_to_users_table',3),(6,'2026_09_01_050448_create_admin_logs_table',3),(7,'2026_09_01_053000_make_mobile_nullable_on_users_table',4);
+INSERT INTO `migrations` VALUES (1,'0001_01_01_000000_create_users_table',1),(2,'0001_01_01_000001_create_cache_table',1),(3,'0001_01_01_000002_create_jobs_table',1),(4,'2026_09_01_045727_create_settings_table',2),(5,'2026_09_01_050447_add_ip_and_active_to_users_table',3),(6,'2026_09_01_050448_create_admin_logs_table',3),(7,'2026_09_01_053000_make_mobile_nullable_on_users_table',4),(8,'2026_09_01_060000_create_popsicles_table',5);
 /*!40000 ALTER TABLE `migrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `popsicles`
+--
+
+DROP TABLE IF EXISTS `popsicles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `popsicles` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `flavor` varchar(100) DEFAULT NULL,
+  `type_key` varchar(50) NOT NULL DEFAULT 'chocobar',
+  `points` int(11) NOT NULL DEFAULT 1,
+  `speed_multiplier` decimal(4,2) NOT NULL DEFAULT 1.00,
+  `spawn_weight` int(11) NOT NULL DEFAULT 100,
+  `image_path` varchar(255) DEFAULT NULL,
+  `primary_color` varchar(20) NOT NULL DEFAULT '#E91E63',
+  `secondary_color` varchar(20) NOT NULL DEFAULT '#FFD200',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `popsicles`
+--
+
+LOCK TABLES `popsicles` WRITE;
+/*!40000 ALTER TABLE `popsicles` DISABLE KEYS */;
+INSERT INTO `popsicles` VALUES (1,'Choco Crunch','Rich Chocolate & Crispy Rice','chocobar',1,1.00,100,NULL,'#3E2723','#FFF8E1',1,'2026-09-01 03:29:25','2026-09-01 03:29:25'),(2,'Berry Rocket','Triple Layer Raspberry Blast','berry_rocket',1,1.05,90,NULL,'#E91E63','#00E5FF',1,'2026-09-01 03:29:25','2026-09-01 03:29:25'),(3,'Mango Blast','Tropical Alphonso Mango Swirl','mango_pop',1,1.00,80,NULL,'#FF9800','#FFEB3B',1,'2026-09-01 03:29:25','2026-09-01 03:29:25'),(4,'Rainbow Twister','Lime, Strawberry & Pineapple','twister',1,1.10,70,NULL,'#4CAF50','#E91E63',1,'2026-09-01 03:29:25','2026-09-01 03:29:25'),(5,'Wonder Cone','Vanilla Wafer Double Crunch','wonder_cone',2,1.15,45,NULL,'#F06292','#D7CCC8',1,'2026-09-01 03:29:25','2026-09-01 03:29:25'),(6,'Golden Star','Elephant House Rare Gold Trophy','golden_star',3,1.25,20,NULL,'#FFD700','#FFFFFF',1,'2026-09-01 03:29:25','2026-09-01 03:29:25');
+/*!40000 ALTER TABLE `popsicles` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -263,7 +298,7 @@ CREATE TABLE `scores` (
   KEY `scores_user_id_foreign` (`user_id`),
   KEY `scores_score_index` (`score`),
   CONSTRAINT `scores_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -272,7 +307,7 @@ CREATE TABLE `scores` (
 
 LOCK TABLES `scores` WRITE;
 /*!40000 ALTER TABLE `scores` DISABLE KEYS */;
-INSERT INTO `scores` VALUES (8,8,1,1,24,'2026-09-01 00:44:15','2026-09-01 00:44:15'),(9,9,3,3,94,'2026-09-01 02:06:38','2026-09-01 02:06:38'),(10,9,0,0,3,'2026-09-01 02:06:57','2026-09-01 02:06:57'),(11,9,0,0,6,'2026-09-01 02:07:17','2026-09-01 02:07:17'),(12,10,0,0,106,'2026-09-01 02:09:16','2026-09-01 02:09:16'),(13,8,1,1,11,'2026-09-01 02:22:18','2026-09-01 02:22:18'),(14,8,1,1,9,'2026-09-01 02:23:13','2026-09-01 02:23:13');
+INSERT INTO `scores` VALUES (18,12,4,4,17,'2026-09-01 02:57:01','2026-09-01 02:57:01');
 /*!40000 ALTER TABLE `scores` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -353,7 +388,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `users_mobile_unique` (`mobile`),
   KEY `users_email_index` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -362,7 +397,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (8,'Dilmith Ranasinghe','0717170333','dilmithsenupa2@gmail.com','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 02:23:00','2026-09-01 00:43:48','2026-09-01 02:23:00'),(9,'Test','07125536373','dilmith@loopsintegrated.com','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 02:07:06','2026-09-01 02:05:00','2026-09-01 02:07:06'),(10,'test','0777726262','dilmith@loopsintegrated.com','127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 02:11:36','2026-09-01 02:07:26','2026-09-01 02:11:36');
+INSERT INTO `users` VALUES (12,'Dilmith','0717170333',NULL,'127.0.0.1','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36','2026-09-01 02:57:05','2026-09-01 02:56:40','2026-09-01 02:57:05');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -375,4 +410,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-09-01 13:30:44
+-- Dump completed on 2026-09-01 14:35:18

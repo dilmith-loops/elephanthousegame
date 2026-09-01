@@ -1,4 +1,4 @@
-import { Player, ScoreSubmission, ScoreRecord, AdminStats, AdminLogRecord, AdminUser } from '../types/game';
+import { Player, ScoreSubmission, ScoreRecord, AdminStats, AdminLogRecord, AdminUser, PopsicleAsset } from '../types/game';
 
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
@@ -394,5 +394,95 @@ export const api = {
   getExportUrl(type: 'users' | 'scores' = 'users') {
     const token = localStorage.getItem('eh_admin_token');
     return `${getApiBaseUrl()}/admin/export?type=${type}&token=${token}`;
+  },
+
+  // Public: Get Active Popsicles for Game
+  async getPopsicles(): Promise<{ success: boolean; popsicles: PopsicleAsset[] }> {
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/popsicles`, {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' }
+      });
+      return await res.json();
+    } catch (e) {
+      console.warn('Failed to load dynamic popsicles, using fallback', e);
+      return { success: false, popsicles: [] };
+    }
+  },
+
+  // Admin: Get All Popsicles with Stats
+  async getAdminPopsicles(): Promise<{ success: boolean; popsicles: PopsicleAsset[]; stats: any }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${getApiBaseUrl()}/admin/popsicles`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to fetch popsicles');
+    return data;
+  },
+
+  // Admin: Create Popsicle
+  async createPopsicle(formData: FormData): Promise<{ success: boolean; message: string; popsicle: PopsicleAsset }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${getApiBaseUrl()}/admin/popsicles`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to create popsicle');
+    return data;
+  },
+
+  // Admin: Update Popsicle
+  async updatePopsicle(id: number, formData: FormData): Promise<{ success: boolean; message: string; popsicle: PopsicleAsset }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${getApiBaseUrl()}/admin/popsicles/${id}`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update popsicle');
+    return data;
+  },
+
+  // Admin: Toggle Popsicle Active Status
+  async togglePopsicle(id: number): Promise<{ success: boolean; message: string; popsicle: PopsicleAsset }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${getApiBaseUrl()}/admin/popsicles/${id}/toggle`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to toggle popsicle status');
+    return data;
+  },
+
+  // Admin: Delete Popsicle
+  async deletePopsicle(id: number): Promise<{ success: boolean; message: string }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${getApiBaseUrl()}/admin/popsicles/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to delete popsicle');
+    return data;
   }
 };

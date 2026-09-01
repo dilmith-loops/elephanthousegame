@@ -50,8 +50,34 @@ export const FLAVORS: Record<PopsicleType, FlavorConfig> = {
     primaryColor: '#FFD700',
     secondaryColor: '#FFF',
     points: 3
+  },
+  custom: {
+    type: 'custom',
+    name: 'Special Ice Cream',
+    primaryColor: '#E91E63',
+    secondaryColor: '#FFD200',
+    points: 1
   }
 };
+
+const imageCache = new Map<string, HTMLImageElement>();
+
+export function preloadPopsicleImage(url: string): Promise<HTMLImageElement> {
+  if (imageCache.has(url)) return Promise.resolve(imageCache.get(url)!);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      imageCache.set(url, img);
+      resolve(img);
+    };
+    img.onerror = () => {
+      // Don't reject fatally, just resolve empty
+      resolve(img);
+    };
+    img.src = url;
+  });
+}
 
 export function drawPopsicle(
   ctx: CanvasRenderingContext2D,
@@ -60,7 +86,10 @@ export function drawPopsicle(
   y: number,
   size: number = 60,
   rotation: number = 0,
-  opacity: number = 1
+  opacity: number = 1,
+  customImageUrl?: string | null,
+  customPrimaryColor?: string,
+  customSecondaryColor?: string
 ) {
   ctx.save();
   ctx.translate(x, y);
@@ -71,27 +100,42 @@ export function drawPopsicle(
   const scale = size / 60;
   ctx.scale(scale, scale);
 
+  // If custom uploaded image is available and loaded, draw image
+  if (customImageUrl && imageCache.has(customImageUrl)) {
+    const img = imageCache.get(customImageUrl);
+    if (img && img.complete && img.naturalWidth > 0) {
+      // Draw with soft glow
+      ctx.shadowColor = customPrimaryColor || '#FF4081';
+      ctx.shadowBlur = 10;
+      ctx.drawImage(img, -30, -35, 60, 70);
+      ctx.restore();
+      return;
+    }
+  }
+
+  // Vector rendering fallback
   switch (type) {
     case 'chocobar':
-      drawChocobar(ctx);
+      drawChocobar(ctx, customPrimaryColor, customSecondaryColor);
       break;
     case 'berry_rocket':
-      drawBerryRocket(ctx);
+      drawBerryRocket(ctx, customPrimaryColor, customSecondaryColor);
       break;
     case 'mango_pop':
-      drawMangoPop(ctx);
+      drawMangoPop(ctx, customPrimaryColor, customSecondaryColor);
       break;
     case 'twister':
-      drawTwister(ctx);
+      drawTwister(ctx, customPrimaryColor, customSecondaryColor);
       break;
     case 'wonder_cone':
-      drawWonderCone(ctx);
+      drawWonderCone(ctx, customPrimaryColor, customSecondaryColor);
       break;
     case 'golden_star':
-      drawGoldenStar(ctx);
+      drawGoldenStar(ctx, customPrimaryColor, customSecondaryColor);
       break;
+    case 'custom':
     default:
-      drawChocobar(ctx);
+      drawChocobar(ctx, customPrimaryColor, customSecondaryColor);
   }
 
   ctx.restore();
@@ -116,28 +160,29 @@ function drawWoodenStick(ctx: CanvasRenderingContext2D, stickY: number = 20, sti
   ctx.stroke();
 }
 
-function drawChocobar(ctx: CanvasRenderingContext2D) {
+function drawChocobar(ctx: CanvasRenderingContext2D, primaryColor?: string, secondaryColor?: string) {
   drawWoodenStick(ctx, 16, 26);
 
-  // Outer chocolate coating
+  // Outer coating
+  const pColor = primaryColor || '#3E2723';
   const grad = ctx.createLinearGradient(-18, -35, 18, 20);
-  grad.addColorStop(0, '#5D4037');
-  grad.addColorStop(0.5, '#3E2723');
-  grad.addColorStop(1, '#271206');
+  grad.addColorStop(0, pColor);
+  grad.addColorStop(0.5, pColor);
+  grad.addColorStop(1, '#1A0C02');
 
   ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.roundRect(-16, -35, 32, 52, [16, 16, 6, 6]);
   ctx.fill();
 
-  // Chocolate highlight shine
+  // Highlight shine
   ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
   ctx.beginPath();
   ctx.roundRect(-12, -30, 6, 40, 3);
   ctx.fill();
 
-  // Chocolate bite mark / crunch bits
-  ctx.fillStyle = '#FFE082';
+  // Crunch bits
+  ctx.fillStyle = secondaryColor || '#FFE082';
   ctx.beginPath();
   ctx.arc(4, -18, 2, 0, Math.PI * 2);
   ctx.arc(-2, -5, 2.5, 0, Math.PI * 2);
@@ -151,11 +196,11 @@ function drawChocobar(ctx: CanvasRenderingContext2D) {
   ctx.fill();
 }
 
-function drawBerryRocket(ctx: CanvasRenderingContext2D) {
+function drawBerryRocket(ctx: CanvasRenderingContext2D, primaryColor?: string, secondaryColor?: string) {
   drawWoodenStick(ctx, 18, 24);
 
-  // Top Section (Red Cherry/Berry)
-  ctx.fillStyle = '#E91E63';
+  // Top Section (Primary Color)
+  ctx.fillStyle = primaryColor || '#E91E63';
   ctx.beginPath();
   ctx.moveTo(-16, -18);
   ctx.quadraticCurveTo(0, -42, 16, -18);
@@ -168,8 +213,8 @@ function drawBerryRocket(ctx: CanvasRenderingContext2D) {
   ctx.fillStyle = '#FFF8E1';
   ctx.fillRect(-16, -8, 32, 12);
 
-  // Bottom Section (Blue Raspberry)
-  ctx.fillStyle = '#00B0FF';
+  // Bottom Section (Secondary Color)
+  ctx.fillStyle = secondaryColor || '#00B0FF';
   ctx.beginPath();
   ctx.roundRect(-16, 4, 32, 16, [0, 0, 8, 8]);
   ctx.fill();
@@ -181,14 +226,16 @@ function drawBerryRocket(ctx: CanvasRenderingContext2D) {
   ctx.fill();
 }
 
-function drawMangoPop(ctx: CanvasRenderingContext2D) {
+function drawMangoPop(ctx: CanvasRenderingContext2D, primaryColor?: string, secondaryColor?: string) {
   drawWoodenStick(ctx, 18, 26);
 
-  // Mango Gradient
+  // Gradient
+  const pColor = primaryColor || '#FF9800';
+  const sColor = secondaryColor || '#FFEB3B';
   const grad = ctx.createLinearGradient(0, -35, 0, 20);
   grad.addColorStop(0, '#FF5722');
-  grad.addColorStop(0.4, '#FF9800');
-  grad.addColorStop(1, '#FFEB3B');
+  grad.addColorStop(0.4, pColor);
+  grad.addColorStop(1, sColor);
 
   ctx.fillStyle = grad;
   ctx.beginPath();
@@ -212,8 +259,11 @@ function drawMangoPop(ctx: CanvasRenderingContext2D) {
   ctx.fill();
 }
 
-function drawTwister(ctx: CanvasRenderingContext2D) {
+function drawTwister(ctx: CanvasRenderingContext2D, primaryColor?: string, secondaryColor?: string) {
   drawWoodenStick(ctx, 18, 26);
+
+  const pColor = primaryColor || '#4CAF50';
+  const sColor = secondaryColor || '#E91E63';
 
   // Base background
   ctx.fillStyle = '#FFEB3B';
@@ -221,8 +271,8 @@ function drawTwister(ctx: CanvasRenderingContext2D) {
   ctx.roundRect(-14, -36, 28, 54, [14, 14, 6, 6]);
   ctx.fill();
 
-  // Spiral swirl 1 (Lime Green)
-  ctx.fillStyle = '#4CAF50';
+  // Spiral swirl 1
+  ctx.fillStyle = pColor;
   ctx.beginPath();
   ctx.moveTo(-14, -30);
   ctx.quadraticCurveTo(0, -22, 14, -26);
@@ -231,8 +281,8 @@ function drawTwister(ctx: CanvasRenderingContext2D) {
   ctx.closePath();
   ctx.fill();
 
-  // Spiral swirl 2 (Strawberry Red)
-  ctx.fillStyle = '#E91E63';
+  // Spiral swirl 2
+  ctx.fillStyle = sColor;
   ctx.beginPath();
   ctx.moveTo(-14, -10);
   ctx.quadraticCurveTo(0, -2, 14, -6);
@@ -241,8 +291,8 @@ function drawTwister(ctx: CanvasRenderingContext2D) {
   ctx.closePath();
   ctx.fill();
 
-  // Spiral swirl 3 (Lime Green)
-  ctx.fillStyle = '#4CAF50';
+  // Spiral swirl 3
+  ctx.fillStyle = pColor;
   ctx.beginPath();
   ctx.moveTo(-14, 8);
   ctx.quadraticCurveTo(0, 16, 14, 12);
@@ -258,7 +308,7 @@ function drawTwister(ctx: CanvasRenderingContext2D) {
   ctx.fill();
 }
 
-function drawWonderCone(ctx: CanvasRenderingContext2D) {
+function drawWonderCone(ctx: CanvasRenderingContext2D, primaryColor?: string, secondaryColor?: string) {
   // Waffle cone
   ctx.fillStyle = '#D7995B';
   ctx.strokeStyle = '#B37233';
@@ -286,19 +336,19 @@ function drawWonderCone(ctx: CanvasRenderingContext2D) {
   ctx.stroke();
 
   // Ice cream scoop bottom
-  ctx.fillStyle = '#FFF9C4';
+  ctx.fillStyle = secondaryColor || '#FFF9C4';
   ctx.beginPath();
   ctx.arc(0, 2, 17, 0, Math.PI);
   ctx.fill();
 
-  // Ice cream scoop top (Strawberry Swirl)
-  ctx.fillStyle = '#F06292';
+  // Ice cream scoop top
+  ctx.fillStyle = primaryColor || '#F06292';
   ctx.beginPath();
   ctx.arc(0, 0, 18, Math.PI, 0);
   ctx.fill();
 
   // Swirl peak
-  ctx.fillStyle = '#FF4081';
+  ctx.fillStyle = primaryColor || '#FF4081';
   ctx.beginPath();
   ctx.moveTo(-12, -2);
   ctx.quadraticCurveTo(0, -28, 6, -30);
@@ -333,13 +383,15 @@ function drawWonderCone(ctx: CanvasRenderingContext2D) {
   });
 }
 
-function drawGoldenStar(ctx: CanvasRenderingContext2D) {
+function drawGoldenStar(ctx: CanvasRenderingContext2D, primaryColor?: string, secondaryColor?: string) {
   drawWoodenStick(ctx, 16, 26);
+
+  const pColor = primaryColor || '#FFD700';
 
   // Outer Golden Glow
   const grad = ctx.createRadialGradient(0, -8, 2, 0, -8, 24);
   grad.addColorStop(0, '#FFF9C4');
-  grad.addColorStop(0.5, '#FFD700');
+  grad.addColorStop(0.5, pColor);
   grad.addColorStop(1, '#FF8F00');
 
   ctx.fillStyle = grad;
@@ -348,7 +400,7 @@ function drawGoldenStar(ctx: CanvasRenderingContext2D) {
   ctx.fill();
 
   // Golden star badge
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = secondaryColor || '#FFFFFF';
   ctx.beginPath();
   const starPoints = 5;
   const outerR = 10;
