@@ -80,4 +80,13 @@ export interface AdminStats {
   today_games: number;
   highest_score: number;
   average_score: number;
+  maintenance_mode?: boolean;
+  maintenance_message?: string;
 }
+
+export interface GameStatus {
+  success: boolean;
+  maintenance_mode: boolean;
+  maintenance_message?: string;
+}
+

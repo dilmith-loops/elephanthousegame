@@ -211,7 +211,7 @@ export async function exportToPDF(type: 'users' | 'scores', stats?: AdminStats |
       s.user?.name || `User #${s.user_id}`,
       s.user?.mobile || '—',
       `${s.score} marks`,
-      `${s.popsicles_caught} 🍦`,
+      `${s.popsicles_caught}`,
       `${s.duration_seconds}s`,
       s.created_at ? new Date(s.created_at).toLocaleString('en-GB') : '—'
     ]);

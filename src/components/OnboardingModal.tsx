@@ -240,22 +240,15 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
         </form>
 
         {/* Footer Actions */}
-        <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400">
           <button
             type="button"
             onClick={onOpenLeaderboard}
-            className="flex items-center space-x-1.5 text-amber-600 dark:text-amber-400 font-bold hover:underline"
+            className="flex items-center space-x-1.5 text-amber-600 dark:text-amber-400 font-bold hover:underline py-1 px-3 rounded-xl hover:bg-amber-500/10 transition-colors cursor-pointer"
           >
             <Trophy className="w-4 h-4" />
-            <span>Leaderboard</span>
+            <span>Hall of Fame Leaderboard</span>
           </button>
-
-          <a
-            href="/admin"
-            className="hover:text-pink-600 dark:hover:text-pink-400 font-medium transition-colors"
-          >
-            Admin Portal →
-          </a>
         </div>
       </div>
     </div>

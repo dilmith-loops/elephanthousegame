@@ -216,6 +216,36 @@ export const api = {
     return data;
   },
 
+  // Public: Get Game Status / Maintenance Check
+  async getGameStatus(): Promise<{ success: boolean; maintenance_mode: boolean; maintenance_message?: string }> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/game/status`, {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' }
+      });
+      return await res.json();
+    } catch {
+      return { success: true, maintenance_mode: false };
+    }
+  },
+
+  // Admin: Toggle Maintenance Mode
+  async toggleMaintenance(enabled: boolean, message?: string): Promise<{ success: boolean; message: string; maintenance_mode: boolean; maintenance_message?: string }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${API_BASE_URL}/admin/maintenance`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ enabled, message })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update maintenance mode');
+    return data;
+  },
+
   // Admin: Export CSV
   getExportUrl(type: 'users' | 'scores' = 'users') {
     const token = localStorage.getItem('eh_admin_token');
