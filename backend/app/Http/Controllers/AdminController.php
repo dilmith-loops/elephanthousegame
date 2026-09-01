@@ -647,7 +647,7 @@ class AdminController extends Controller
         ->orderByDesc('highest_score')
         ->get();
 
-        $csvHeader = ['User ID', 'Name', 'Mobile Number', 'Email', 'Last IP Address', 'Highest Score', 'Total Games Played', 'Registered Date'];
+        $csvHeader = ['User ID', 'Name', 'Mobile Number', 'Last IP Address', 'Highest Score', 'Total Games Played', 'Registered Date'];
 
         $callback = function () use ($users, $csvHeader) {
             $file = fopen('php://output', 'w');
@@ -658,7 +658,6 @@ class AdminController extends Controller
                     $user->id,
                     $user->name,
                     $user->mobile,
-                    $user->email ?? 'N/A',
                     $user->last_ip_address ?? 'N/A',
                     $user->highest_score,
                     $user->total_games,

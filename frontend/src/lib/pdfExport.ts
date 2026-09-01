@@ -142,14 +142,13 @@ export async function exportToPDF(type: 'users' | 'scores', stats?: AdminStats |
     const users: Player[] = res.users?.data || [];
 
     const tableHeaders = [
-      ['#', 'Player Name', 'Mobile Number', 'Email Address', 'High Score', 'Games', 'Registered Date']
+      ['#', 'Player Name', 'Mobile Number', 'High Score', 'Games', 'Registered Date']
     ];
 
     const tableRows = users.map((u, idx) => [
       idx + 1,
       u.name,
       u.mobile || '—',
-      u.email || '—',
       `${u.highest_score || 0} pts`,
       u.total_games || 0,
       u.created_at ? new Date(u.created_at).toLocaleDateString('en-GB') : '—'
@@ -171,9 +170,9 @@ export async function exportToPDF(type: 'users' | 'scores', stats?: AdminStats |
       columnStyles: {
         0: { halign: 'center', cellWidth: 25 },
         1: { fontStyle: 'bold' },
-        4: { halign: 'center', fontStyle: 'bold', textColor: [216, 27, 96] },
-        5: { halign: 'center' },
-        6: { halign: 'center' }
+        3: { halign: 'center', fontStyle: 'bold', textColor: [216, 27, 96] },
+        4: { halign: 'center' },
+        5: { halign: 'center' }
       },
       styles: {
         fontSize: 8.5,

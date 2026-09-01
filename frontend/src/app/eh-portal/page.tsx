@@ -426,8 +426,7 @@ export default function AdminPage() {
       setIsUpdatingPlayer(true);
       const res = await api.updatePlayerUser(editingPlayer.id, {
         name: editPlayerName.trim(),
-        mobile: editPlayerMobile.trim(),
-        email: editPlayerEmail.trim() || null
+        mobile: editPlayerMobile.trim()
       });
       setPlayerEditMsg({ type: 'success', text: res.message || 'Player updated successfully!' });
       loadTabData();
@@ -1056,7 +1055,7 @@ export default function AdminPage() {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search player name, mobile, email..."
+                  placeholder="Search player name, mobile..."
                   value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                   className="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
@@ -1095,7 +1094,6 @@ export default function AdminPage() {
                       <th className="py-3 px-4 rounded-l-xl whitespace-nowrap">ID</th>
                       <th className="py-3 px-4 whitespace-nowrap">Player Name</th>
                       <th className="py-3 px-4 whitespace-nowrap">Mobile Number</th>
-                      <th className="py-3 px-4 whitespace-nowrap">Email Address</th>
                       <th className="py-3 px-4 text-center whitespace-nowrap">Highest Score</th>
                       <th className="py-3 px-4 text-center whitespace-nowrap">Total Games</th>
                       <th className="py-3 px-4 whitespace-nowrap">Registered At</th>
@@ -1107,8 +1105,7 @@ export default function AdminPage() {
                       <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
                         <td className="py-3.5 px-4 font-mono text-slate-400 whitespace-nowrap">#{u.id}</td>
                         <td className="py-3.5 px-4 font-extrabold text-white whitespace-nowrap">{u.name}</td>
-                        <td className="py-3.5 px-4 font-mono text-slate-300 whitespace-nowrap">{u.mobile}</td>
-                        <td className="py-3.5 px-4 text-slate-400 whitespace-nowrap">{u.email || '—'}</td>
+                        <td className="py-3.5 px-4 font-mono text-slate-300 whitespace-nowrap">{u.mobile || '—'}</td>
                         <td className="py-3.5 px-4 text-center whitespace-nowrap">
                           <span className="px-2.5 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-black">
                             {u.highest_score || 0} pts
@@ -1883,22 +1880,6 @@ export default function AdminPage() {
                     required
                     placeholder="07XXXXXXXX"
                     className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Email Address (Optional)
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="email"
-                    value={editPlayerEmail}
-                    onChange={(e) => setEditPlayerEmail(e.target.value)}
-                    placeholder="player@example.com"
-                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500"
                   />
                 </div>
               </div>
