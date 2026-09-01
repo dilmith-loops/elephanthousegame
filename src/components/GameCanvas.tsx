@@ -18,7 +18,9 @@ import {
   AlertTriangle,
   Flame,
   Award,
-  Pause
+  Pause,
+  Play,
+  X
 } from 'lucide-react';
 
 interface Props {
@@ -109,14 +111,16 @@ export default function GameCanvas({
   const [gameDuration, setGameDuration] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<{ rank?: number; personal_best?: number } | null>(null);
+  const [showEndGameConfirm, setShowEndGameConfirm] = useState(false);
 
   // Game Engine Refs
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const lastVideoTimeRef = useRef<number>(-1);
   const lastDetectTimestampRef = useRef<number>(0);
-  const isPausedRef = useRef(isPaused);
-  isPausedRef.current = isPaused;
+  const pauseStartTimeRef = useRef<number>(0);
+  const isPausedRef = useRef(isPaused || showEndGameConfirm);
+  isPausedRef.current = isPaused || showEndGameConfirm;
 
   const popsiclesRef = useRef<PopsicleItem[]>([]);
   const particlesRef = useRef<SplashParticle[]>([]);
@@ -331,12 +335,36 @@ export default function GameCanvas({
         rank: res.rank,
         personal_best: res.personal_best
       });
+      onEndGame(scoreRef.current);
     } catch (err) {
-      console.error('Error saving score:', err);
+      console.error('Failed to submit score:', err);
     } finally {
       setIsSubmitting(false);
     }
-  }, [gameStartTime, player.id]);
+  }, [gameStartTime, onEndGame, player.id]);
+
+  // Request End Game (Pauses gameplay & opens custom confirmation dialog)
+  const handleRequestEndGame = () => {
+    if (countdown !== null || isGameOver) return;
+    pauseStartTimeRef.current = Date.now();
+    setShowEndGameConfirm(true);
+  };
+
+  // Resume Game from End Game Dialog
+  const handleResumeGame = () => {
+    if (pauseStartTimeRef.current > 0) {
+      const pausedDuration = Date.now() - pauseStartTimeRef.current;
+      setGameStartTime((prev) => prev + pausedDuration);
+      pauseStartTimeRef.current = 0;
+    }
+    setShowEndGameConfirm(false);
+  };
+
+  // Confirm End Game & Submit Score
+  const handleConfirmEndGame = () => {
+    setShowEndGameConfirm(false);
+    endGame();
+  };
 
   // Main AR Canvas Game Loop
   useEffect(() => {
@@ -687,7 +715,7 @@ export default function GameCanvas({
           </button>
 
           <button
-            onClick={endGame}
+            onClick={handleRequestEndGame}
             disabled={countdown !== null || isGameOver}
             className="px-3.5 py-2 md:px-4 md:py-2.5 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-black text-xs md:text-sm shadow-lg shadow-red-600/30 flex items-center space-x-1.5 transition-all transform active:scale-95 cursor-pointer disabled:opacity-50"
           >
@@ -878,6 +906,74 @@ export default function GameCanvas({
                   <span>Switch Player</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom End Game Confirmation Dialog */}
+      {showEndGameConfirm && !isGameOver && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-sm bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl">
+            {/* Close button */}
+            <button
+              onClick={handleResumeGame}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Icon Header */}
+            <div className="flex flex-col items-center text-center mb-5">
+              <div className="w-16 h-16 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center mb-3.5 shadow-lg shadow-rose-500/10 animate-pulse">
+                <StopCircle className="w-8 h-8" />
+              </div>
+
+              <h2 className="text-xl font-black text-white">
+                End Current Game?
+              </h2>
+              <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                Game is currently <strong className="text-amber-400">paused</strong>. Would you like to finish now and submit your score?
+              </p>
+            </div>
+
+            {/* Current Session Stats Preview */}
+            <div className="grid grid-cols-3 gap-2 bg-slate-800/70 p-3.5 rounded-2xl border border-slate-700/70 text-center mb-5">
+              <div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">Score</div>
+                <div className="text-base font-black text-pink-400">{score}</div>
+              </div>
+              <div className="border-x border-slate-700/80">
+                <div className="text-[10px] uppercase font-bold text-slate-400">Caught</div>
+                <div className="text-base font-black text-amber-400">{catches} 🍦</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-slate-400">Time</div>
+                <div className="text-base font-black text-cyan-400">
+                  {Math.max(1, Math.round((Date.now() - gameStartTime - (Date.now() - (pauseStartTimeRef.current || Date.now()))) / 1000))}s
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Action Buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={handleResumeGame}
+                className="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-lg shadow-emerald-600/25 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+              >
+                <Play className="w-4 h-4 fill-white" />
+                <span>Keep Playing</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmEndGame}
+                className="py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-black text-xs shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+              >
+                <StopCircle className="w-4 h-4" />
+                <span>End & Submit</span>
+              </button>
             </div>
           </div>
         </div>
