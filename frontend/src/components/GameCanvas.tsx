@@ -770,12 +770,12 @@ export default function GameCanvas({
           </div>
         </div>
 
-        {/* Center: Active Multiplier/Combo Indicator (Floating) */}
+        {/* Center: Active Multiplier/Combo Indicator (Floating below top bar) */}
         {combo > 1 && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none">
-            <span className="inline-flex items-center space-x-1 text-[11px] sm:text-xs font-black text-rose-300 animate-bounce bg-rose-500/30 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-rose-500/50 shadow-lg shadow-rose-500/20">
-              <Flame className="w-3.5 h-3.5 fill-rose-400 text-rose-400" />
-              <span>{combo}x!</span>
+          <div className="absolute top-14 left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300">
+            <span className="inline-flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white animate-bounce bg-gradient-to-r from-rose-600/90 to-amber-600/90 backdrop-blur-md px-3.5 py-1 rounded-full border border-rose-400/50 shadow-xl shadow-rose-500/30">
+              <Flame className="w-4 h-4 fill-amber-300 text-amber-300 animate-pulse" />
+              <span className="tracking-wide">{combo}x Combo!</span>
             </span>
           </div>
         )}
