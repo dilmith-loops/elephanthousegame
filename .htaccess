@@ -1,0 +1,40 @@
+# Hostinger Apache / LiteSpeed Configuration for Elephant House AR Game
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Prevent directory browsing
+    Options -Indexes
+
+    # Custom 404 Error Document
+    ErrorDocument 404 /out/404.html
+
+    # If already requesting /out, let it pass
+    RewriteRule ^out/ - [L]
+
+    # If root URL (e.g. yourdomain.com/ or yourdomain.com/ElephantHouseGame/)
+    RewriteRule ^$ out/index.html [L]
+
+    # If file exists in out/ folder, serve it
+    RewriteCond %{REQUEST_URI} !^/out/
+    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
+    RewriteRule ^(.*)$ out/$1 [L]
+</IfModule>
+
+# MIME types for AR MediaPipe WASM and AI models
+<IfModule mod_mime.c>
+    AddType application/wasm .wasm
+    AddType application/octet-stream .task
+    AddType application/octet-stream .tflite
+    AddType image/svg+xml .svg
+    AddType font/woff2 .woff2
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Enable Gzip / Deflate Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/wasm image/svg+xml
+</IfModule>
