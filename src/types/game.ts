@@ -40,6 +40,13 @@ export interface AdminLogRecord {
   created_at: string;
 }
 
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  created_at?: string;
+}
+
 export type PopsicleType = 'chocobar' | 'berry_rocket' | 'mango_pop' | 'twister' | 'wonder_cone' | 'golden_star';
 
 export interface PopsicleItem {

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../lib/api';
-import { AdminStats, Player, ScoreRecord, AdminLogRecord } from '../../types/game';
+import { AdminStats, Player, ScoreRecord, AdminLogRecord, AdminUser } from '../../types/game';
 import {
   Users,
   Gamepad2,
@@ -35,12 +35,18 @@ import {
   Globe,
   Smartphone,
   Check,
-  UserCheck
+  UserCheck,
+  Settings,
+  Sliders,
+  UserPlus,
+  Trash2,
+  Shield,
+  UserCog
 } from 'lucide-react';
 import Link from 'next/link';
 import { exportToPDF } from '../../lib/pdfExport';
 
-type SidebarTab = 'overview' | 'active_users' | 'users' | 'scores' | 'logs' | 'security';
+type SidebarTab = 'overview' | 'active_users' | 'users' | 'scores' | 'logs' | 'settings' | 'security';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -79,8 +85,24 @@ export default function AdminPage() {
   const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
   const [showCurrentPass, setShowCurrentPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  // Admin Accounts Management States
+  const [adminAccounts, setAdminAccounts] = useState<AdminUser[]>([]);
+  const [currentAdminId, setCurrentAdminId] = useState<number | null>(null);
+  const [loadingAdmins, setLoadingAdmins] = useState(false);
+  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
+  const [newAdminName, setNewAdminName] = useState('');
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [newAdminConfirmPass, setNewAdminConfirmPass] = useState('');
+  const [showNewAdminPass, setShowNewAdminPass] = useState(false);
+  const [showNewAdminConfirmPass, setShowNewAdminConfirmPass] = useState(false);
+  const [createAdminMsg, setCreateAdminMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
+  const [deletingAdminId, setDeletingAdminId] = useState<number | null>(null);
 
   // Export PDF Loading State
   const [isExportingPDF, setIsExportingPDF] = useState(false);
@@ -161,6 +183,8 @@ export default function AdminPage() {
           setTotalPages(res.logs.last_page || 1);
           setTotalRecords(res.logs.total || 0);
         }
+      } else if (activeTab === 'security') {
+        await loadAdminAccounts();
       }
     } catch (err) {
       console.error('Failed to load tab data:', err);
@@ -168,6 +192,80 @@ export default function AdminPage() {
       setLoadingData(false);
     }
   }, [activeTab, page, searchQuery, loadStats]);
+
+  // Load Admin Accounts
+  const loadAdminAccounts = useCallback(async () => {
+    setLoadingAdmins(true);
+    try {
+      const res = await api.getAdminUsersList();
+      if (res.success) {
+        setAdminAccounts(res.admins || []);
+        if (res.current_admin_id) {
+          setCurrentAdminId(res.current_admin_id);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load admin accounts:', err);
+    } finally {
+      setLoadingAdmins(false);
+    }
+  }, []);
+
+  // Handle Create New Admin User
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateAdminMsg(null);
+
+    if (newAdminPassword.length < 6) {
+      setCreateAdminMsg({ type: 'error', text: 'Password must be at least 6 characters.' });
+      return;
+    }
+    if (newAdminPassword !== newAdminConfirmPass) {
+      setCreateAdminMsg({ type: 'error', text: 'Password confirmation does not match.' });
+      return;
+    }
+
+    try {
+      setIsCreatingAdmin(true);
+      const res = await api.createAdminUser({
+        name: newAdminName.trim(),
+        email: newAdminEmail.trim(),
+        password: newAdminPassword,
+        password_confirmation: newAdminConfirmPass
+      });
+      setCreateAdminMsg({ type: 'success', text: res.message });
+      setNewAdminName('');
+      setNewAdminEmail('');
+      setNewAdminPassword('');
+      setNewAdminConfirmPass('');
+      await loadAdminAccounts();
+      setTimeout(() => {
+        setShowAddAdminModal(false);
+        setCreateAdminMsg(null);
+      }, 1200);
+    } catch (err: any) {
+      setCreateAdminMsg({ type: 'error', text: err.message || 'Failed to create admin user.' });
+    } finally {
+      setIsCreatingAdmin(false);
+    }
+  };
+
+  // Handle Delete Admin User
+  const handleDeleteAdmin = async (adminUser: AdminUser) => {
+    if (!window.confirm(`Are you sure you want to remove administrator "${adminUser.name}" (${adminUser.email})?`)) {
+      return;
+    }
+
+    try {
+      setDeletingAdminId(adminUser.id);
+      await api.deleteAdminUser(adminUser.id);
+      await loadAdminAccounts();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete admin account.');
+    } finally {
+      setDeletingAdminId(null);
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -475,6 +573,18 @@ export default function AdminPage() {
             </button>
 
             <button
+              onClick={() => { setActiveTab('settings'); setPage(1); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'settings'
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/20'
+                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              <span>System Settings</span>
+            </button>
+
+            <button
               onClick={() => { setActiveTab('security'); setPage(1); setIsMobileMenuOpen(false); }}
               className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'security'
@@ -520,6 +630,7 @@ export default function AdminPage() {
               {activeTab === 'users' && 'Registered Players Directory'}
               {activeTab === 'scores' && 'Game Session Score Logs'}
               {activeTab === 'logs' && 'Admin Audit & Action Logs'}
+              {activeTab === 'settings' && 'System & Maintenance Settings'}
               {activeTab === 'security' && 'Admin Profile & Security'}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -542,63 +653,6 @@ export default function AdminPage() {
         {/* 1. OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Maintenance Mode Control Banner */}
-            <div className={`p-4 md:p-5 rounded-2xl border transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
-              stats?.maintenance_mode
-                ? 'bg-rose-950/40 border-rose-600/50 shadow-lg shadow-rose-950/30'
-                : 'bg-slate-900/60 border-slate-800/80'
-            }`}>
-              <div className="flex items-center space-x-3.5">
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-colors ${
-                  stats?.maintenance_mode
-                    ? 'bg-rose-500/20 text-rose-400 border-rose-500/30 animate-pulse'
-                    : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                }`}>
-                  {stats?.maintenance_mode ? (
-                    <Wrench className="w-5 h-5" />
-                  ) : (
-                    <CheckCircle2 className="w-5 h-5" />
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-bold text-white">System Maintenance Mode</span>
-                    <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
-                      stats?.maintenance_mode
-                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                    }`}>
-                      {stats?.maintenance_mode ? 'Locked / Maintenance Active' : 'Live & Operational'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {stats?.maintenance_mode
-                      ? 'The game is currently locked. Players visiting the game will see the maintenance screen.'
-                      : 'Game is live. All registered and new users can freely play and submit scores.'}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={openMaintenanceDialog}
-                disabled={isTogglingMaintenance}
-                className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-2 shadow-md transition-all cursor-pointer disabled:opacity-50 flex-shrink-0 ${
-                  stats?.maintenance_mode
-                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/25'
-                    : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/25'
-                }`}
-              >
-                <Power className="w-4 h-4" />
-                <span>
-                  {isTogglingMaintenance
-                    ? 'Updating...'
-                    : stats?.maintenance_mode
-                    ? 'Disable Maintenance (Go Live)'
-                    : 'Enable Maintenance Mode'}
-                </span>
-              </button>
-            </div>
-
             {/* KPI Stat Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
               <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
@@ -1097,110 +1151,445 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 6. SECURITY & PASSWORD TAB */}
+        {/* 6. SETTINGS TAB (SYSTEM & MAINTENANCE CONTROLS) */}
+        {activeTab === 'settings' && (
+          <div className="max-w-3xl space-y-6">
+            {/* System Maintenance Mode Card */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-800">
+                <div className="flex items-center space-x-3.5">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-colors ${
+                    stats?.maintenance_mode
+                      ? 'bg-rose-500/20 text-rose-400 border-rose-500/30 animate-pulse'
+                      : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                  }`}>
+                    {stats?.maintenance_mode ? (
+                      <Wrench className="w-6 h-6" />
+                    ) : (
+                      <CheckCircle2 className="w-6 h-6" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <h3 className="text-base font-black text-white">System Maintenance Mode</h3>
+                      <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
+                        stats?.maintenance_mode
+                          ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      }`}>
+                        {stats?.maintenance_mode ? 'Locked / Maintenance Active' : 'Live & Operational'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {stats?.maintenance_mode
+                        ? 'The game is currently locked. All visiting players will see the maintenance screen.'
+                        : 'The AR Tongue Catch game is live for all players.'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={openMaintenanceDialog}
+                  disabled={isTogglingMaintenance}
+                  className={`px-5 py-3 rounded-xl font-bold text-xs flex items-center space-x-2 shadow-lg transition-all cursor-pointer disabled:opacity-50 flex-shrink-0 ${
+                    stats?.maintenance_mode
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/25'
+                      : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/25'
+                  }`}
+                >
+                  <Power className="w-4 h-4" />
+                  <span>
+                    {isTogglingMaintenance
+                      ? 'Updating...'
+                      : stats?.maintenance_mode
+                      ? 'Disable Maintenance (Go Live)'
+                      : 'Enable Maintenance Mode'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Maintenance Notice Message Info */}
+              <div className="p-4 bg-slate-800/50 rounded-2xl border border-slate-700/60 text-xs space-y-2">
+                <div className="flex items-center justify-between text-slate-300 font-bold">
+                  <span>Current Player Notice Message:</span>
+                  <button
+                    onClick={openMaintenanceDialog}
+                    className="text-pink-400 hover:text-pink-300 underline font-semibold text-[11px] cursor-pointer"
+                  >
+                    Edit Message & Toggle
+                  </button>
+                </div>
+                <p className="font-mono text-slate-400 bg-slate-900/60 p-3 rounded-xl border border-slate-800 leading-relaxed text-[11px]">
+                  {stats?.maintenance_message ||
+                    'The Elephant House AR Game is currently undergoing scheduled maintenance. Please check back shortly!'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 7. SECURITY & ADMIN USERS TAB */}
         {activeTab === 'security' && (
-          <div className="max-w-2xl bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
-            <div>
-              <h3 className="text-lg font-black text-white flex items-center space-x-2">
-                <KeyRound className="w-5 h-5 text-pink-500" />
-                <span>Change Admin Access Password</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Ensure your administrative credentials are secure. Updating your password will take effect immediately.
-              </p>
+          <div className="max-w-4xl space-y-6">
+            {/* Admin Accounts Management Card */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-pink-500/20 border border-pink-500/30 flex items-center justify-center text-pink-400">
+                    <UserCog className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <h3 className="text-base font-black text-white">Administrator Accounts</h3>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] font-extrabold border border-slate-700">
+                        {adminAccounts.length} Admins
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Authorized users with full administrative access to the Elephant House control center.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setNewAdminName('');
+                    setNewAdminEmail('');
+                    setNewAdminPassword('');
+                    setNewAdminConfirmPass('');
+                    setCreateAdminMsg(null);
+                    setShowAddAdminModal(true);
+                  }}
+                  className="px-4 py-2.5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-extrabold rounded-xl text-xs flex items-center space-x-2 shadow-lg shadow-pink-600/20 transition-all cursor-pointer flex-shrink-0"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Add New Admin</span>
+                </button>
+              </div>
+
+              {/* Admins Table */}
+              <div className="overflow-x-auto">
+                {loadingAdmins ? (
+                  <div className="py-10 text-center">
+                    <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                    <p className="text-xs text-slate-400">Loading admin users...</p>
+                  </div>
+                ) : adminAccounts.length === 0 ? (
+                  <div className="py-10 text-center text-xs text-slate-400">
+                    No admin accounts found.
+                  </div>
+                ) : (
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-800/40 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4 rounded-l-xl">Admin Profile</th>
+                        <th className="py-3 px-4">Email Address</th>
+                        <th className="py-3 px-4">Role / Access</th>
+                        <th className="py-3 px-4">Created Date</th>
+                        <th className="py-3 px-4 text-right rounded-r-xl">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {adminAccounts.map((admin) => {
+                        const isSelf = admin.id === currentAdminId;
+                        return (
+                          <tr key={admin.id} className="hover:bg-slate-800/30 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-pink-400 font-black flex items-center justify-center text-xs">
+                                  {admin.name.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="font-extrabold text-white">{admin.name}</span>
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 font-mono text-slate-300">
+                              <div className="flex items-center space-x-2">
+                                <span>{admin.email}</span>
+                                {isSelf && (
+                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-[9px] uppercase">
+                                    You (Current)
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/30 text-[10px] font-bold">
+                                <Shield className="w-3 h-3" />
+                                <span>Administrator</span>
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
+                              {admin.created_at ? new Date(admin.created_at).toLocaleDateString() : 'System Default'}
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              {isSelf ? (
+                                <span className="text-[10px] text-slate-500 font-semibold italic">
+                                  Active Session
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleDeleteAdmin(admin)}
+                                  disabled={deletingAdminId === admin.id || adminAccounts.length <= 1}
+                                  className="p-2 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 hover:border-red-600 transition-colors disabled:opacity-40 cursor-pointer"
+                                  title="Delete Admin Account"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
 
-            {passwordMsg && (
-              <div className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center space-x-2 ${
-                passwordMsg.type === 'success'
+            {/* Change Password Card */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+              <div>
+                <h3 className="text-base font-black text-white flex items-center space-x-2">
+                  <KeyRound className="w-5 h-5 text-pink-500" />
+                  <span>Change Your Login Password</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Ensure your administrative credentials are secure. Updating your password will take effect immediately.
+                </p>
+              </div>
+
+              {passwordMsg && (
+                <div className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center space-x-2 ${
+                  passwordMsg.type === 'success'
+                    ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
+                    : 'bg-rose-950/60 border-rose-800 text-rose-300'
+                }`}>
+                  {passwordMsg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                  <span>{passwordMsg.text}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleChangePassword} className="space-y-4 max-w-lg">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    Current Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type={showCurrentPass ? 'text' : 'password'}
+                      placeholder="Enter current password"
+                      value={currentPasswordInput}
+                      onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPass(!showCurrentPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 cursor-pointer"
+                    >
+                      {showCurrentPass ? <EyeOff className="w-4 h-4 text-pink-400" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    New Password (min 6 characters)
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type={showNewPass ? 'text' : 'password'}
+                      placeholder="Enter new strong password"
+                      value={newPasswordInput}
+                      onChange={(e) => setNewPasswordInput(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPass(!showNewPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 cursor-pointer"
+                    >
+                      {showNewPass ? <EyeOff className="w-4 h-4 text-pink-400" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    Confirm New Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type={showConfirmPass ? 'text' : 'password'}
+                      placeholder="Re-type new password"
+                      value={confirmPasswordInput}
+                      onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPass(!showConfirmPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 cursor-pointer"
+                      title={showConfirmPass ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirmPass ? <EyeOff className="w-4 h-4 text-pink-400" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={isUpdatingPassword}
+                    className="w-full py-3 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-xl shadow-lg shadow-pink-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer disabled:opacity-50 text-xs md:text-sm"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                    <span>{isUpdatingPassword ? 'Updating Password...' : 'Save New Password'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Modal: Add New Administrator */}
+      {showAddAdminModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl">
+            <button
+              onClick={() => setShowAddAdminModal(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center space-x-3 mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-pink-500/20 border border-pink-500/30 flex items-center justify-center text-pink-400">
+                <UserPlus className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white">Create Admin Account</h3>
+                <p className="text-xs text-slate-400">Grant administrative access</p>
+              </div>
+            </div>
+
+            {createAdminMsg && (
+              <div className={`mb-4 p-3 rounded-xl border text-xs font-semibold flex items-center space-x-2 ${
+                createAdminMsg.type === 'success'
                   ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
                   : 'bg-rose-950/60 border-rose-800 text-rose-300'
               }`}>
-                {passwordMsg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-                <span>{passwordMsg.text}</span>
+                {createAdminMsg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                <span>{createAdminMsg.text}</span>
               </div>
             )}
 
-            <form onSubmit={handleChangePassword} className="space-y-4">
+            <form onSubmit={handleCreateAdmin} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  Current Password
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. John Silva"
+                  value={newAdminName}
+                  onChange={(e) => setNewAdminName(e.target.value)}
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Admin Email Address
+                </label>
+                <input
+                  type="email"
+                  placeholder="e.g. john@elephanthouse.lk"
+                  value={newAdminEmail}
+                  onChange={(e) => setNewAdminEmail(e.target.value)}
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Password (min 6 chars)
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
-                    type={showCurrentPass ? 'text' : 'password'}
-                    placeholder="Enter current password"
-                    value={currentPasswordInput}
-                    onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                    type={showNewAdminPass ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={newAdminPassword}
+                    onChange={(e) => setNewAdminPassword(e.target.value)}
                     required
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowCurrentPass(!showCurrentPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                    onClick={() => setShowNewAdminPass(!showNewAdminPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 cursor-pointer"
                   >
-                    {showCurrentPass ? <EyeOff className="w-4 h-4 text-pink-400" /> : <Eye className="w-4 h-4" />}
+                    {showNewAdminPass ? <EyeOff className="w-4 h-4 text-pink-400" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  New Password (min 6 characters)
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Confirm Password
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
-                    type={showNewPass ? 'text' : 'password'}
-                    placeholder="Enter new strong password"
-                    value={newPasswordInput}
-                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                    type={showNewAdminConfirmPass ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={newAdminConfirmPass}
+                    onChange={(e) => setNewAdminConfirmPass(e.target.value)}
                     required
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowNewPass(!showNewPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                    onClick={() => setShowNewAdminConfirmPass(!showNewAdminConfirmPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 cursor-pointer"
                   >
-                    {showNewPass ? <EyeOff className="w-4 h-4 text-pink-400" /> : <Eye className="w-4 h-4" />}
+                    {showNewAdminConfirmPass ? <EyeOff className="w-4 h-4 text-pink-400" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  Confirm New Password
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="password"
-                    placeholder="Re-type new password"
-                    value={confirmPasswordInput}
-                    onChange={(e) => setConfirmPasswordInput(e.target.value)}
-                    required
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2">
+              <div className="grid grid-cols-2 gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddAdminModal(false)}
+                  className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
-                  disabled={isUpdatingPassword}
-                  className="w-full py-3 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-xl shadow-lg shadow-pink-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer disabled:opacity-50 text-xs md:text-sm"
+                  disabled={isCreatingAdmin}
+                  className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-extrabold text-xs shadow-lg shadow-pink-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-1.5"
                 >
-                  <KeyRound className="w-4 h-4" />
-                  <span>{isUpdatingPassword ? 'Updating Password...' : 'Save New Password'}</span>
+                  {isCreatingAdmin ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <span>Create Admin</span>
+                  )}
                 </button>
               </div>
             </form>
           </div>
-        )}
-      </main>
+        </div>
+      )}
 
       {/* Custom Maintenance Mode Confirmation Dialog */}
       {showMaintenanceModal && (

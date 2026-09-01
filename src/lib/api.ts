@@ -158,6 +158,61 @@ export const api = {
     return data;
   },
 
+  // Admin: List all admin accounts
+  async getAdminUsersList(): Promise<{
+    success: boolean;
+    current_admin_id: number;
+    admins: Array<{ id: number; name: string; email: string; created_at?: string }>;
+  }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${API_BASE_URL}/admin/admins`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to fetch admin accounts');
+    return data;
+  },
+
+  // Admin: Create new admin account
+  async createAdminUser(payload: {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+  }): Promise<{ success: boolean; message: string; admin: { id: number; name: string; email: string } }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${API_BASE_URL}/admin/admins`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to create admin user');
+    return data;
+  },
+
+  // Admin: Delete an admin account
+  async deleteAdminUser(id: number): Promise<{ success: boolean; message: string }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${API_BASE_URL}/admin/admins/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to delete admin user');
+    return data;
+  },
+
   // Admin: Get Activity Logs
   async getAdminLogs(params: { page?: number; limit?: number } = {}): Promise<{
     success: boolean;
