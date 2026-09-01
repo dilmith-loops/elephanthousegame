@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../lib/api';
-import { AdminStats, Player, ScoreRecord } from '../../types/game';
+import { AdminStats, Player, ScoreRecord, AdminLogRecord } from '../../types/game';
 import {
   Users,
   Gamepad2,
@@ -26,10 +26,21 @@ import {
   Wrench,
   AlertTriangle,
   CheckCircle2,
-  X
+  X,
+  Radio,
+  History,
+  KeyRound,
+  LayoutDashboard,
+  Menu,
+  Globe,
+  Smartphone,
+  Check,
+  UserCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import { exportToPDF } from '../../lib/pdfExport';
+
+type SidebarTab = 'overview' | 'active_users' | 'users' | 'scores' | 'logs' | 'security';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -39,17 +50,42 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
+  // Layout & Navigation State
+  const [activeTab, setActiveTab] = useState<SidebarTab>('overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   // Dashboard Data
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [activeTab, setActiveTab] = useState<'users' | 'scores'>('users');
+  const [usersList, setUsersList] = useState<Player[]>([]);
+  const [activeUsersList, setActiveUsersList] = useState<Player[]>([]);
+  const [scoresList, setScoresList] = useState<ScoreRecord[]>([]);
+  const [logsList, setLogsList] = useState<AdminLogRecord[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+
+  // Search & Pagination
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [usersList, setUsersList] = useState<Player[]>([]);
-  const [scoresList, setScoresList] = useState<ScoreRecord[]>([]);
-  const [loadingData, setLoadingData] = useState(false);
+  const [totalRecords, setTotalRecords] = useState(0);
 
-  // Check saved token on mount
+  // Maintenance Dialog States
+  const [isTogglingMaintenance, setIsTogglingMaintenance] = useState(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [maintenanceMsgInput, setMaintenanceMsgInput] = useState('');
+
+  // Password Change States
+  const [currentPasswordInput, setCurrentPasswordInput] = useState('');
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  // Export PDF Loading State
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
+  // Check stored auth token on mount
   useEffect(() => {
     const token = localStorage.getItem('eh_admin_token');
     if (token) {
@@ -57,72 +93,88 @@ export default function AdminPage() {
     }
   }, []);
 
+  // Handle Admin Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoginError(null);
     setIsLoggingIn(true);
+    setLoginError(null);
 
     try {
-      const res = await api.adminLogin(loginEmail, loginPassword);
-      if (res.success) {
-        setIsAuthenticated(true);
-      }
-    } catch (err: unknown) {
-      setLoginError((err as Error).message || 'Invalid credentials');
+      await api.adminLogin(loginEmail, loginPassword);
+      setIsAuthenticated(true);
+    } catch (err: any) {
+      setLoginError(err.message || 'Login failed.');
     } finally {
       setIsLoggingIn(false);
     }
   };
 
+  // Handle Logout
   const handleLogout = () => {
     localStorage.removeItem('eh_admin_token');
     setIsAuthenticated(false);
   };
 
-  // Fetch Dashboard Stats
+  // Load KPI Stats
   const loadStats = useCallback(async () => {
     try {
       const res = await api.getAdminStats();
-      if (res.stats) {
+      if (res.success) {
         setStats(res.stats);
       }
     } catch (err) {
-      console.error('Failed to load admin stats:', err);
+      console.error('Failed to load stats:', err);
     }
   }, []);
 
-  // Fetch Tab Data
+  // Load Active Tab Data
   const loadTabData = useCallback(async () => {
     setLoadingData(true);
     try {
-      if (activeTab === 'users') {
-        const res = await api.getAdminUsers({ page, search: searchQuery, limit: 10 });
-        if (res.users) {
+      if (activeTab === 'overview') {
+        await loadStats();
+      } else if (activeTab === 'active_users') {
+        const res = await api.getActiveUsers({ page, search: searchQuery, limit: 15 });
+        if (res.success) {
+          setActiveUsersList(res.active_users.data || []);
+          setTotalPages(res.active_users.last_page || 1);
+          setTotalRecords(res.active_users.total || 0);
+        }
+      } else if (activeTab === 'users') {
+        const res = await api.getAdminUsers({ page, search: searchQuery, limit: 15 });
+        if (res.success) {
           setUsersList(res.users.data || []);
           setTotalPages(res.users.last_page || 1);
+          setTotalRecords(res.users.total || 0);
         }
-      } else {
-        const res = await api.getAdminScores({ page, search: searchQuery, limit: 10 });
-        if (res.scores) {
+      } else if (activeTab === 'scores') {
+        const res = await api.getAdminScores({ page, search: searchQuery, limit: 15 });
+        if (res.success) {
           setScoresList(res.scores.data || []);
           setTotalPages(res.scores.last_page || 1);
+          setTotalRecords(res.scores.total || 0);
+        }
+      } else if (activeTab === 'logs') {
+        const res = await api.getAdminLogs({ page, limit: 20 });
+        if (res.success) {
+          setLogsList(res.logs.data || []);
+          setTotalPages(res.logs.last_page || 1);
+          setTotalRecords(res.logs.total || 0);
         }
       }
     } catch (err) {
-      console.error('Failed to load table data:', err);
+      console.error('Failed to load tab data:', err);
     } finally {
       setLoadingData(false);
     }
-  }, [activeTab, page, searchQuery]);
+  }, [activeTab, page, searchQuery, loadStats]);
 
   useEffect(() => {
     if (isAuthenticated) {
       loadStats();
       loadTabData();
     }
-  }, [isAuthenticated, loadStats, loadTabData]);
-
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  }, [isAuthenticated, activeTab, loadStats, loadTabData]);
 
   // Handle Export CSV
   const handleExport = (type: 'users' | 'scores') => {
@@ -143,10 +195,7 @@ export default function AdminPage() {
     }
   };
 
-  const [isTogglingMaintenance, setIsTogglingMaintenance] = useState(false);
-  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
-  const [maintenanceMsgInput, setMaintenanceMsgInput] = useState('');
-
+  // Open Maintenance Dialog
   const openMaintenanceDialog = () => {
     setMaintenanceMsgInput(
       stats?.maintenance_message ||
@@ -178,6 +227,39 @@ export default function AdminPage() {
       alert('Failed to update maintenance mode. Please try again.');
     } finally {
       setIsTogglingMaintenance(false);
+    }
+  };
+
+  // Handle Change Password Form
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordMsg(null);
+
+    if (newPasswordInput.length < 6) {
+      setPasswordMsg({ type: 'error', text: 'New password must be at least 6 characters.' });
+      return;
+    }
+
+    if (newPasswordInput !== confirmPasswordInput) {
+      setPasswordMsg({ type: 'error', text: 'New password confirmation does not match.' });
+      return;
+    }
+
+    try {
+      setIsUpdatingPassword(true);
+      const res = await api.updateAdminPassword({
+        current_password: currentPasswordInput,
+        new_password: newPasswordInput,
+        new_password_confirmation: confirmPasswordInput
+      });
+      setPasswordMsg({ type: 'success', text: res.message || 'Password updated successfully!' });
+      setCurrentPasswordInput('');
+      setNewPasswordInput('');
+      setConfirmPasswordInput('');
+    } catch (err: any) {
+      setPasswordMsg({ type: 'error', text: err.message || 'Failed to update password.' });
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -284,308 +366,607 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Top Navbar */}
-      <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30 px-4 md:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 p-1 shadow-md border border-slate-700/60 flex items-center justify-center">
-            <img
-              src="/logo.png"
-              alt="Elephant House"
-              className="w-full h-full object-contain"
-            />
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row">
+      {/* Mobile Top Header */}
+      <div className="md:hidden bg-slate-900 border-b border-slate-800 p-3.5 flex items-center justify-between sticky top-0 z-30">
+        <div className="flex items-center space-x-2.5">
+          <img src="/logo.png" alt="Elephant House" className="w-8 h-8 object-contain" />
+          <span className="font-extrabold text-sm text-pink-400">EH Admin</span>
+        </div>
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+        >
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* Responsive Sidebar Navigation */}
+      <aside
+        className={`fixed md:sticky top-0 inset-y-0 left-0 z-40 w-64 bg-slate-900/95 md:bg-slate-900/80 backdrop-blur-xl border-r border-slate-800 flex flex-col justify-between p-4 transition-transform duration-300 ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
+        <div>
+          {/* Brand Header */}
+          <div className="flex items-center space-x-3 px-2 py-3 mb-4 border-b border-slate-800/80">
+            <div className="w-10 h-10 rounded-xl bg-white p-1 shadow-md border border-slate-700/60 flex items-center justify-center flex-shrink-0">
+              <img
+                src="/logo.png"
+                alt="Elephant House"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div>
+              <h1 className="font-black text-sm bg-gradient-to-r from-pink-400 to-amber-300 bg-clip-text text-transparent">
+                Elephant House
+              </h1>
+              <p className="text-[10px] text-slate-400 font-semibold">AR Game Control Center</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-black text-base md:text-lg bg-gradient-to-r from-pink-400 to-amber-300 bg-clip-text text-transparent">
-              Elephant House Game Admin
-            </h1>
-            <p className="text-[11px] text-slate-400">Player Insights & Score Analytics</p>
-          </div>
+
+          {/* Navigation Links */}
+          <nav className="space-y-1">
+            <button
+              onClick={() => { setActiveTab('overview'); setPage(1); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'overview'
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/20'
+                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Dashboard Overview</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('active_users'); setPage(1); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'active_users'
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/20'
+                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <Radio className="w-4 h-4 text-emerald-400" />
+                <span>Live Active Users</span>
+              </div>
+              {(stats?.active_users_count ?? 0) > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black border border-emerald-500/30">
+                  {stats?.active_users_count}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('users'); setPage(1); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'users'
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/20'
+                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Registered Players</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('scores'); setPage(1); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'scores'
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/20'
+                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <Gamepad2 className="w-4 h-4" />
+              <span>Game Score Logs</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('logs'); setPage(1); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'logs'
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/20'
+                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <History className="w-4 h-4" />
+              <span>Admin Activity Logs</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('security'); setPage(1); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'security'
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/20'
+                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>Security & Password</span>
+            </button>
+          </nav>
         </div>
 
-        <div className="flex items-center space-x-3">
+        {/* Sidebar Footer */}
+        <div className="pt-4 border-t border-slate-800/80 space-y-2">
           <Link
             href="/"
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-1.5 transition-colors"
+            className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-colors"
           >
             <Gamepad2 className="w-4 h-4 text-pink-400" />
-            <span className="hidden sm:inline">Play Game</span>
+            <span>Switch to Game</span>
           </Link>
 
           <button
             onClick={handleLogout}
-            className="px-3 py-1.5 rounded-xl bg-red-950/60 hover:bg-red-900/70 border border-red-800/60 text-red-300 text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
+            className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-300 text-xs font-semibold transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
-            <span>Logout</span>
+            <span>Sign Out</span>
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content Viewport */}
       <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-6">
         
-        {/* Maintenance Mode Control Banner */}
-        <div className={`p-4 md:p-5 rounded-2xl border transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
-          stats?.maintenance_mode
-            ? 'bg-rose-950/40 border-rose-600/50 shadow-lg shadow-rose-950/30'
-            : 'bg-slate-900/60 border-slate-800/80'
-        }`}>
-          <div className="flex items-center space-x-3.5">
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-colors ${
+        {/* Top Breadcrumb & Status Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-3">
+          <div>
+            <h2 className="text-xl md:text-2xl font-black text-white capitalize">
+              {activeTab === 'overview' && 'Dashboard Overview'}
+              {activeTab === 'active_users' && 'Live Active Users & IP Monitoring'}
+              {activeTab === 'users' && 'Registered Players Directory'}
+              {activeTab === 'scores' && 'Game Session Score Logs'}
+              {activeTab === 'logs' && 'Admin Audit & Action Logs'}
+              {activeTab === 'security' && 'Admin Profile & Security'}
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Elephant House AR Tongue Catch Ice Cream Campaign
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => { loadStats(); loadTabData(); }}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold flex items-center space-x-1.5 transition-colors cursor-pointer"
+              title="Refresh Data"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loadingData ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 1. OVERVIEW TAB */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            {/* Maintenance Mode Control Banner */}
+            <div className={`p-4 md:p-5 rounded-2xl border transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
               stats?.maintenance_mode
-                ? 'bg-rose-500/20 text-rose-400 border-rose-500/30 animate-pulse'
-                : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                ? 'bg-rose-950/40 border-rose-600/50 shadow-lg shadow-rose-950/30'
+                : 'bg-slate-900/60 border-slate-800/80'
             }`}>
-              {stats?.maintenance_mode ? (
-                <Wrench className="w-5 h-5" />
-              ) : (
-                <CheckCircle2 className="w-5 h-5" />
-              )}
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-bold text-white">System Maintenance Mode</span>
-                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
+              <div className="flex items-center space-x-3.5">
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-colors ${
                   stats?.maintenance_mode
-                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                    ? 'bg-rose-500/20 text-rose-400 border-rose-500/30 animate-pulse'
+                    : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                 }`}>
-                  {stats?.maintenance_mode ? 'Locked / Maintenance Active' : 'Live & Operational'}
-                </span>
+                  {stats?.maintenance_mode ? (
+                    <Wrench className="w-5 h-5" />
+                  ) : (
+                    <CheckCircle2 className="w-5 h-5" />
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-bold text-white">System Maintenance Mode</span>
+                    <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${
+                      stats?.maintenance_mode
+                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                    }`}>
+                      {stats?.maintenance_mode ? 'Locked / Maintenance Active' : 'Live & Operational'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {stats?.maintenance_mode
+                      ? 'The game is currently locked. Players visiting the game will see the maintenance screen.'
+                      : 'Game is live. All registered and new users can freely play and submit scores.'}
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {stats?.maintenance_mode
-                  ? 'The game is currently locked. Players visiting the game will see the maintenance screen.'
-                  : 'Game is live. All registered and new users can freely play and submit scores.'}
-              </p>
-            </div>
-          </div>
 
-          <button
-            onClick={openMaintenanceDialog}
-            disabled={isTogglingMaintenance}
-            className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-2 shadow-md transition-all cursor-pointer disabled:opacity-50 flex-shrink-0 ${
-              stats?.maintenance_mode
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/25'
-                : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/25'
-            }`}
-          >
-            <Power className="w-4 h-4" />
-            <span>
-              {isTogglingMaintenance
-                ? 'Updating...'
-                : stats?.maintenance_mode
-                ? 'Disable Maintenance (Go Live)'
-                : 'Enable Maintenance Mode'}
-            </span>
-          </button>
-        </div>
-
-        {/* KPI Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-bold uppercase tracking-wider">Total Players</span>
-              <Users className="w-4 h-4 text-pink-400" />
-            </div>
-            <div className="text-2xl md:text-3xl font-black text-white mt-2">
-              {stats?.total_users ?? 0}
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1">Unique mobile users</p>
-          </div>
-
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-bold uppercase tracking-wider">Total Games</span>
-              <Gamepad2 className="w-4 h-4 text-amber-400" />
-            </div>
-            <div className="text-2xl md:text-3xl font-black text-white mt-2">
-              {stats?.total_games ?? 0}
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1">Sessions completed</p>
-          </div>
-
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-bold uppercase tracking-wider">Today's Games</span>
-              <Activity className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div className="text-2xl md:text-3xl font-black text-white mt-2">
-              {stats?.today_games ?? 0}
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1">Played in last 24h</p>
-          </div>
-
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-bold uppercase tracking-wider">Top Score</span>
-              <Trophy className="w-4 h-4 text-yellow-400" />
-            </div>
-            <div className="text-2xl md:text-3xl font-black text-amber-400 mt-2">
-              {stats?.highest_score ?? 0} <span className="text-xs text-slate-400 font-bold">pts</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1">Game record</p>
-          </div>
-
-          <div className="col-span-2 md:col-span-1 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-bold uppercase tracking-wider">Average Score</span>
-              <Clock className="w-4 h-4 text-cyan-400" />
-            </div>
-            <div className="text-2xl md:text-3xl font-black text-white mt-2">
-              {stats?.average_score ?? 0} <span className="text-xs text-slate-400 font-bold">pts</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1">Per session average</p>
-          </div>
-        </div>
-
-        {/* Content Container */}
-        <div className="bg-slate-900/70 border border-slate-800 rounded-3xl p-4 md:p-6 shadow-xl">
-          
-          {/* Controls Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-800">
-            
-            {/* Tabs */}
-            <div className="flex bg-slate-800/80 p-1 rounded-2xl w-full md:w-auto">
               <button
-                onClick={() => { setActiveTab('users'); setPage(1); }}
-                className={`flex-1 md:flex-initial px-5 py-2 text-xs md:text-sm font-bold rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'users'
-                    ? 'bg-pink-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-slate-200'
+                onClick={openMaintenanceDialog}
+                disabled={isTogglingMaintenance}
+                className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-2 shadow-md transition-all cursor-pointer disabled:opacity-50 flex-shrink-0 ${
+                  stats?.maintenance_mode
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/25'
+                    : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/25'
                 }`}
               >
-                Registered Players
-              </button>
-              <button
-                onClick={() => { setActiveTab('scores'); setPage(1); }}
-                className={`flex-1 md:flex-initial px-5 py-2 text-xs md:text-sm font-bold rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'scores'
-                    ? 'bg-pink-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Score Logs
+                <Power className="w-4 h-4" />
+                <span>
+                  {isTogglingMaintenance
+                    ? 'Updating...'
+                    : stats?.maintenance_mode
+                    ? 'Disable Maintenance (Go Live)'
+                    : 'Enable Maintenance Mode'}
+                </span>
               </button>
             </div>
 
-            {/* Search & Export */}
-            <div className="flex items-center space-x-2 w-full md:w-auto">
-              <div className="relative flex-1 md:w-64">
+            {/* KPI Stat Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider">Total Players</span>
+                  <Users className="w-4 h-4 text-pink-400" />
+                </div>
+                <div className="text-2xl md:text-3xl font-black text-white mt-2">
+                  {stats?.total_users ?? 0}
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">Unique mobile users</p>
+              </div>
+
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider">Live Online</span>
+                  <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
+                </div>
+                <div className="text-2xl md:text-3xl font-black text-emerald-400 mt-2">
+                  {stats?.active_users_count ?? 0}
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">Active in last 15 min</p>
+              </div>
+
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider">Total Games</span>
+                  <Gamepad2 className="w-4 h-4 text-amber-400" />
+                </div>
+                <div className="text-2xl md:text-3xl font-black text-white mt-2">
+                  {stats?.total_games ?? 0}
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">Sessions completed</p>
+              </div>
+
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider">Top Score</span>
+                  <Trophy className="w-4 h-4 text-amber-400" />
+                </div>
+                <div className="text-2xl md:text-3xl font-black text-amber-400 mt-2">
+                  {stats?.highest_score ?? 0} <span className="text-xs font-normal text-amber-300">pts</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">Game record marks</p>
+              </div>
+
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider">Average Score</span>
+                  <Clock className="w-4 h-4 text-cyan-400" />
+                </div>
+                <div className="text-2xl md:text-3xl font-black text-white mt-2">
+                  {stats?.average_score ?? 0} <span className="text-xs font-normal text-slate-400">pts</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">Per session average</p>
+              </div>
+            </div>
+
+            {/* Quick Actions Card */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-extrabold text-sm text-white flex items-center space-x-2">
+                    <Radio className="w-4 h-4 text-emerald-400" />
+                    <span>Real-time Active Users & IP Addresses</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Monitor active connections, players' IP addresses, device user agents, and recent engagement.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('active_users')}
+                  className="mt-4 px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
+                >
+                  <span>View Active Users Table</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-extrabold text-sm text-white flex items-center space-x-2">
+                    <KeyRound className="w-4 h-4 text-pink-400" />
+                    <span>Admin Security & Password</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Change administrative access password and review audit logs of recent modifications.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('security')}
+                  className="mt-4 px-4 py-2 bg-pink-600/20 hover:bg-pink-600/30 text-pink-300 border border-pink-500/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
+                >
+                  <span>Manage Password</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 2. ACTIVE USERS TAB (WITH IP ADDRESSES) */}
+        {activeTab === 'active_users' && (
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-4 md:p-6 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative w-full sm:w-72">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search by name, mobile, email..."
+                  placeholder="Filter by name, mobile, IP..."
                   value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500 text-white"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <span className="text-xs text-slate-400">
+                Total Users: <strong className="text-white">{totalRecords}</strong>
+              </span>
+            </div>
+
+            <div className="overflow-x-auto py-2">
+              {loadingData ? (
+                <div className="py-16 text-center">
+                  <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <p className="text-xs text-slate-400">Loading active users...</p>
+                </div>
+              ) : activeUsersList.length === 0 ? (
+                <div className="py-16 text-center text-slate-400 text-xs">
+                  No active users found matching your search.
+                </div>
+              ) : (
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-800/50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4 rounded-l-xl">Status</th>
+                      <th className="py-3 px-4">Player Name</th>
+                      <th className="py-3 px-4">Mobile</th>
+                      <th className="py-3 px-4">Client IP Address</th>
+                      <th className="py-3 px-4 text-center">High Score</th>
+                      <th className="py-3 px-4 text-center">Games</th>
+                      <th className="py-3 px-4 rounded-r-xl">Last Active Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {activeUsersList.map((u) => (
+                      <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <span className={`inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            u.status === 'online'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse'
+                              : u.status === 'idle'
+                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                              : 'bg-slate-800 text-slate-400 border border-slate-700'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              u.status === 'online' ? 'bg-emerald-400' : u.status === 'idle' ? 'bg-amber-400' : 'bg-slate-500'
+                            }`} />
+                            <span className="capitalize">{u.status || 'Offline'}</span>
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 font-extrabold text-white">{u.name}</td>
+                        <td className="py-3.5 px-4 font-mono text-slate-300">{u.mobile}</td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-mono text-xs px-2 py-1 rounded bg-slate-800 text-cyan-300 border border-slate-700">
+                            {u.last_ip_address || '127.0.0.1'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-center font-bold text-pink-400">
+                          {u.highest_score || 0} pts
+                        </td>
+                        <td className="py-3.5 px-4 text-center text-slate-300">{u.total_games || 0}</td>
+                        <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400">
+                          {u.last_active_at ? new Date(u.last_active_at).toLocaleString() : 'Just now'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t border-slate-800 text-xs text-slate-400">
+                <span>Page {page} of {totalPages}</span>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 3. REGISTERED PLAYERS TAB */}
+        {activeTab === 'users' && (
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-4 md:p-6 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search player name, mobile, email..."
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                  className="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
                 />
               </div>
 
-              <button
-                onClick={() => { loadStats(); loadTabData(); }}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
-                title="Refresh Table"
-              >
-                <RefreshCw className={`w-4 h-4 ${loadingData ? 'animate-spin' : ''}`} />
-              </button>
-
-              <button
-                onClick={() => handleExport(activeTab)}
-                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md transition-all cursor-pointer flex-shrink-0"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export CSV</span>
-              </button>
-
-              <button
-                onClick={() => handleExportPDF(activeTab)}
-                disabled={isExportingPDF}
-                className="px-3.5 py-2 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md transition-all cursor-pointer flex-shrink-0 disabled:opacity-50"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>{isExportingPDF ? 'Generating...' : 'Export PDF'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Table View */}
-          <div className="overflow-x-auto py-3">
-            {loadingData ? (
-              <div className="py-20 text-center">
-                <div className="w-8 h-8 border-3 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                <p className="text-xs text-slate-400">Loading {activeTab} data...</p>
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <button
+                  onClick={() => handleExport('users')}
+                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md transition-all cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export CSV</span>
+                </button>
+                <button
+                  onClick={() => handleExportPDF('users')}
+                  disabled={isExportingPDF}
+                  className="px-3.5 py-2 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{isExportingPDF ? 'Generating...' : 'Export PDF'}</span>
+                </button>
               </div>
-            ) : activeTab === 'users' ? (
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-800/50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
-                  <tr>
-                    <th className="py-3 px-4 rounded-l-xl">ID</th>
-                    <th className="py-3 px-4">Player Name</th>
-                    <th className="py-3 px-4">Mobile Number</th>
-                    <th className="py-3 px-4">Email</th>
-                    <th className="py-3 px-4 text-center">Highest Score</th>
-                    <th className="py-3 px-4 text-center">Total Games</th>
-                    <th className="py-3 px-4 rounded-r-xl">Registered At</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {usersList.length === 0 ? (
+            </div>
+
+            <div className="overflow-x-auto py-2">
+              {loadingData ? (
+                <div className="py-16 text-center">
+                  <div className="w-8 h-8 border-3 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <p className="text-xs text-slate-400">Loading players...</p>
+                </div>
+              ) : (
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-800/50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-slate-500">
-                        No players found matching your search.
-                      </td>
+                      <th className="py-3 px-4 rounded-l-xl">ID</th>
+                      <th className="py-3 px-4">Player Name</th>
+                      <th className="py-3 px-4">Mobile Number</th>
+                      <th className="py-3 px-4">Email Address</th>
+                      <th className="py-3 px-4 text-center">Highest Score</th>
+                      <th className="py-3 px-4 text-center">Total Games</th>
+                      <th className="py-3 px-4 rounded-r-xl">Registered At</th>
                     </tr>
-                  ) : (
-                    usersList.map((u) => (
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {usersList.map((u) => (
                       <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
                         <td className="py-3.5 px-4 font-mono text-slate-400">#{u.id}</td>
                         <td className="py-3.5 px-4 font-extrabold text-white">{u.name}</td>
                         <td className="py-3.5 px-4 font-mono text-slate-300">{u.mobile}</td>
                         <td className="py-3.5 px-4 text-slate-400">{u.email || '—'}</td>
                         <td className="py-3.5 px-4 text-center">
-                          <span className="px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-black">
+                          <span className="px-2.5 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-black">
                             {u.highest_score || 0} pts
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-center font-bold text-slate-300">
-                          {u.total_games || 0}
-                        </td>
+                        <td className="py-3.5 px-4 text-center text-slate-300">{u.total_games || 0}</td>
                         <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
-                          {u.created_at ? new Date(u.created_at).toLocaleString() : '—'}
+                          {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            ) : (
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-800/50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
-                  <tr>
-                    <th className="py-3 px-4 rounded-l-xl">Log ID</th>
-                    <th className="py-3 px-4">Player</th>
-                    <th className="py-3 px-4">Mobile</th>
-                    <th className="py-3 px-4 text-center">Marks (Score)</th>
-                    <th className="py-3 px-4 text-center">Popsicles Caught</th>
-                    <th className="py-3 px-4 text-center">Duration</th>
-                    <th className="py-3 px-4 rounded-r-xl">Played At</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {scoresList.length === 0 ? (
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t border-slate-800 text-xs text-slate-400">
+                <span>Page {page} of {totalPages}</span>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 4. GAME SCORE LOGS TAB */}
+        {activeTab === 'scores' && (
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-4 md:p-6 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search score records..."
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                  className="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <button
+                  onClick={() => handleExport('scores')}
+                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md transition-all cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export CSV</span>
+                </button>
+                <button
+                  onClick={() => handleExportPDF('scores')}
+                  disabled={isExportingPDF}
+                  className="px-3.5 py-2 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-md transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{isExportingPDF ? 'Generating...' : 'Export PDF'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto py-2">
+              {loadingData ? (
+                <div className="py-16 text-center">
+                  <div className="w-8 h-8 border-3 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <p className="text-xs text-slate-400">Loading scores...</p>
+                </div>
+              ) : (
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-800/50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-slate-500">
-                        No score logs recorded yet.
-                      </td>
+                      <th className="py-3 px-4 rounded-l-xl">Log ID</th>
+                      <th className="py-3 px-4">Player</th>
+                      <th className="py-3 px-4">Mobile</th>
+                      <th className="py-3 px-4">Player IP</th>
+                      <th className="py-3 px-4 text-center">Marks (Score)</th>
+                      <th className="py-3 px-4 text-center">Caught</th>
+                      <th className="py-3 px-4 text-center">Duration</th>
+                      <th className="py-3 px-4 rounded-r-xl">Played At</th>
                     </tr>
-                  ) : (
-                    scoresList.map((s) => (
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {scoresList.map((s) => (
                       <tr key={s.id} className="hover:bg-slate-800/40 transition-colors">
                         <td className="py-3.5 px-4 font-mono text-slate-400">#{s.id}</td>
                         <td className="py-3.5 px-4 font-extrabold text-white">{s.user?.name || `User #${s.user_id}`}</td>
                         <td className="py-3.5 px-4 font-mono text-slate-300">{s.user?.mobile || '—'}</td>
+                        <td className="py-3.5 px-4 font-mono text-slate-400">{s.user?.last_ip_address || '127.0.0.1'}</td>
                         <td className="py-3.5 px-4 text-center">
                           <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-black">
                             {s.score} marks
@@ -601,36 +982,224 @@ export default function AdminPage() {
                           {s.created_at ? new Date(s.created_at).toLocaleString() : '—'}
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t border-slate-800 text-xs text-slate-400">
+                <span>Page {page} of {totalPages}</span>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
+        )}
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-slate-800 text-xs text-slate-400">
-              <span>Page {page} of {totalPages}</span>
-              <div className="flex items-center space-x-1">
+        {/* 5. ADMIN AUDIT LOGS TAB */}
+        {activeTab === 'logs' && (
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-4 md:p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400">
+                Showing all administrative actions, logins, and maintenance events.
+              </span>
+              <button
+                onClick={loadTabData}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-300"
+              >
+                Refresh Logs
+              </button>
+            </div>
+
+            <div className="overflow-x-auto py-2">
+              {loadingData ? (
+                <div className="py-16 text-center">
+                  <div className="w-8 h-8 border-3 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <p className="text-xs text-slate-400">Loading audit logs...</p>
+                </div>
+              ) : logsList.length === 0 ? (
+                <div className="py-16 text-center text-slate-400 text-xs">
+                  No activity logs recorded yet.
+                </div>
+              ) : (
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-800/50 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4 rounded-l-xl">Log ID</th>
+                      <th className="py-3 px-4">Action</th>
+                      <th className="py-3 px-4">Description</th>
+                      <th className="py-3 px-4">Admin Email</th>
+                      <th className="py-3 px-4">IP Address</th>
+                      <th className="py-3 px-4 rounded-r-xl">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {logsList.map((log) => (
+                      <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3.5 px-4 font-mono text-slate-400">#{log.id}</td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-pink-400 font-bold uppercase text-[10px]">
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-200">{log.description || '—'}</td>
+                        <td className="py-3.5 px-4 font-mono text-slate-400">{log.admin_email || 'System'}</td>
+                        <td className="py-3.5 px-4 font-mono text-cyan-400">{log.ip_address || '127.0.0.1'}</td>
+                        <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400">
+                          {log.created_at ? new Date(log.created_at).toLocaleString() : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t border-slate-800 text-xs text-slate-400">
+                <span>Page {page} of {totalPages}</span>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 6. SECURITY & PASSWORD TAB */}
+        {activeTab === 'security' && (
+          <div className="max-w-2xl bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+            <div>
+              <h3 className="text-lg font-black text-white flex items-center space-x-2">
+                <KeyRound className="w-5 h-5 text-pink-500" />
+                <span>Change Admin Access Password</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Ensure your administrative credentials are secure. Updating your password will take effect immediately.
+              </p>
+            </div>
+
+            {passwordMsg && (
+              <div className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center space-x-2 ${
+                passwordMsg.type === 'success'
+                  ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
+                  : 'bg-rose-950/60 border-rose-800 text-rose-300'
+              }`}>
+                {passwordMsg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                <span>{passwordMsg.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Current Password
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type={showCurrentPass ? 'text' : 'password'}
+                    placeholder="Enter current password"
+                    value={currentPasswordInput}
+                    onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                    required
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPass(!showCurrentPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                  >
+                    {showCurrentPass ? <EyeOff className="w-4 h-4 text-pink-400" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  New Password (min 6 characters)
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type={showNewPass ? 'text' : 'password'}
+                    placeholder="Enter new strong password"
+                    value={newPasswordInput}
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                    required
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPass(!showNewPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                  >
+                    {showNewPass ? <EyeOff className="w-4 h-4 text-pink-400" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Confirm New Password
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="password"
+                    placeholder="Re-type new password"
+                    value={confirmPasswordInput}
+                    onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-slate-500"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2">
                 <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors cursor-pointer"
+                  type="submit"
+                  disabled={isUpdatingPassword}
+                  className="w-full py-3 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-xl shadow-lg shadow-pink-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer disabled:opacity-50 text-xs md:text-sm"
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 transition-colors cursor-pointer"
-                >
-                  <ChevronRight className="w-4 h-4" />
+                  <KeyRound className="w-4 h-4" />
+                  <span>{isUpdatingPassword ? 'Updating Password...' : 'Save New Password'}</span>
                 </button>
               </div>
-            </div>
-          )}
-        </div>
+            </form>
+          </div>
+        )}
       </main>
 
       {/* Custom Maintenance Mode Confirmation Dialog */}

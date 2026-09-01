@@ -141,6 +141,16 @@ export default function GameCanvas({
     setIsMuted(!isMuted);
   };
 
+  // Periodic Active Player Heartbeat Ping
+  useEffect(() => {
+    if (!player.id) return;
+    api.sendPlayerPing(player.id);
+    const interval = setInterval(() => {
+      api.sendPlayerPing(player.id);
+    }, 25000);
+    return () => clearInterval(interval);
+  }, [player.id]);
+
   // Initialize MediaPipe Face Landmarker via Singleton
   useEffect(() => {
     let isMounted = true;

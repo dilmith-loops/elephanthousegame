@@ -3,9 +3,13 @@ export interface Player {
   name: string;
   mobile: string;
   email?: string | null;
+  last_ip_address?: string | null;
+  last_user_agent?: string | null;
+  last_active_at?: string | null;
   created_at?: string;
   highest_score?: number;
   total_games?: number;
+  status?: 'online' | 'idle' | 'offline';
 }
 
 export interface ScoreSubmission {
@@ -22,6 +26,17 @@ export interface ScoreRecord {
   score: number;
   popsicles_caught: number;
   duration_seconds: number;
+  created_at: string;
+}
+
+export interface AdminLogRecord {
+  id: number;
+  admin_id?: number | null;
+  admin_email?: string | null;
+  action: string;
+  description?: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
   created_at: string;
 }
 
@@ -78,6 +93,7 @@ export interface AdminStats {
   total_users: number;
   total_games: number;
   today_games: number;
+  active_users_count?: number;
   highest_score: number;
   average_score: number;
   maintenance_mode?: boolean;
@@ -89,4 +105,3 @@ export interface GameStatus {
   maintenance_mode: boolean;
   maintenance_message?: string;
 }
-
