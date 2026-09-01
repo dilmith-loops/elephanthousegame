@@ -18,6 +18,15 @@ export function getApiBaseUrl(): string {
   return 'http://127.0.0.1:8008/api';
 }
 
+export function getPopsicleImageUrl(urlOrPath: string | null | undefined): string | null {
+  if (!urlOrPath) return null;
+  if (urlOrPath.startsWith('blob:') || urlOrPath.startsWith('data:')) {
+    return urlOrPath;
+  }
+  const filename = urlOrPath.split('/').pop();
+  return `${getApiBaseUrl()}/popsicles/image/${filename}`;
+}
+
 export const api = {
   // Public: Send heartbeat ping for active player session
   async sendPlayerPing(userId: number): Promise<void> {

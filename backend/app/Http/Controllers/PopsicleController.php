@@ -27,6 +27,49 @@ class PopsicleController extends Controller
     }
 
     /**
+     * Public API: Stream/Serve uploaded popsicle image directly
+     */
+    public function serveImage($filename)
+    {
+        $filename = basename($filename);
+
+        $candidates = [
+            public_path('uploads/popsicles/' . $filename),
+            base_path('public/uploads/popsicles/' . $filename),
+            base_path('../public/uploads/popsicles/' . $filename),
+            base_path('../uploads/popsicles/' . $filename),
+            base_path('../backend/public/uploads/popsicles/' . $filename),
+            storage_path('app/public/popsicles/' . $filename),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (File::exists($candidate)) {
+                $ext = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
+                $mimeTypes = [
+                    'png' => 'image/png',
+                    'jpg' => 'image/jpeg',
+                    'jpeg' => 'image/jpeg',
+                    'svg' => 'image/svg+xml',
+                    'webp' => 'image/webp',
+                    'gif' => 'image/gif',
+                ];
+                $contentType = $mimeTypes[$ext] ?? File::mimeType($candidate) ?? 'image/png';
+
+                return response()->file($candidate, [
+                    'Content-Type' => $contentType,
+                    'Cache-Control' => 'public, max-age=86400',
+                    'Access-Control-Allow-Origin' => '*',
+                ]);
+            }
+        }
+
+        return response()->json([
+            'error' => 'Image not found',
+            'filename' => $filename,
+        ], 404);
+    }
+
+    /**
      * Admin API: List all popsicles with statistics
      */
     public function adminIndex(Request $request)

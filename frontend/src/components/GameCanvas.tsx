@@ -5,7 +5,7 @@ import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision';
 import { Player, PopsicleItem, SplashParticle, ScorePopup, FaceMouthState, PopsicleAsset, PopsicleType } from '../types/game';
 import { FLAVORS, drawPopsicle, preloadPopsicleImage } from '../lib/sprites';
 import { sound } from '../lib/audio';
-import { api } from '../lib/api';
+import { api, getPopsicleImageUrl } from '../lib/api';
 import confetti from 'canvas-confetti';
 import {
   Volume2,
@@ -182,8 +182,9 @@ export default function GameCanvas({
         popsicleAssetsRef.current = res.popsicles;
         // Preload any custom uploaded images into canvas cache
         res.popsicles.forEach((p) => {
-          if (p.image_url) {
-            preloadPopsicleImage(p.image_url);
+          const imgUrl = getPopsicleImageUrl(p.image_url);
+          if (imgUrl) {
+            preloadPopsicleImage(imgUrl);
           }
         });
       }
@@ -659,7 +660,7 @@ export default function GameCanvas({
             flavorName: chosen.name,
             color: chosen.primary_color || '#E91E63',
             secondaryColor: chosen.secondary_color || '#FFD200',
-            imageUrl: chosen.image_url
+            imageUrl: getPopsicleImageUrl(chosen.image_url)
           });
         } else {
           // Preset Fallback

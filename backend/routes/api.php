@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/game/status', [PlayerController::class, 'status']);
 Route::post('/player/ping', [PlayerController::class, 'ping']);
 Route::get('/popsicles', [PopsicleController::class, 'index']);
+Route::get('/popsicles/image/{filename}', [PopsicleController::class, 'serveImage']);
 
 // Player Endpoints
 Route::post('/player/auth', [PlayerController::class, 'auth']);

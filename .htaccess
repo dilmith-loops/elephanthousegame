@@ -12,6 +12,9 @@
     RewriteCond %{REQUEST_URI} api/ [NC]
     RewriteRule ^(.*)$ index.php [L]
 
+    # Forward uploaded media files to backend public storage
+    RewriteRule ^uploads/(.*)$ backend/public/uploads/$1 [L]
+
     # 2. If requesting frontend/out/ directory directly, pass through
     RewriteRule ^frontend/out/ - [L]
 

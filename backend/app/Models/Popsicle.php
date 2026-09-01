@@ -44,6 +44,9 @@ class Popsicle extends Model
             return $this->image_path;
         }
 
-        return url($this->image_path);
+        $filename = basename($this->image_path);
+        
+        $root = request() ? request()->root() : url('');
+        return rtrim($root, '/') . '/api/popsicles/image/' . $filename;
     }
 }

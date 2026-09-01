@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { api } from '../../lib/api';
+import { api, getPopsicleImageUrl } from '../../lib/api';
 import { AdminStats, Player, ScoreRecord, AdminLogRecord, AdminUser, PopsicleAsset } from '../../types/game';
 import {
   Users,
@@ -316,7 +316,7 @@ export default function AdminPage() {
     setPSecondaryColor(p.secondary_color || '#FFD200');
     setPIsActive(p.is_active);
     setPImageFile(null);
-    setPImagePreview(p.image_url || null);
+    setPImagePreview(getPopsicleImageUrl(p.image_url) || null);
     setPRemoveImage(false);
     setPopsicleFormMsg(null);
     setShowPopsicleModal(true);
@@ -1607,7 +1607,7 @@ export default function AdminPage() {
                               >
                                 {p.image_url ? (
                                   <img
-                                    src={p.image_url}
+                                    src={getPopsicleImageUrl(p.image_url) || ''}
                                     alt={p.name}
                                     className="w-9 h-9 object-contain"
                                   />
