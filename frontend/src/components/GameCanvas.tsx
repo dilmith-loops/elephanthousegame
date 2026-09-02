@@ -1320,43 +1320,54 @@ export default function GameCanvas({
 
       {/* Custom End Game Confirmation Dialog */}
       {showEndGameConfirm && !isGameOver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-sm bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
+          {/* Ambient Glows behind modal */}
+          <div className="absolute w-72 h-72 bg-rose-600/20 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute w-60 h-60 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="relative w-full max-w-sm bg-[#181922]/98 backdrop-blur-2xl border-2 border-[#38394a] rounded-3xl p-6 sm:p-7 text-white shadow-[0_20px_60px_rgba(0,0,0,0.95)] ring-1 ring-white/10 select-none">
             {/* Close button */}
             <button
               onClick={handleResumeGame}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Icon Header */}
             <div className="flex flex-col items-center text-center mb-5">
-              <div className="w-16 h-16 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center mb-3.5 shadow-lg shadow-rose-500/10 animate-pulse">
-                <StopCircle className="w-8 h-8" />
+              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-rose-500/25 to-pink-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center mb-3.5 shadow-[0_0_20px_rgba(244,63,94,0.3)] animate-pulse">
+                <div className="w-7 h-7 rounded-lg border-2 border-rose-400 flex items-center justify-center">
+                  <div className="w-3 h-3 rounded-[2px] bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.8)]"></div>
+                </div>
               </div>
 
-              <h2 className="text-xl font-black text-white">
+              <h2 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
                 End Current Game?
               </h2>
-              <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                Game is currently <strong className="text-amber-400">paused</strong>. Would you like to finish now and submit your score?
+              <p className="text-xs text-slate-400 mt-1.5 leading-relaxed max-w-xs">
+                Game is currently <span className="font-bold text-amber-400">paused</span>. Would you like to finish now and record your score?
               </p>
             </div>
 
-            {/* Current Session Stats Preview */}
-            <div className="grid grid-cols-3 gap-2 bg-slate-800/70 p-3.5 rounded-2xl border border-slate-700/70 text-center mb-5">
-              <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Score</div>
-                <div className="text-base font-black text-pink-400">{score}</div>
+            {/* Current Session Stats Preview Card */}
+            <div className="grid grid-cols-3 gap-2 bg-[#12131a] p-3.5 rounded-2xl border border-[#2c2d3d] text-center mb-6 shadow-inner">
+              <div className="flex flex-col items-center justify-center">
+                <div className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Score</div>
+                <div className="text-lg sm:text-xl font-black text-[#ffaa00] mt-0.5 drop-shadow-[0_2px_8px_rgba(255,170,0,0.3)]">
+                  {score.toLocaleString()}
+                </div>
               </div>
-              <div className="border-x border-slate-700/80">
-                <div className="text-[10px] uppercase font-bold text-slate-400">Caught</div>
-                <div className="text-base font-black text-amber-400">{catches} 🍦</div>
+              <div className="border-x border-[#2c2d3d] flex flex-col items-center justify-center px-1">
+                <div className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Caught</div>
+                <div className="text-lg sm:text-xl font-black text-white mt-0.5 flex items-center space-x-1">
+                  <span>{catches}</span>
+                  <span className="text-xs">🍦</span>
+                </div>
               </div>
-              <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Time</div>
-                <div className="text-base font-black text-cyan-400">
+              <div className="flex flex-col items-center justify-center">
+                <div className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Time</div>
+                <div className="text-lg sm:text-xl font-black text-cyan-400 mt-0.5">
                   {Math.max(1, Math.round((Date.now() - gameStartTime - (Date.now() - (pauseStartTimeRef.current || Date.now()))) / 1000))}s
                 </div>
               </div>
@@ -1367,7 +1378,7 @@ export default function GameCanvas({
               <button
                 type="button"
                 onClick={handleResumeGame}
-                className="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-lg shadow-emerald-600/25 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                className="py-3 px-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white text-xs sm:text-sm font-black shadow-[0_4px_16px_rgba(16,185,129,0.35)] border border-emerald-400/30 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
               >
                 <Play className="w-4 h-4 fill-white" />
                 <span>Keep Playing</span>
@@ -1376,9 +1387,9 @@ export default function GameCanvas({
               <button
                 type="button"
                 onClick={handleConfirmEndGame}
-                className="py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-black text-xs shadow-lg shadow-rose-600/30 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                className="py-3 px-3 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white font-black text-xs sm:text-sm shadow-[0_4px_16px_rgba(225,29,72,0.45)] border border-rose-400/30 transition-all cursor-pointer flex items-center justify-center space-x-1.5"
               >
-                <StopCircle className="w-4 h-4" />
+                <div className="w-2.5 h-2.5 rounded-[2px] bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)]"></div>
                 <span>End & Submit</span>
               </button>
             </div>
