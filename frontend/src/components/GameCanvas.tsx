@@ -982,7 +982,7 @@ export default function GameCanvas({
         style={{
           paddingTop: 'max(48px, calc(env(safe-area-inset-top, 0px) + 10px))',
         }}
-        className="w-full max-w-lg z-30 px-3 sm:px-4 pb-2 flex items-center justify-between pointer-events-auto flex-shrink-0"
+        className="w-full max-w-lg md:max-w-none md:absolute md:top-0 md:inset-x-0 z-30 px-3 sm:px-4 md:px-6 pb-2 md:pt-6 flex items-center justify-between pointer-events-auto flex-shrink-0 md:bg-gradient-to-b md:from-black/90 md:via-black/50 md:to-transparent"
       >
         {/* Left: Player Profile & Live Score Pill (Reference Design) */}
         <div className="flex items-center space-x-2 sm:space-x-3.5 bg-[#181922]/95 backdrop-blur-2xl border border-[#38394a] sm:border-2 shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full py-1 px-2.5 sm:py-2 sm:px-4 ring-1 ring-white/10 select-none transition-all flex-shrink min-w-0">
@@ -1068,12 +1068,12 @@ export default function GameCanvas({
         </div>
       </header>
 
-      {/* 3:4 Portrait Camera Viewport (Matches Native iOS Camera App Framing) */}
+      {/* Camera Viewport: 3:4 on Mobile (Uncropped Portrait) | Full Screen on Desktop */}
       <div
         ref={containerRef}
-        className="relative w-full max-w-md aspect-[3/4] max-h-[68vh] my-auto flex items-center justify-center overflow-hidden rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-white/10 bg-slate-900"
+        className="relative w-full max-w-md md:max-w-none md:fixed md:inset-0 md:w-full md:h-full md:aspect-auto md:max-h-none md:my-0 md:rounded-none md:border-0 md:shadow-none aspect-[3/4] max-h-[68vh] my-auto flex items-center justify-center overflow-hidden rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-white/10 bg-slate-900"
       >
-        {/* Native 3:4 Portrait Camera Video Feed */}
+        {/* Native Camera Video Feed */}
         <video
           ref={videoRef}
           playsInline
