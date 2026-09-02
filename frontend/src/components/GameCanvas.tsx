@@ -1092,12 +1092,16 @@ export default function GameCanvas({
           className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-3xl opacity-40 pointer-events-none scale-110"
         />
 
-        {/* 100% Full-Sensor Unzoomed Selfie Camera Feed (Exact 12:19 Framing) */}
+        {/* 100% Full-Sensor Unzoomed Selfie Camera Feed with Soft Feated Edges */}
         <video
           ref={videoRef}
           playsInline
           muted
           autoPlay
+          style={{
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%)',
+          }}
           className="absolute inset-0 w-full h-full object-contain -scale-x-100 pointer-events-none"
         />
 
