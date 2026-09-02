@@ -1270,7 +1270,7 @@ export default function GameCanvas({
         }}
         className="w-full max-w-md md:hidden flex flex-col items-center justify-center pt-0 pb-3 px-4 z-20 flex-shrink-0 -mt-3.5 sm:-mt-4 mb-auto"
       >
-        <div className="h-7 sm:h-9 w-full max-w-[170px] sm:max-w-[200px] flex items-center justify-center filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
+        <div className="h-9 sm:h-11 w-full max-w-[210px] sm:max-w-[250px] flex items-center justify-center filter drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
           <img
             src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/wonder_logo.png`}
             alt="Elephant House Wonder"
