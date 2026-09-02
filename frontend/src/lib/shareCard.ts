@@ -221,7 +221,6 @@ export async function generateAndShareScoreCard(data: ScoreCardData): Promise<{ 
       await navigator.share({
         title: 'My Elephant House AR Game Score',
         text: shareText,
-        url: shareUrl,
         files: [file]
       });
       return { success: true, mode: 'shared' };
