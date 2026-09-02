@@ -1344,7 +1344,7 @@ export default function GameCanvas({
                       rank: submissionResult?.rank
                     });
                     if (res.success) {
-                      setShareFeedback(res.mode === 'shared' ? 'Shared to socials! 🚀' : 'Score Card saved to photos! 📸');
+                      setShareFeedback(res.mode === 'shared' ? 'Shared to socials!' : 'Score Card saved to photos!');
                       setTimeout(() => setShareFeedback(null), 3500);
                     }
                   } catch {
@@ -1370,7 +1370,7 @@ export default function GameCanvas({
                 ) : (
                   <>
                     <Share2 className="w-4 h-4" />
-                    <span>Share Score Post to Socials 🚀</span>
+                    <span>Share Score Post to Socials</span>
                   </>
                 )}
               </button>
