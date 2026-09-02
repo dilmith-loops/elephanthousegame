@@ -232,8 +232,9 @@ export default function GameCanvas({
 
   // Sound toggle
   const toggleMute = () => {
-    sound.isMuted = !isMuted;
-    setIsMuted(!isMuted);
+    const nextMuted = !isMuted;
+    sound.setMute(nextMuted);
+    setIsMuted(nextMuted);
   };
 
   // Load Dynamic Popsicle Assets from Admin API
@@ -423,6 +424,7 @@ export default function GameCanvas({
         setCountdown(null);
         const startTime = Date.now();
         setGameStartTime(startTime);
+        sound.startBGM();
       }, 700);
       return () => clearTimeout(timer);
     }
@@ -491,6 +493,7 @@ export default function GameCanvas({
       cancelAnimationFrame(animationFrameIdRef.current);
     }
 
+    sound.stopBGM();
     sound.playGameOver();
     confetti({
       particleCount: 120,
@@ -597,6 +600,23 @@ export default function GameCanvas({
       window.removeEventListener('blur', handleWindowBlur);
     };
   }, [countdown, isGameOver]);
+
+  // Sync background music with pause & active game states
+  useEffect(() => {
+    if (countdown !== null || isGameOver) return;
+    if (isPaused || showEndGameConfirm || isTabHidden) {
+      sound.pauseBGM();
+    } else {
+      sound.resumeBGM();
+    }
+  }, [isPaused, showEndGameConfirm, isTabHidden, countdown, isGameOver]);
+
+  // Cleanup BGM on unmount
+  useEffect(() => {
+    return () => {
+      sound.stopBGM();
+    };
+  }, []);
 
   // Main AR Canvas Game Loop
   useEffect(() => {
