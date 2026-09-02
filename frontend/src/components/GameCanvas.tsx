@@ -248,25 +248,42 @@ export default function GameCanvas({
         }
 
         const isMobile = typeof window !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        const idealW = isMobile ? 640 : 1280;
-        const idealH = isMobile ? 480 : 720;
+        const isInAppBrowser =
+          typeof window !== 'undefined' &&
+          /FBAN|FBAV|Instagram|TikTok|Line\/|MicroMessenger|Snapchat|Twitter|ByteLocale/i.test(navigator.userAgent);
 
+        // Stage 1: Try optimal lightweight constraints (480p on mobile to prevent CPU/GPU bottleneck, 720p on desktop)
         try {
           stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: 'user',
-              width: { ideal: idealW, max: 1280 },
-              height: { ideal: idealH, max: 720 },
-              frameRate: { ideal: 30, max: 60 }
-            },
+            video: isMobile
+              ? {
+                  facingMode: 'user',
+                  width: { ideal: 480, max: 640 },
+                  height: { ideal: 640, max: 800 },
+                  frameRate: { ideal: 30, max: 30 }
+                }
+              : {
+                  facingMode: 'user',
+                  width: { ideal: 1280, max: 1280 },
+                  height: { ideal: 720, max: 720 },
+                  frameRate: { ideal: 30, max: 60 }
+                },
             audio: false
           });
         } catch {
-          // Fallback to basic user camera constraint for all mobile devices
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user' },
-            audio: false
-          });
+          // Stage 2: Fallback to basic user camera constraint
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: 'user' },
+              audio: false
+            });
+          } catch {
+            // Stage 3: Universal fallback to any video input
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false
+            });
+          }
         }
 
         if (!isMounted) {
@@ -294,11 +311,21 @@ export default function GameCanvas({
         console.error('Camera access error:', err);
         if (isMounted) {
           const errMsg = err instanceof Error ? err.message : '';
-          setCameraError(
-            errMsg.includes('HTTPS')
-              ? errMsg
-              : 'Please allow front camera access in your browser settings to play the Tongue Catch game.'
-          );
+          const isInApp =
+            typeof window !== 'undefined' &&
+            /FBAN|FBAV|Instagram|TikTok|Line\/|MicroMessenger|Snapchat|Twitter|ByteLocale/i.test(navigator.userAgent);
+
+          if (errMsg.includes('HTTPS')) {
+            setCameraError('Camera requires HTTPS. Please access via secure https:// domain.');
+          } else if (isInApp) {
+            setCameraError(
+              'In-app browsers (Instagram, Facebook, TikTok) often restrict camera access. Tap the menu (•••) and select "Open in Chrome / Safari" to play!'
+            );
+          } else {
+            setCameraError(
+              'Please allow front camera access in your browser settings to play the Tongue Catch game.'
+            );
+          }
           setLoadingCamera(false);
         }
       }
@@ -577,9 +604,13 @@ export default function GameCanvas({
       ctx.drawImage(video, -(offsetX + renderW - width), offsetY, renderW, renderH);
       ctx.restore();
 
-      // Run Face Landmarker throttled to ~26 FPS to eliminate mobile CPU/GPU lag while maintaining 60 FPS camera canvas
+      // Adaptive FaceLandmarker detection interval:
+      // Mobile (~19 FPS / 52ms interval) prevents mobile CPU overheating & frame stutter while LERP keeps cursor silky-smooth at 60 FPS
+      // Desktop (~26 FPS / 38ms interval)
       const landmarker = faceLandmarkerRef.current || globalLandmarker;
-      const detectInterval = 38; // 38ms interval = ~26 detections/sec (smooth & lag-free)
+      const isMobileDev = typeof window !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const detectInterval = isMobileDev ? 52 : 38;
+
       if (
         !currentlyPaused &&
         landmarker &&
@@ -615,11 +646,12 @@ export default function GameCanvas({
 
             // Smooth linear interpolation (LERP) for jitter-free tracking
             const prevMouth = mouthStateRef.current;
+            const lerpFactor = isMobileDev ? 0.55 : 0.65;
             const smoothX = prevMouth.isDetected
-              ? prevMouth.mouthCenter.x + (targetMouthX - prevMouth.mouthCenter.x) * 0.6
+              ? prevMouth.mouthCenter.x + (targetMouthX - prevMouth.mouthCenter.x) * lerpFactor
               : targetMouthX;
             const smoothY = prevMouth.isDetected
-              ? prevMouth.mouthCenter.y + (targetMouthY - prevMouth.mouthCenter.y) * 0.6
+              ? prevMouth.mouthCenter.y + (targetMouthY - prevMouth.mouthCenter.y) * lerpFactor
               : targetMouthY;
 
             mouthStateRef.current = {
