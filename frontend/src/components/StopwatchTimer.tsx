@@ -8,15 +8,15 @@ interface Props {
   className?: string;
 }
 
-// Crisp 7-Segment SVG Segment Paths (viewBox: 0 0 20 36)
+// 7-segment definitions for a single digit within local (0 0 16 26) box
 const SEGMENTS: Record<string, string> = {
-  a: 'M 3.5 2.5 L 16.5 2.5 L 14.5 5.5 L 5.5 5.5 Z', // top
-  b: 'M 17.5 3.5 L 17.5 16.5 L 14.5 14.5 L 14.5 5.5 Z', // top right
-  c: 'M 17.5 19.5 L 17.5 32.5 L 14.5 30.5 L 14.5 21.5 Z', // bottom right
-  d: 'M 3.5 33.5 L 16.5 33.5 L 14.5 30.5 L 5.5 30.5 Z', // bottom
-  e: 'M 2.5 19.5 L 5.5 21.5 L 5.5 30.5 L 2.5 32.5 Z', // bottom left
-  f: 'M 2.5 3.5 L 5.5 5.5 L 5.5 14.5 L 2.5 16.5 Z', // top left
-  g: 'M 3.5 18 L 5.8 15.8 L 14.2 15.8 L 16.5 18 L 14.2 20.2 L 5.8 20.2 Z', // middle
+  a: 'M 2.5 1.5 L 13.5 1.5 L 12 3.8 L 4 3.8 Z', // top
+  b: 'M 14.5 2.5 L 14.5 12 L 12 10.5 L 12 4 Z', // top right
+  c: 'M 14.5 14 L 14.5 23.5 L 12 22 L 12 15.5 Z', // bottom right
+  d: 'M 2.5 24.5 L 13.5 24.5 L 12 22.2 L 4 22.2 Z', // bottom
+  e: 'M 1.5 14 L 4 15.5 L 4 22 L 1.5 23.5 Z', // bottom left
+  f: 'M 1.5 2.5 L 4 4 Z L 4 10.5 L 1.5 12 Z', // top left
+  g: 'M 2.5 13 L 4.5 11.2 L 11.5 11.2 L 13.5 13 L 11.5 14.8 L 4.5 14.8 Z', // middle
 };
 
 const DIGIT_MAP: Record<string, string[]> = {
@@ -32,23 +32,22 @@ const DIGIT_MAP: Record<string, string[]> = {
   '9': ['a', 'b', 'c', 'd', 'f', 'g'],
 };
 
-function SevenSegmentDigit({ digit, activeColor, inactiveColor }: { digit: string; activeColor: string; inactiveColor: string }) {
+function DigitGroup({ x, digit, color, inactiveColor }: { x: number; digit: string; color: string; inactiveColor: string }) {
   const activeSegments = DIGIT_MAP[digit] || [];
 
   return (
-    <svg viewBox="0 0 20 36" className="w-3.5 h-6 sm:w-4 sm:h-7 flex-shrink-0">
+    <g transform={`translate(${x}, 1)`}>
       {Object.entries(SEGMENTS).map(([segKey, pathD]) => {
         const isActive = activeSegments.includes(segKey);
         return (
           <path
             key={segKey}
             d={pathD}
-            fill={isActive ? activeColor : inactiveColor}
-            className="transition-colors duration-150"
+            fill={isActive ? color : inactiveColor}
           />
         );
       })}
-    </svg>
+    </g>
   );
 }
 
@@ -63,8 +62,8 @@ export default function StopwatchTimer({ timeLeft, className = '' }: Props) {
   const isUrgent = timeLeft <= 5;
   const isWarning = timeLeft <= 15 && !isUrgent;
 
-  const activeColor = isUrgent ? '#dc2626' : isWarning ? '#d97706' : '#141419';
-  const inactiveColor = 'rgba(0, 0, 0, 0.04)';
+  const activeColor = isUrgent ? '#dc2626' : isWarning ? '#d97706' : '#111116';
+  const inactiveColor = 'rgba(0, 0, 0, 0.035)';
 
   return (
     <div
@@ -76,7 +75,8 @@ export default function StopwatchTimer({ timeLeft, className = '' }: Props) {
           : 'drop-shadow-[0_8px_20px_rgba(0,0,0,0.8)]'
       } ${className}`}
       style={{
-        width: '76px',
+        width: '82px',
+        maxWidth: '92px',
       }}
     >
       {/* 3D Realistic Stopwatch Base Image */}
@@ -87,35 +87,34 @@ export default function StopwatchTimer({ timeLeft, className = '' }: Props) {
         draggable={false}
       />
 
-      {/* 7-Segment Digital LCD Display Centered on Dial */}
+      {/* Proportional Unified SVG 7-Segment Display precisely inside the White Dial */}
       <div
-        className="absolute flex items-center justify-center pointer-events-none space-x-[2px] sm:space-x-[2.5px]"
+        className="absolute flex items-center justify-center pointer-events-none"
         style={{
-          top: '58.6%',
+          top: '59.8%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '56%',
+          width: '46%',
+          aspectRatio: '84 / 28',
         }}
       >
-        {/* Minute Digits */}
-        <SevenSegmentDigit digit={mStr[0]} activeColor={activeColor} inactiveColor={inactiveColor} />
-        <SevenSegmentDigit digit={mStr[1]} activeColor={activeColor} inactiveColor={inactiveColor} />
+        <svg viewBox="0 0 84 28" className="w-full h-full">
+          {/* Side dashes matching stopwatch dial design */}
+          <line x1="2" y1="14" x2="6" y2="14" stroke={activeColor} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+          <line x1="78" y1="14" x2="82" y2="14" stroke={activeColor} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
 
-        {/* Colon Dots */}
-        <div className="flex flex-col justify-center items-center space-y-1 sm:space-y-1.5 px-[1px]">
-          <div
-            className="w-1 h-1 rounded-[0.5px] transition-colors duration-150"
-            style={{ backgroundColor: activeColor }}
-          />
-          <div
-            className="w-1 h-1 rounded-[0.5px] transition-colors duration-150"
-            style={{ backgroundColor: activeColor }}
-          />
-        </div>
+          {/* Minute Digits (x: 10, x: 27) */}
+          <DigitGroup x={10} digit={mStr[0]} color={activeColor} inactiveColor={inactiveColor} />
+          <DigitGroup x={27} digit={mStr[1]} color={activeColor} inactiveColor={inactiveColor} />
 
-        {/* Second Digits */}
-        <SevenSegmentDigit digit={sStr[0]} activeColor={activeColor} inactiveColor={inactiveColor} />
-        <SevenSegmentDigit digit={sStr[1]} activeColor={activeColor} inactiveColor={inactiveColor} />
+          {/* Colon Dots (x: 45) */}
+          <circle cx="45" cy="10" r="1.4" fill={activeColor} />
+          <circle cx="45" cy="18" r="1.4" fill={activeColor} />
+
+          {/* Second Digits (x: 49, x: 66) */}
+          <DigitGroup x={49} digit={sStr[0]} color={activeColor} inactiveColor={inactiveColor} />
+          <DigitGroup x={66} digit={sStr[1]} color={activeColor} inactiveColor={inactiveColor} />
+        </svg>
       </div>
     </div>
   );
