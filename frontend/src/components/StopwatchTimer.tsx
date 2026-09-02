@@ -8,103 +8,114 @@ interface Props {
   className?: string;
 }
 
-export default function StopwatchTimer({ timeLeft, totalDuration = 60, className = '' }: Props) {
+// Crisp 7-Segment SVG Segment Paths (viewBox: 0 0 20 36)
+const SEGMENTS: Record<string, string> = {
+  a: 'M 3.5 2.5 L 16.5 2.5 L 14.5 5.5 L 5.5 5.5 Z', // top
+  b: 'M 17.5 3.5 L 17.5 16.5 L 14.5 14.5 L 14.5 5.5 Z', // top right
+  c: 'M 17.5 19.5 L 17.5 32.5 L 14.5 30.5 L 14.5 21.5 Z', // bottom right
+  d: 'M 3.5 33.5 L 16.5 33.5 L 14.5 30.5 L 5.5 30.5 Z', // bottom
+  e: 'M 2.5 19.5 L 5.5 21.5 L 5.5 30.5 L 2.5 32.5 Z', // bottom left
+  f: 'M 2.5 3.5 L 5.5 5.5 L 5.5 14.5 L 2.5 16.5 Z', // top left
+  g: 'M 3.5 18 L 5.8 15.8 L 14.2 15.8 L 16.5 18 L 14.2 20.2 L 5.8 20.2 Z', // middle
+};
+
+const DIGIT_MAP: Record<string, string[]> = {
+  '0': ['a', 'b', 'c', 'd', 'e', 'f'],
+  '1': ['b', 'c'],
+  '2': ['a', 'b', 'd', 'e', 'g'],
+  '3': ['a', 'b', 'c', 'd', 'g'],
+  '4': ['b', 'c', 'f', 'g'],
+  '5': ['a', 'c', 'd', 'f', 'g'],
+  '6': ['a', 'c', 'd', 'e', 'f', 'g'],
+  '7': ['a', 'b', 'c'],
+  '8': ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+  '9': ['a', 'b', 'c', 'd', 'f', 'g'],
+};
+
+function SevenSegmentDigit({ digit, activeColor, inactiveColor }: { digit: string; activeColor: string; inactiveColor: string }) {
+  const activeSegments = DIGIT_MAP[digit] || [];
+
+  return (
+    <svg viewBox="0 0 20 36" className="w-3.5 h-6 sm:w-4 sm:h-7 flex-shrink-0">
+      {Object.entries(SEGMENTS).map(([segKey, pathD]) => {
+        const isActive = activeSegments.includes(segKey);
+        return (
+          <path
+            key={segKey}
+            d={pathD}
+            fill={isActive ? activeColor : inactiveColor}
+            className="transition-colors duration-150"
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+export default function StopwatchTimer({ timeLeft, className = '' }: Props) {
   const safeTime = Math.max(0, timeLeft);
   const minutes = Math.floor(safeTime / 60);
   const seconds = safeTime % 60;
-  const timeFormatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+  const mStr = minutes.toString().padStart(2, '0');
+  const sStr = seconds.toString().padStart(2, '0');
 
   const isUrgent = timeLeft <= 5;
   const isWarning = timeLeft <= 15 && !isUrgent;
 
-  // Percentage for the bottom micro-progress bar (0% to 100%)
-  const progressPercent = Math.max(0, Math.min(100, (safeTime / totalDuration) * 100));
+  const activeColor = isUrgent ? '#dc2626' : isWarning ? '#d97706' : '#141419';
+  const inactiveColor = 'rgba(0, 0, 0, 0.04)';
 
   return (
     <div
-      className={`relative inline-flex flex-col items-center select-none pointer-events-none transition-all duration-300 ${
+      className={`relative inline-flex items-center justify-center select-none pointer-events-none transition-all duration-300 ${
         isUrgent
-          ? 'scale-105 animate-pulse'
+          ? 'scale-105 drop-shadow-[0_0_18px_rgba(235,30,120,0.95)] animate-pulse'
           : isWarning
-          ? 'scale-102'
-          : ''
+          ? 'scale-102 drop-shadow-[0_0_12px_rgba(245,158,11,0.6)]'
+          : 'drop-shadow-[0_8px_20px_rgba(0,0,0,0.8)]'
       } ${className}`}
+      style={{
+        width: '76px',
+      }}
     >
-      {/* Sleek Floating Glass Capsule Pill */}
+      {/* 3D Realistic Stopwatch Base Image */}
+      <img
+        src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/stopwatch_frame.png`}
+        alt="Stopwatch Timer"
+        className="w-full h-auto object-contain select-none pointer-events-none"
+        draggable={false}
+      />
+
+      {/* 7-Segment Digital LCD Display Centered on Dial */}
       <div
-        className={`relative flex items-center space-x-2 sm:space-x-2.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full backdrop-blur-2xl border transition-all duration-300 ${
-          isUrgent
-            ? 'bg-gradient-to-r from-rose-600 via-red-600 to-pink-600 border-white text-white shadow-[0_0_25px_rgba(225,29,72,0.9)] ring-2 ring-white/70'
-            : isWarning
-            ? 'bg-gradient-to-r from-amber-600/95 via-orange-600/95 to-amber-500/95 border-amber-300 text-white shadow-[0_0_18px_rgba(245,158,11,0.65)] ring-1 ring-amber-300/50'
-            : 'bg-[#181922]/90 border border-white/20 text-white shadow-[0_8px_25px_rgba(0,0,0,0.85)] ring-1 ring-white/10'
-        }`}
+        className="absolute flex items-center justify-center pointer-events-none space-x-[2px] sm:space-x-[2.5px]"
+        style={{
+          top: '58.6%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '56%',
+        }}
       >
-        {/* Sleek Minimalist Stopwatch Icon */}
-        <div className="relative flex items-center justify-center flex-shrink-0">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-colors duration-200 ${
-              isUrgent ? 'text-white' : isWarning ? 'text-amber-200' : 'text-[#ff2a6d]'
-            }`}
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            {/* Stopwatch Top Knob */}
-            <line x1="12" y1="2" x2="12" y2="5" />
-            <line x1="9" y1="2" x2="15" y2="2" />
-            {/* Stopwatch Side Pusher */}
-            <line x1="19" y1="5" x2="17" y2="7" />
-            {/* Stopwatch Body Circle */}
-            <circle cx="12" cy="14" r="8" />
-            {/* Stopwatch Hand (ticks) */}
-            <line
-              x1="12"
-              y1="14"
-              x2="15"
-              y2="11"
-              strokeWidth="2.2"
-              className={isUrgent ? 'animate-spin origin-[12px_14px]' : ''}
-            />
-          </svg>
-        </div>
+        {/* Minute Digits */}
+        <SevenSegmentDigit digit={mStr[0]} activeColor={activeColor} inactiveColor={inactiveColor} />
+        <SevenSegmentDigit digit={mStr[1]} activeColor={activeColor} inactiveColor={inactiveColor} />
 
-        {/* Large Crisp Digital Digits: 00:53 */}
-        <div className="flex items-baseline space-x-0.5">
-          <span
-            className={`font-black font-mono tracking-tight leading-none ${
-              isUrgent
-                ? 'text-sm sm:text-base text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]'
-                : isWarning
-                ? 'text-xs sm:text-sm text-amber-100'
-                : 'text-xs sm:text-sm text-white drop-shadow-sm'
-            }`}
-            style={{
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {timeFormatted}
-          </span>
-        </div>
-
-        {/* Bottom Micro Glowing Progress Track inside capsule */}
-        <div className="absolute bottom-0 inset-x-3 h-[2px] rounded-full overflow-hidden bg-white/10 pointer-events-none">
+        {/* Colon Dots */}
+        <div className="flex flex-col justify-center items-center space-y-1 sm:space-y-1.5 px-[1px]">
           <div
-            className={`h-full rounded-full transition-all duration-1000 ease-linear ${
-              isUrgent
-                ? 'bg-white shadow-[0_0_6px_#fff]'
-                : isWarning
-                ? 'bg-amber-300 shadow-[0_0_6px_rgba(252,211,77,0.8)]'
-                : 'bg-gradient-to-r from-[#ff2a6d] to-[#ffaa00] shadow-[0_0_6px_rgba(255,42,109,0.8)]'
-            }`}
-            style={{
-              width: `${progressPercent}%`,
-            }}
+            className="w-1 h-1 rounded-[0.5px] transition-colors duration-150"
+            style={{ backgroundColor: activeColor }}
+          />
+          <div
+            className="w-1 h-1 rounded-[0.5px] transition-colors duration-150"
+            style={{ backgroundColor: activeColor }}
           />
         </div>
+
+        {/* Second Digits */}
+        <SevenSegmentDigit digit={sStr[0]} activeColor={activeColor} inactiveColor={inactiveColor} />
+        <SevenSegmentDigit digit={sStr[1]} activeColor={activeColor} inactiveColor={inactiveColor} />
       </div>
     </div>
   );
