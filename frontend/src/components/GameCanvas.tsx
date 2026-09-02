@@ -1355,7 +1355,7 @@ export default function GameCanvas({
                   }
                 }}
                 disabled={isSharing}
-                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-purple-500/25 border border-purple-400/30 flex items-center justify-center space-x-2 transition-all active:scale-98 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#b21f85] via-[#c22d95] to-[#8d1468] hover:from-[#c22d95] hover:to-[#b21f85] text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-[#b21f85]/30 border border-white/25 flex items-center justify-center space-x-2 transition-all active:scale-98 cursor-pointer disabled:opacity-50"
               >
                 {isSharing ? (
                   <>
