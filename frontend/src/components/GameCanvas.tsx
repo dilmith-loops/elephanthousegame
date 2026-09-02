@@ -201,7 +201,6 @@ export default function GameCanvas({
 
   // Game Engine Refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
@@ -375,14 +374,6 @@ export default function GameCanvas({
           } catch {
             // Hardware zoom constraint handled silently
           }
-        }
-
-        if (bgVideoRef.current) {
-          bgVideoRef.current.setAttribute('playsinline', 'true');
-          bgVideoRef.current.setAttribute('webkit-playsinline', 'true');
-          bgVideoRef.current.muted = true;
-          bgVideoRef.current.srcObject = stream;
-          bgVideoRef.current.play().catch(() => {});
         }
 
         if (videoRef.current) {
@@ -1098,16 +1089,7 @@ export default function GameCanvas({
 
       {/* Main Canvas Viewport Container */}
       <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* Ambient Live Video Backdrop (Fills vertical edges smoothly) */}
-        <video
-          ref={bgVideoRef}
-          playsInline
-          muted
-          autoPlay
-          className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-3xl opacity-40 pointer-events-none scale-110"
-        />
-
-        {/* 100% Uncropped Natural Selfie Camera Feed (Option 2 - Zero Zoom) */}
+        {/* 100% Uncropped Natural Selfie Camera Feed (Pure Camera, No Covers) */}
         <video
           ref={videoRef}
           playsInline
