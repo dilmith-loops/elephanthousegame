@@ -8,113 +8,136 @@ interface Props {
   className?: string;
 }
 
-// 7-segment definitions for a single digit within local (0 0 16 26) box
-const SEGMENTS: Record<string, string> = {
-  a: 'M 2.5 1.5 L 13.5 1.5 L 12 3.8 L 4 3.8 Z', // top
-  b: 'M 14.5 2.5 L 14.5 12 L 12 10.5 L 12 4 Z', // top right
-  c: 'M 14.5 14 L 14.5 23.5 L 12 22 L 12 15.5 Z', // bottom right
-  d: 'M 2.5 24.5 L 13.5 24.5 L 12 22.2 L 4 22.2 Z', // bottom
-  e: 'M 1.5 14 L 4 15.5 L 4 22 L 1.5 23.5 Z', // bottom left
-  f: 'M 1.5 2.5 L 4 4 Z L 4 10.5 L 1.5 12 Z', // top left
-  g: 'M 2.5 13 L 4.5 11.2 L 11.5 11.2 L 13.5 13 L 11.5 14.8 L 4.5 14.8 Z', // middle
-};
-
-const DIGIT_MAP: Record<string, string[]> = {
-  '0': ['a', 'b', 'c', 'd', 'e', 'f'],
-  '1': ['b', 'c'],
-  '2': ['a', 'b', 'd', 'e', 'g'],
-  '3': ['a', 'b', 'c', 'd', 'g'],
-  '4': ['b', 'c', 'f', 'g'],
-  '5': ['a', 'c', 'd', 'f', 'g'],
-  '6': ['a', 'c', 'd', 'e', 'f', 'g'],
-  '7': ['a', 'b', 'c'],
-  '8': ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
-  '9': ['a', 'b', 'c', 'd', 'f', 'g'],
-};
-
-function DigitGroup({ x, digit, color, inactiveColor }: { x: number; digit: string; color: string; inactiveColor: string }) {
-  const activeSegments = DIGIT_MAP[digit] || [];
-
-  return (
-    <g transform={`translate(${x}, 1)`}>
-      {Object.entries(SEGMENTS).map(([segKey, pathD]) => {
-        const isActive = activeSegments.includes(segKey);
-        return (
-          <path
-            key={segKey}
-            d={pathD}
-            fill={isActive ? color : inactiveColor}
-          />
-        );
-      })}
-    </g>
-  );
-}
-
-export default function StopwatchTimer({ timeLeft, className = '' }: Props) {
+export default function StopwatchTimer({ timeLeft, totalDuration = 60, className = '' }: Props) {
   const safeTime = Math.max(0, timeLeft);
   const minutes = Math.floor(safeTime / 60);
   const seconds = safeTime % 60;
-
-  const mStr = minutes.toString().padStart(2, '0');
-  const sStr = seconds.toString().padStart(2, '0');
+  const timeFormatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
   const isUrgent = timeLeft <= 5;
   const isWarning = timeLeft <= 15 && !isUrgent;
 
-  const activeColor = isUrgent ? '#dc2626' : isWarning ? '#d97706' : '#111116';
-  const inactiveColor = 'rgba(0, 0, 0, 0.035)';
-
   return (
     <div
-      className={`relative inline-flex items-center justify-center select-none pointer-events-none transition-all duration-300 ${
+      className={`relative inline-flex flex-col items-center select-none pointer-events-none transition-all duration-300 ${
         isUrgent
-          ? 'scale-105 drop-shadow-[0_0_18px_rgba(235,30,120,0.95)] animate-pulse'
+          ? 'scale-110 drop-shadow-[0_0_22px_rgba(244,63,94,0.9)] animate-pulse'
           : isWarning
-          ? 'scale-102 drop-shadow-[0_0_12px_rgba(245,158,11,0.6)]'
-          : 'drop-shadow-[0_8px_20px_rgba(0,0,0,0.8)]'
+          ? 'scale-105 drop-shadow-[0_0_16px_rgba(245,158,11,0.7)]'
+          : 'drop-shadow-[0_10px_25px_rgba(0,0,0,0.75)]'
       } ${className}`}
-      style={{
-        width: '82px',
-        maxWidth: '92px',
-      }}
     >
-      {/* 3D Realistic Stopwatch Base Image */}
-      <img
-        src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/stopwatch_frame.png`}
-        alt="Stopwatch Timer"
-        className="w-full h-auto object-contain select-none pointer-events-none"
-        draggable={false}
-      />
+      {/* Fluffy Wonder Cloud Container */}
+      <div className="relative flex items-center justify-center">
+        {/* Cloud SVG Graphic with Soft Pillowy Contours */}
+        <svg
+          viewBox="0 0 160 90"
+          className="w-24 sm:w-28 h-auto flex-shrink-0"
+          style={{
+            filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25))',
+          }}
+        >
+          <defs>
+            {/* Normal Wonder Cloud Gradient */}
+            <linearGradient id="cloudGradientNormal" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="60%" stopColor="#FFF4FA" />
+              <stop offset="100%" stopColor="#FCE7F3" />
+            </linearGradient>
 
-      {/* Proportional Unified SVG 7-Segment Display precisely inside the White Dial */}
-      <div
-        className="absolute flex items-center justify-center pointer-events-none"
-        style={{
-          top: '59.8%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '46%',
-          aspectRatio: '84 / 28',
-        }}
-      >
-        <svg viewBox="0 0 84 28" className="w-full h-full">
-          {/* Side dashes matching stopwatch dial design */}
-          <line x1="2" y1="14" x2="6" y2="14" stroke={activeColor} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
-          <line x1="78" y1="14" x2="82" y2="14" stroke={activeColor} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+            {/* Warning Sunset Cloud Gradient */}
+            <linearGradient id="cloudGradientWarning" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#FFFBEB" />
+              <stop offset="70%" stopColor="#FEF3C7" />
+              <stop offset="100%" stopColor="#FDE68A" />
+            </linearGradient>
 
-          {/* Minute Digits (x: 10, x: 27) */}
-          <DigitGroup x={10} digit={mStr[0]} color={activeColor} inactiveColor={inactiveColor} />
-          <DigitGroup x={27} digit={mStr[1]} color={activeColor} inactiveColor={inactiveColor} />
+            {/* Urgent Rosy Cloud Gradient */}
+            <linearGradient id="cloudGradientUrgent" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#FFF1F2" />
+              <stop offset="60%" stopColor="#FFE4E6" />
+              <stop offset="100%" stopColor="#FECDD3" />
+            </linearGradient>
 
-          {/* Colon Dots (x: 45) */}
-          <circle cx="45" cy="10" r="1.4" fill={activeColor} />
-          <circle cx="45" cy="18" r="1.4" fill={activeColor} />
+            {/* Soft Shadow Filter for Cloud Depth */}
+            <filter id="cloudInnerShadow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="rgba(0,0,0,0.12)" />
+            </filter>
+          </defs>
 
-          {/* Second Digits (x: 49, x: 66) */}
-          <DigitGroup x={49} digit={sStr[0]} color={activeColor} inactiveColor={inactiveColor} />
-          <DigitGroup x={66} digit={sStr[1]} color={activeColor} inactiveColor={inactiveColor} />
+          {/* Cloud Outline & Pillowy Body */}
+          <path
+            d="M 38 72 
+               L 122 72 
+               A 16 16 0 0 0 138 56 
+               A 18 18 0 0 0 126 34 
+               A 24 24 0 0 0 98 18 
+               A 28 28 0 0 0 52 24 
+               A 20 20 0 0 0 30 42 
+               A 16 16 0 0 0 38 72 Z"
+            fill={
+              isUrgent
+                ? 'url(#cloudGradientUrgent)'
+                : isWarning
+                ? 'url(#cloudGradientWarning)'
+                : 'url(#cloudGradientNormal)'
+            }
+            stroke={
+              isUrgent
+                ? '#FB7185'
+                : isWarning
+                ? '#FBBF24'
+                : '#F472B6'
+            }
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+            filter="url(#cloudInnerShadow)"
+          />
+
+          {/* Soft Highlight Arc */}
+          <path
+            d="M 58 27 A 22 22 0 0 1 92 22"
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.9)"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+
+          {/* Playful Golden Sparkle on Cloud Top Right */}
+          <g transform="translate(126, 18) scale(0.7)">
+            <path
+              d="M 10 0 L 12.5 7.5 L 20 10 L 12.5 12.5 L 10 20 L 7.5 12.5 L 0 10 L 7.5 7.5 Z"
+              fill={isUrgent ? '#F43F5E' : '#F59E0B'}
+              className="animate-pulse"
+            />
+          </g>
         </svg>
+
+        {/* Large Playful Bold Timer Digits Centered Inside Cloud Belly */}
+        <div
+          className="absolute flex items-center justify-center pointer-events-none"
+          style={{
+            top: '52%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <span
+            className={`font-black font-mono tracking-tight leading-none text-center select-none ${
+              isUrgent
+                ? 'text-[#E11D48] text-base sm:text-lg'
+                : isWarning
+                ? 'text-[#B45309] text-sm sm:text-base'
+                : 'text-[#B21F85] text-sm sm:text-base'
+            }`}
+            style={{
+              letterSpacing: '-0.02em',
+              textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)',
+            }}
+          >
+            {timeFormatted}
+          </span>
+        </div>
       </div>
     </div>
   );
