@@ -214,12 +214,14 @@ export async function generateAndShareScoreCard(data: ScoreCardData): Promise<{ 
     const file = new File([blob], `elephant-house-wonder-score-${data.score}.png`, { type: 'image/png' });
 
     // 10. Native Web Share API
-    const shareText = `🍦 I just scored ${data.score} marks on the Elephant House Wonder AR Catch Game! Can you beat my high score? Play now! #ElephantHouse #WonderIceCream`;
+    const shareUrl = typeof window !== 'undefined' && window.location.origin ? window.location.origin + (process.env.NEXT_PUBLIC_BASE_PATH || '') : 'https://ai.loopsintegrated.co';
+    const shareText = `🍦 I just scored ${data.score} marks on the Elephant House Wonder AR Catch Game! Can you beat my high score? Play now: ${shareUrl} #ElephantHouse #WonderIceCream`;
 
     if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         title: 'My Elephant House AR Game Score',
         text: shareText,
+        url: shareUrl,
         files: [file]
       });
       return { success: true, mode: 'shared' };
