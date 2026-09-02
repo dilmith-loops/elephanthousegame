@@ -23,8 +23,12 @@ import {
   Play,
   X,
   CheckCircle2,
-  Star
+  Star,
+  Share2,
+  Download,
+  Check
 } from 'lucide-react';
+import { generateAndShareScoreCard } from '../lib/shareCard';
 
 function SoftServeIcon({ className = 'w-6 h-6 sm:w-7 sm:h-7' }: { className?: string }) {
   return (
@@ -198,6 +202,8 @@ export default function GameCanvas({
   const [submissionResult, setSubmissionResult] = useState<{ rank?: number; personal_best?: number } | null>(null);
   const [showEndGameConfirm, setShowEndGameConfirm] = useState(false);
   const [isTabHidden, setIsTabHidden] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
   // Game Engine Refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -1321,6 +1327,54 @@ export default function GameCanvas({
 
             {/* Action Buttons */}
             <div className="space-y-2.5">
+              {/* Share Score Card to Socials Button */}
+              <button
+                type="button"
+                onClick={async () => {
+                  if (isSharing) return;
+                  setIsSharing(true);
+                  setShareFeedback(null);
+                  try {
+                    const res = await generateAndShareScoreCard({
+                      playerName: player.name,
+                      score,
+                      catches,
+                      maxCombo,
+                      durationSeconds: gameDuration,
+                      rank: submissionResult?.rank
+                    });
+                    if (res.success) {
+                      setShareFeedback(res.mode === 'shared' ? 'Shared to socials! 🚀' : 'Score Card saved to photos! 📸');
+                      setTimeout(() => setShareFeedback(null), 3500);
+                    }
+                  } catch {
+                    setShareFeedback('Could not share score card');
+                    setTimeout(() => setShareFeedback(null), 3000);
+                  } finally {
+                    setIsSharing(false);
+                  }
+                }}
+                disabled={isSharing}
+                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-purple-500/25 border border-purple-400/30 flex items-center justify-center space-x-2 transition-all active:scale-98 cursor-pointer disabled:opacity-50"
+              >
+                {isSharing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Generating Branded Score Post...</span>
+                  </>
+                ) : shareFeedback ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-300" />
+                    <span className="text-emerald-300">{shareFeedback}</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-4 h-4" />
+                    <span>Share Score Post to Socials 🚀</span>
+                  </>
+                )}
+              </button>
+
               <button
                 onClick={() => {
                   setIsGameOver(false);
@@ -1338,7 +1392,7 @@ export default function GameCanvas({
                   setCombo(0);
                   setCountdown(3);
                 }}
-                className="w-full py-3.5 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-2xl shadow-lg shadow-pink-500/30 flex items-center justify-center space-x-2 cursor-pointer transition-all active:scale-98"
+                className="w-full py-3 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-2xl shadow-lg shadow-pink-500/30 flex items-center justify-center space-x-2 cursor-pointer transition-all active:scale-98 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Play Again</span>
