@@ -30,6 +30,7 @@ import {
   Clock
 } from 'lucide-react';
 import { generateAndShareScoreCard } from '../lib/shareCard';
+import StopwatchTimer from './StopwatchTimer';
 
 function SoftServeIcon({ className = 'w-6 h-6 sm:w-7 sm:h-7' }: { className?: string }) {
   return (
@@ -1143,75 +1144,13 @@ export default function GameCanvas({
           className="absolute inset-0 w-full h-full pointer-events-none"
         />
 
-        {/* Interactive Centered Session Countdown Timer */}
+        {/* Stopwatch Countdown Timer Centered in Camera Viewport */}
         {timerConfig.enabled && countdown === null && !isGameOver && (
-          <div className="absolute top-2.5 sm:top-3.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none select-none transition-all duration-300">
-            <div className="relative flex items-center justify-center">
-              {/* Expanding Pulse Sonar Ring for Final 5 Seconds */}
-              {timeLeft <= 5 && (
-                <div className="absolute -inset-1 rounded-full bg-rose-500/50 animate-ping pointer-events-none"></div>
-              )}
-
-              {/* Main Interactive Timer Capsule */}
-              <div
-                className={`flex items-center space-x-2 sm:space-x-2.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full backdrop-blur-2xl border transition-all duration-300 ${
-                  timeLeft <= 5
-                    ? 'bg-gradient-to-r from-rose-600 via-red-600 to-pink-600 border-white text-white shadow-[0_0_25px_rgba(225,29,72,0.85)] scale-110 ring-2 ring-white/70'
-                    : timeLeft <= 15
-                    ? 'bg-gradient-to-r from-amber-600/95 to-orange-600/95 border-amber-300 text-white shadow-[0_0_20px_rgba(245,158,11,0.6)] scale-105 ring-1 ring-amber-300/60'
-                    : 'bg-[#181922]/90 border border-white/20 text-white shadow-[0_10px_25px_rgba(0,0,0,0.8)]'
-                }`}
-              >
-                {/* Radial Progress Ring */}
-                <div className="relative w-5 h-5 sm:w-5.5 sm:h-5.5 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      className="text-white/15"
-                      strokeWidth="3.5"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className={`transition-all duration-1000 ease-linear ${
-                        timeLeft <= 5
-                          ? 'text-white'
-                          : timeLeft <= 15
-                          ? 'text-amber-200'
-                          : 'text-[#ff2a6d]'
-                      }`}
-                      strokeDasharray={`${Math.max(0, Math.min(100, (timeLeft / (timerConfig.duration || 60)) * 100))}, 100`}
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Clock className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${
-                      timeLeft <= 5 ? 'text-white animate-spin' : timeLeft <= 15 ? 'text-amber-200' : 'text-pink-400'
-                    }`} />
-                  </div>
-                </div>
-
-                {/* Digits Display */}
-                <div className="flex items-baseline space-x-0.5">
-                  <span className={`font-black font-mono tracking-tight leading-none ${
-                    timeLeft <= 5
-                      ? 'text-base sm:text-xl text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]'
-                      : timeLeft <= 15
-                      ? 'text-sm sm:text-lg text-amber-100'
-                      : 'text-sm sm:text-base text-white'
-                  }`}>
-                    {timeLeft}
-                  </span>
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-300/90 uppercase tracking-wide">
-                    s
-                  </span>
-                </div>
-              </div>
-            </div>
+          <div className="absolute top-1 sm:top-2 left-1/2 -translate-x-1/2 z-30 pointer-events-none select-none transition-all duration-300">
+            <StopwatchTimer
+              timeLeft={timeLeft}
+              totalDuration={timerConfig.duration || 60}
+            />
           </div>
         )}
 
