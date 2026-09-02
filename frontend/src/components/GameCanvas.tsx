@@ -180,7 +180,6 @@ export default function GameCanvas({
   onChangePlayer
 }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -374,14 +373,6 @@ export default function GameCanvas({
           } catch {
             // Hardware zoom constraint handled silently
           }
-        }
-
-        if (bgVideoRef.current) {
-          bgVideoRef.current.setAttribute('playsinline', 'true');
-          bgVideoRef.current.setAttribute('webkit-playsinline', 'true');
-          bgVideoRef.current.muted = true;
-          bgVideoRef.current.srcObject = stream;
-          bgVideoRef.current.play().catch(() => {});
         }
 
         if (videoRef.current) {
@@ -686,7 +677,7 @@ export default function GameCanvas({
       // Always clear the canvas before drawing frame to eliminate any streaking/trails
       ctx.clearRect(0, 0, width, height);
 
-      // Calculate wide-angle uncropped transform for camera feed
+      // Calculate object-fit: cover transform for 100% full screen camera feed
       const videoW = video.videoWidth || 1280;
       const videoH = video.videoHeight || 720;
       const videoAspect = videoW / videoH;
@@ -697,24 +688,16 @@ export default function GameCanvas({
       let offsetX: number;
       let offsetY: number;
 
-      // On mobile portrait, fit by width so the full wide-angle view is visible without digital zoom
-      if (height > width) {
+      if (videoAspect > screenAspect) {
+        renderH = height;
+        renderW = height * videoAspect;
+        offsetX = (width - renderW) / 2;
+        offsetY = 0;
+      } else {
         renderW = width;
         renderH = width / videoAspect;
         offsetX = 0;
         offsetY = (height - renderH) / 2;
-      } else {
-        if (videoAspect > screenAspect) {
-          renderH = height;
-          renderW = height * videoAspect;
-          offsetX = (width - renderW) / 2;
-          offsetY = 0;
-        } else {
-          renderW = width;
-          renderH = width / videoAspect;
-          offsetX = 0;
-          offsetY = (height - renderH) / 2;
-        }
       }
 
       // Note: Video frame is rendered directly by GPU hardware via the native <video> tag behind the transparent canvas!
@@ -751,7 +734,7 @@ export default function GameCanvas({
             const rawVx = (upperLip.x + lowerLip.x) / 2;
             const rawVy = (upperLip.y + lowerLip.y) / 2;
             const targetMouthX = (1 - rawVx) * renderW + offsetX;
-            const targetMouthY = rawVy * renderH + offsetY + 10;
+            const targetMouthY = rawVy * renderH + offsetY;
 
             const lipDistanceY = Math.abs(lowerLip.y - upperLip.y) * renderH;
             const lipDistanceX = Math.abs(rightCorner.x - leftCorner.x) * renderW;
@@ -1105,26 +1088,13 @@ export default function GameCanvas({
 
       {/* Main Canvas Viewport Container */}
       <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* Full-Screen Ambient Live Video Backdrop (Fills entire screen with live movement & color) */}
-        <video
-          ref={bgVideoRef}
-          playsInline
-          muted
-          autoPlay
-          className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-3xl opacity-45 pointer-events-none scale-110"
-        />
-
-        {/* Wide-Angle Live Camera Video Feed (Full Uncropped Field of View - Zoomed Out) */}
+        {/* Full-Screen Hardware-Accelerated Native Camera Video Feed */}
         <video
           ref={videoRef}
           playsInline
           muted
           autoPlay
-          style={{
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)',
-          }}
-          className="absolute inset-0 w-full h-full object-contain -scale-x-100 pointer-events-none"
+          className="absolute inset-0 w-full h-full object-cover -scale-x-100 pointer-events-none"
         />
 
         <canvas
