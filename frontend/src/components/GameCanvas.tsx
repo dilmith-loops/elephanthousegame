@@ -980,16 +980,16 @@ export default function GameCanvas({
       {/* Top Header Controls (Player profile, Score, Sound, Leaderboard, End) */}
       <header
         style={{
-          paddingTop: 'max(36px, calc(env(safe-area-inset-top, 0px) + 6px))',
+          paddingTop: 'max(16px, calc(env(safe-area-inset-top, 0px) + 2px))',
         }}
-        className="w-full max-w-lg md:max-w-none md:absolute md:top-0 md:inset-x-0 z-30 px-2.5 sm:px-4 md:px-6 pb-1.5 md:pt-6 flex items-center justify-between pointer-events-auto flex-shrink-0 md:bg-gradient-to-b md:from-black/90 md:via-black/50 md:to-transparent"
+        className="w-full max-w-lg md:max-w-none md:absolute md:top-0 md:inset-x-0 z-30 px-2 sm:px-4 md:px-6 pb-0.5 md:pt-6 flex items-center justify-between pointer-events-auto flex-shrink-0 md:bg-gradient-to-b md:from-black/90 md:via-black/50 md:to-transparent"
       >
         {/* Left: Player Profile & Live Score Pill (Reference Design) */}
-        <div className="flex items-center space-x-2 sm:space-x-3.5 bg-[#181922]/95 backdrop-blur-2xl border border-[#38394a] sm:border-2 shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full py-1 px-2.5 sm:py-2 sm:px-4 ring-1 ring-white/10 select-none transition-all flex-shrink min-w-0">
+        <div className="flex items-center space-x-1.5 sm:space-x-3.5 bg-[#181922]/95 backdrop-blur-2xl border border-[#38394a] sm:border-2 shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full py-0.5 px-2 sm:py-2 sm:px-4 ring-1 ring-white/10 select-none transition-all flex-shrink min-w-0">
           {/* Avatar Ring */}
           <div className="relative flex-shrink-0">
             {/* Glowing Sunset Ring */}
-            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full p-[1.5px] sm:p-[2px] bg-gradient-to-tr from-[#ff2a6d] via-[#ff6a00] to-[#ffaa00] shadow-[0_0_12px_rgba(255,106,0,0.45)] flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full p-[1.5px] sm:p-[2px] bg-gradient-to-tr from-[#ff2a6d] via-[#ff6a00] to-[#ffaa00] shadow-[0_0_12px_rgba(255,106,0,0.45)] flex items-center justify-center overflow-hidden">
               <CartoonAvatar name={player.name} size="md" className="w-full h-full" />
             </div>
           </div>
@@ -998,17 +998,17 @@ export default function GameCanvas({
           <div className="flex flex-col justify-center min-w-0 pr-0.5 sm:pr-1">
             {/* Top row: Name */}
             <div className="leading-tight">
-              <span className="text-white font-black text-[10px] sm:text-sm tracking-[0.12em] sm:tracking-[0.14em] uppercase truncate max-w-[75px] xs:max-w-[105px] sm:max-w-[160px] drop-shadow-sm block">
+              <span className="text-white font-black text-[9px] sm:text-sm tracking-[0.12em] sm:tracking-[0.14em] uppercase truncate max-w-[70px] xs:max-w-[100px] sm:max-w-[160px] drop-shadow-sm block">
                 {player.name}
               </span>
             </div>
 
             {/* Bottom row: Score + Soft Serve Ice Cream Cone */}
             <div className="flex items-center space-x-1 sm:space-x-1.5 mt-0.5">
-              <span className="font-black text-base sm:text-2xl text-[#ffaa00] tracking-tight leading-none drop-shadow-[0_2px_8px_rgba(255,170,0,0.35)]">
+              <span className="font-black text-sm sm:text-2xl text-[#ffaa00] tracking-tight leading-none drop-shadow-[0_2px_8px_rgba(255,170,0,0.35)]">
                 {score.toLocaleString()}
               </span>
-              <SoftServeIcon className="w-4 h-4 sm:w-6 sm:h-6" />
+              <SoftServeIcon className="w-3.5 h-3.5 sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
@@ -1017,7 +1017,7 @@ export default function GameCanvas({
         {combo > 1 && (
           <div
             style={{
-              top: 'max(90px, calc(env(safe-area-inset-top, 0px) + 60px))',
+              top: 'max(65px, calc(env(safe-area-inset-top, 0px) + 48px))',
             }}
             className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300 animate-bounce"
           >
