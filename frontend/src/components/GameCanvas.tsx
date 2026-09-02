@@ -313,21 +313,21 @@ export default function GameCanvas({
           typeof window !== 'undefined' &&
           /FBAN|FBAV|Instagram|TikTok|Line\/|MicroMessenger|Snapchat|Twitter|ByteLocale/i.test(navigator.userAgent);
 
-        // Stage 1: Try optimal lightweight constraints (480p on mobile to prevent CPU/GPU bottleneck, 720p on desktop)
+        // Stage 1: Request optimal portrait 9:16 aspect ratio (avoids 4:3 zoom cropping on tall mobile screens)
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: isMobile
               ? {
                   facingMode: 'user',
-                  width: { ideal: 480, max: 640 },
-                  height: { ideal: 640, max: 800 },
-                  frameRate: { ideal: 30, max: 30 }
+                  width: { ideal: 720, max: 1080 },
+                  height: { ideal: 1280, max: 1920 },
+                  aspectRatio: { ideal: 9 / 16 }
                 }
               : {
                   facingMode: 'user',
-                  width: { ideal: 1280, max: 1280 },
-                  height: { ideal: 720, max: 720 },
-                  frameRate: { ideal: 30, max: 60 }
+                  width: { ideal: 1280, max: 1920 },
+                  height: { ideal: 720, max: 1080 },
+                  aspectRatio: { ideal: 16 / 9 }
                 },
             audio: false
           });
@@ -970,40 +970,40 @@ export default function GameCanvas({
 
   return (
     <div className="relative w-full h-[100dvh] max-h-[100dvh] flex flex-col bg-slate-950 overflow-hidden select-none">
-      {/* Top HUD Header */}
-      <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between pt-3 pb-4 px-3 sm:px-5 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-auto select-none">
+      {/* Top HUD Header with Safe Area Insets for iOS Notch / Dynamic Island */}
+      <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between pt-[max(env(safe-area-inset-top,0px),12px)] pb-3 px-2.5 sm:px-5 bg-gradient-to-b from-black/90 via-black/50 to-transparent pointer-events-auto select-none gap-2">
         {/* Left: Player Profile & Live Score Pill (Reference Design) */}
-        <div className="flex items-center space-x-2.5 sm:space-x-3.5 bg-[#181922]/95 backdrop-blur-2xl border-2 border-[#38394a] shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full py-1.5 px-3 sm:py-2 sm:px-4 ring-1 ring-white/10 select-none transition-all">
+        <div className="flex items-center space-x-2 sm:space-x-3.5 bg-[#181922]/95 backdrop-blur-2xl border border-[#38394a] sm:border-2 shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full py-1 px-2.5 sm:py-2 sm:px-4 ring-1 ring-white/10 select-none transition-all flex-shrink min-w-0">
           {/* Avatar Ring */}
           <div className="relative flex-shrink-0">
             {/* Glowing Sunset Ring */}
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-[2px] bg-gradient-to-tr from-[#ff2a6d] via-[#ff6a00] to-[#ffaa00] shadow-[0_0_14px_rgba(255,106,0,0.45)] flex items-center justify-center overflow-hidden">
+            <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full p-[1.5px] sm:p-[2px] bg-gradient-to-tr from-[#ff2a6d] via-[#ff6a00] to-[#ffaa00] shadow-[0_0_12px_rgba(255,106,0,0.45)] flex items-center justify-center overflow-hidden">
               <CartoonAvatar name={player.name} size="md" className="w-full h-full" />
             </div>
           </div>
 
           {/* Name & Live Score */}
-          <div className="flex flex-col justify-center min-w-0 pr-1">
+          <div className="flex flex-col justify-center min-w-0 pr-0.5 sm:pr-1">
             {/* Top row: Name */}
             <div className="leading-tight">
-              <span className="text-white font-black text-xs sm:text-sm tracking-[0.14em] uppercase truncate max-w-[105px] sm:max-w-[160px] drop-shadow-sm block">
+              <span className="text-white font-black text-[10px] sm:text-sm tracking-[0.12em] sm:tracking-[0.14em] uppercase truncate max-w-[75px] xs:max-w-[105px] sm:max-w-[160px] drop-shadow-sm block">
                 {player.name}
               </span>
             </div>
 
             {/* Bottom row: Score + Soft Serve Ice Cream Cone */}
-            <div className="flex items-center space-x-1.5 mt-0.5">
-              <span className="font-black text-xl sm:text-2xl text-[#ffaa00] tracking-tight leading-none drop-shadow-[0_2px_8px_rgba(255,170,0,0.35)]">
+            <div className="flex items-center space-x-1 sm:space-x-1.5 mt-0.5">
+              <span className="font-black text-base sm:text-2xl text-[#ffaa00] tracking-tight leading-none drop-shadow-[0_2px_8px_rgba(255,170,0,0.35)]">
                 {score.toLocaleString()}
               </span>
-              <SoftServeIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+              <SoftServeIcon className="w-4 h-4 sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
 
-        {/* Center: Active Multiplier/Combo Indicator (Floating below top bar) */}
+        {/* Center: Active Multiplier/Combo Indicator */}
         {combo > 1 && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300 animate-bounce">
+          <div className="absolute top-[calc(max(env(safe-area-inset-top,0px),12px)+52px)] left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300 animate-bounce">
             <span className="inline-flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-rose-600 to-amber-500 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/30 shadow-xl shadow-rose-600/40">
               <Flame className="w-4 h-4 fill-amber-300 text-amber-300 animate-pulse" />
               <span className="tracking-wide">{combo}x Combo!</span>
@@ -1012,11 +1012,11 @@ export default function GameCanvas({
         )}
 
         {/* Right: Sound, Leaderboard & End Game Controls Capsule */}
-        <div className="flex items-center space-x-2 sm:space-x-2.5 bg-[#181922]/95 backdrop-blur-2xl border-2 border-[#38394a] shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full p-1.5 sm:p-2 ring-1 ring-white/10 flex-shrink-0 select-none">
+        <div className="flex items-center space-x-1.5 sm:space-x-2.5 bg-[#181922]/95 backdrop-blur-2xl border border-[#38394a] sm:border-2 shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full p-1 sm:p-2 ring-1 ring-white/10 flex-shrink-0 select-none">
           {/* Sound Toggle Button */}
           <button
             onClick={toggleMute}
-            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
+            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
               isMuted
                 ? 'bg-rose-500/15 border border-rose-500/30 text-rose-400 hover:bg-rose-500/25 shadow-[0_0_10px_rgba(244,63,94,0.25)]'
                 : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
@@ -1024,28 +1024,28 @@ export default function GameCanvas({
             title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
           >
             {isMuted ? (
-              <VolumeX className="w-4 h-4 sm:w-4.5 sm:h-4.5 filter drop-shadow-[0_0_4px_rgba(244,63,94,0.5)]" />
+              <VolumeX className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 filter drop-shadow-[0_0_4px_rgba(244,63,94,0.5)]" />
             ) : (
-              <Volume2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 filter drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+              <Volume2 className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 filter drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
             )}
           </button>
 
           {/* Leaderboard Trophy Button */}
           <button
             onClick={onOpenLeaderboard}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 active:scale-90 transition-all flex items-center justify-center cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.25)]"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 active:scale-90 transition-all flex items-center justify-center cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.25)]"
             title="Hall of Fame Leaderboard"
           >
-            <Trophy className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-300 filter drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+            <Trophy className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-amber-300 filter drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
           </button>
 
           {/* End Game Action Button */}
           <button
             onClick={handleRequestEndGame}
             disabled={countdown !== null || isGameOver}
-            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white text-xs sm:text-sm font-black tracking-wider uppercase flex items-center space-x-1.5 shadow-[0_4px_16px_rgba(225,29,72,0.45)] border border-rose-400/40 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-2.5 py-1 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white text-[11px] sm:text-sm font-black tracking-wider uppercase flex items-center space-x-1 sm:space-x-1.5 shadow-[0_4px_16px_rgba(225,29,72,0.45)] border border-rose-400/40 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <div className="w-2.5 h-2.5 rounded-[3px] bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)]"></div>
+            <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-[2px] sm:rounded-[3px] bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)]"></div>
             <span>End</span>
           </button>
         </div>
@@ -1212,14 +1212,14 @@ export default function GameCanvas({
           </div>
         )}
 
-        {/* Bottom Live Tongue Guidance Pill */}
+        {/* Bottom Live Tongue Guidance Pill with Safe Area Inset */}
         {countdown === null && !isGameOver && !isPaused && (
-          <div className="absolute bottom-6 inset-x-0 z-20 flex justify-center pointer-events-none px-4">
+          <div className="absolute bottom-[max(env(safe-area-inset-bottom,0px),24px)] inset-x-0 z-20 flex justify-center pointer-events-none px-4">
             <div
-              className={`px-4 py-2 rounded-full backdrop-blur-md text-xs font-black flex items-center space-x-2 border transition-all duration-300 ${
+              className={`px-4 py-2 rounded-full backdrop-blur-md text-xs font-black flex items-center space-x-2 border transition-all duration-300 shadow-xl ${
                 isMouthOpen
-                  ? 'bg-emerald-500/30 text-emerald-300 border-emerald-500/50 scale-105 shadow-lg shadow-emerald-500/20'
-                  : 'bg-black/60 text-slate-300 border-white/20'
+                  ? 'bg-emerald-500/30 text-emerald-300 border-emerald-500/50 scale-105 shadow-emerald-500/20'
+                  : 'bg-black/70 text-slate-300 border-white/20'
               }`}
             >
               <span className="text-base">{isMouthOpen ? '👅' : '👄'}</span>
