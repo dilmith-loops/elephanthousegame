@@ -992,29 +992,40 @@ export default function GameCanvas({
         )}
 
         {/* Right: Sound, Leaderboard & End Game Controls Capsule */}
-        <div className="flex items-center space-x-1.5 bg-[#181922]/95 backdrop-blur-2xl border-2 border-[#38394a] shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full p-1.5 ring-1 ring-white/10 flex-shrink-0">
+        <div className="flex items-center space-x-2 sm:space-x-2.5 bg-[#181922]/95 backdrop-blur-2xl border-2 border-[#38394a] shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full p-1.5 sm:p-2 ring-1 ring-white/10 flex-shrink-0 select-none">
+          {/* Sound Toggle Button */}
           <button
             onClick={toggleMute}
-            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 active:scale-95 text-white flex items-center justify-center transition-all cursor-pointer"
-            title={isMuted ? 'Unmute' : 'Mute'}
+            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
+              isMuted
+                ? 'bg-rose-500/15 border border-rose-500/30 text-rose-400 hover:bg-rose-500/25 shadow-[0_0_10px_rgba(244,63,94,0.25)]'
+                : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
+            }`}
+            title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
           >
-            {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+            {isMuted ? (
+              <VolumeX className="w-4 h-4 sm:w-4.5 sm:h-4.5 filter drop-shadow-[0_0_4px_rgba(244,63,94,0.5)]" />
+            ) : (
+              <Volume2 className="w-4 h-4 sm:w-4.5 sm:h-4.5 filter drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+            )}
           </button>
 
+          {/* Leaderboard Trophy Button */}
           <button
             onClick={onOpenLeaderboard}
-            className="w-8 h-8 rounded-full bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 text-amber-300 flex items-center justify-center transition-all cursor-pointer"
-            title="Leaderboard"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 active:scale-90 transition-all flex items-center justify-center cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.25)]"
+            title="Hall of Fame Leaderboard"
           >
-            <Trophy className="w-4 h-4" />
+            <Trophy className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-300 filter drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
           </button>
 
+          {/* End Game Action Button */}
           <button
             onClick={handleRequestEndGame}
             disabled={countdown !== null || isGameOver}
-            className="px-3 py-1.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white text-xs font-black flex items-center space-x-1 shadow-md shadow-red-600/30 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white text-xs sm:text-sm font-black tracking-wider uppercase flex items-center space-x-1.5 shadow-[0_4px_16px_rgba(225,29,72,0.45)] border border-rose-400/40 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <StopCircle className="w-3.5 h-3.5 fill-white" />
+            <div className="w-2.5 h-2.5 rounded-[3px] bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)]"></div>
             <span>End</span>
           </button>
         </div>
