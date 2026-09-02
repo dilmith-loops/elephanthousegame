@@ -678,7 +678,7 @@ export default function GameCanvas({
       // Always clear the canvas before drawing frame to eliminate any streaking/trails
       ctx.clearRect(0, 0, width, height);
 
-      // Calculate uncropped wide-angle transform for camera feed (Option 2 - Zero Distortion & Zero Zoom)
+      // Calculate object-fit: cover transform for portrait camera feed
       const videoW = video.videoWidth || 1280;
       const videoH = video.videoHeight || 720;
       const videoAspect = videoW / videoH;
@@ -690,15 +690,15 @@ export default function GameCanvas({
       let offsetY: number;
 
       if (videoAspect > screenAspect) {
-        renderW = width;
-        renderH = width / videoAspect;
-        offsetX = 0;
-        offsetY = (height - renderH) / 2;
-      } else {
         renderH = height;
         renderW = height * videoAspect;
         offsetX = (width - renderW) / 2;
         offsetY = 0;
+      } else {
+        renderW = width;
+        renderH = width / videoAspect;
+        offsetX = 0;
+        offsetY = (height - renderH) / 2;
       }
 
       // Note: Video frame is rendered directly by GPU hardware via the native <video> tag behind the transparent canvas!
@@ -1089,13 +1089,13 @@ export default function GameCanvas({
 
       {/* Main Canvas Viewport Container */}
       <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* 100% Uncropped Natural Selfie Camera Feed (Pure Camera, No Covers) */}
+        {/* Portrait Full-Height Native Camera Video Feed */}
         <video
           ref={videoRef}
           playsInline
           muted
           autoPlay
-          className="absolute inset-0 w-full h-full object-contain -scale-x-100 pointer-events-none"
+          className="absolute inset-0 w-full h-full object-cover -scale-x-100 pointer-events-none"
         />
 
         <canvas
