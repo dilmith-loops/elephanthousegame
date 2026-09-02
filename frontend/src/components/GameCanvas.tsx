@@ -678,28 +678,11 @@ export default function GameCanvas({
       // Always clear the canvas before drawing frame to eliminate any streaking/trails
       ctx.clearRect(0, 0, width, height);
 
-      // Calculate object-fit: cover transform for 100% full screen camera feed
-      const videoW = video.videoWidth || 1280;
-      const videoH = video.videoHeight || 720;
-      const videoAspect = videoW / videoH;
-      const screenAspect = width / height;
-
-      let renderW: number;
-      let renderH: number;
-      let offsetX: number;
-      let offsetY: number;
-
-      if (videoAspect > screenAspect) {
-        renderH = height;
-        renderW = height * videoAspect;
-        offsetX = (width - renderW) / 2;
-        offsetY = 0;
-      } else {
-        renderW = width;
-        renderH = width / videoAspect;
-        offsetX = 0;
-        offsetY = (height - renderH) / 2;
-      }
+      // 100% Full-Screen Uncropped Transform (Zero Crop, Zero Zoom, Full Screen)
+      const renderW = width;
+      const renderH = height;
+      const offsetX = 0;
+      const offsetY = 0;
 
       // Note: Video frame is rendered directly by GPU hardware via the native <video> tag behind the transparent canvas!
       // This eliminates 100% of the canvas drawImage video copy lag on mobile devices.
@@ -1089,13 +1072,13 @@ export default function GameCanvas({
 
       {/* Main Canvas Viewport Container */}
       <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* 100% Full-Screen Edge-to-Edge Native Camera Video Feed */}
+        {/* 100% Full-Screen Uncropped Native Camera Video Feed */}
         <video
           ref={videoRef}
           playsInline
           muted
           autoPlay
-          className="absolute inset-0 w-full h-full object-cover -scale-x-100 pointer-events-none"
+          className="absolute inset-0 w-full h-full object-fill -scale-x-100 pointer-events-none"
         />
 
         <canvas
