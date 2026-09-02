@@ -1266,9 +1266,9 @@ export default function GameCanvas({
       {/* Bottom Brand Bar (Mobile View - Below Camera) */}
       <div
         style={{
-          paddingBottom: 'max(14px, calc(env(safe-area-inset-bottom, 0px) + 6px))',
+          paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom, 0px) + 14px))',
         }}
-        className="w-full max-w-md md:hidden flex flex-col items-center justify-center pt-0.5 pb-2 px-4 z-20 flex-shrink-0 -mt-1 sm:-mt-1.5 mb-auto"
+        className="w-full max-w-md md:hidden flex flex-col items-center justify-center pt-0 pb-3 px-4 z-20 flex-shrink-0 -mt-3.5 sm:-mt-4 mb-auto"
       >
         <div className="h-7 sm:h-9 w-full max-w-[170px] sm:max-w-[200px] flex items-center justify-center filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
           <img
