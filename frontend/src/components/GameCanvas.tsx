@@ -312,45 +312,35 @@ export default function GameCanvas({
           typeof window !== 'undefined' &&
           /FBAN|FBAV|Instagram|TikTok|Line\/|MicroMessenger|Snapchat|Twitter|ByteLocale/i.test(navigator.userAgent);
 
-        // Stage 1: Request 9:16 native mobile portrait camera stream
+        // Stage 1: Optimal lightweight constraints (480p on mobile to prevent CPU/GPU bottleneck, 720p on desktop)
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: isMobile
               ? {
                   facingMode: 'user',
-                  aspectRatio: { ideal: 9 / 16 },
-                  width: { ideal: 720, max: 1080 },
-                  height: { ideal: 1280, max: 1920 }
+                  width: { ideal: 480, max: 640 },
+                  height: { ideal: 640, max: 800 },
+                  frameRate: { ideal: 30, max: 30 }
                 }
               : {
                   facingMode: 'user',
-                  aspectRatio: { ideal: 16 / 9 },
-                  width: { ideal: 1280, max: 1920 },
-                  height: { ideal: 720, max: 1080 }
+                  width: { ideal: 1280, max: 1280 },
+                  height: { ideal: 720, max: 720 },
+                  frameRate: { ideal: 30, max: 60 }
                 },
             audio: false
           });
         } catch {
-          // Stage 2: Resolution fallback
+          // Stage 2: Fallback to basic user camera constraint
           try {
             stream = await navigator.mediaDevices.getUserMedia({
-              video: isMobile
-                ? {
-                    facingMode: 'user',
-                    width: { ideal: 720 },
-                    height: { ideal: 1280 }
-                  }
-                : {
-                    facingMode: 'user',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                  },
+              video: { facingMode: 'user' },
               audio: false
             });
           } catch {
-            // Stage 3: Universal fallback
+            // Stage 3: Universal fallback to any video input
             stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: 'user' },
+              video: true,
               audio: false
             });
           }
@@ -359,21 +349,6 @@ export default function GameCanvas({
         if (!isMounted) {
           stream.getTracks().forEach((track) => track.stop());
           return;
-        }
-
-        // Activate hardware 0.5x ultra-wide lens if supported by phone camera
-        const track = stream.getVideoTracks()[0];
-        if (track && 'getCapabilities' in track) {
-          try {
-            const caps = (track as unknown as { getCapabilities: () => { zoom?: { min: number } } }).getCapabilities();
-            if (caps && caps.zoom && typeof caps.zoom.min === 'number') {
-              (track as unknown as { applyConstraints: (c: unknown) => Promise<void> }).applyConstraints({
-                advanced: [{ zoom: caps.zoom.min }]
-              }).catch(() => {});
-            }
-          } catch {
-            // Hardware zoom constraint handled silently
-          }
         }
 
         if (videoRef.current) {
