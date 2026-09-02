@@ -139,7 +139,6 @@ export default function LeaderboardModal({ onClose }: Props) {
                   <div className="text-right flex-shrink-0">
                     <div className="flex items-center space-x-1 justify-end font-black text-base text-pink-600 dark:text-pink-400">
                       <span>{player.highest_score || 0}</span>
-                      <span className="text-xs uppercase font-bold text-slate-400">pts</span>
                     </div>
                     {rank <= 3 && (
                       <span className="inline-flex items-center text-[10px] text-amber-500 font-bold">
