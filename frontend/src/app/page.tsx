@@ -47,20 +47,17 @@ export default function HomePage() {
   if (isMaintenance) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center relative overflow-hidden p-4 select-none">
+        {/* Wonder Gates Full Background Image Asset */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-100"
+          style={{ backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ''}/wonder_background.jpg)` }}
+        />
+        {/* Cinematic gradient vignette & ambient light overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/50 to-slate-950/80 backdrop-blur-[2px]" />
+
         {/* Ambient Glows */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-rose-600/20 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-500/15 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-
-        {/* Floating Decorative Emojis */}
-        <div className="absolute top-16 left-12 text-6xl opacity-15 animate-bounce pointer-events-none">
-          🍦
-        </div>
-        <div className="absolute top-1/3 right-16 text-7xl opacity-15 animate-pulse pointer-events-none">
-          🍧
-        </div>
-        <div className="absolute bottom-20 left-20 text-6xl opacity-20 animate-spin pointer-events-none">
-          🍭
-        </div>
 
         {/* Maintenance Box */}
         <div className="relative w-full max-w-lg bg-slate-900/90 backdrop-blur-2xl border border-rose-500/30 rounded-3xl p-8 md:p-10 shadow-2xl text-center z-10">
