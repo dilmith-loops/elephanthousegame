@@ -204,6 +204,9 @@ export default function GameCanvas({
   const [isTabHidden, setIsTabHidden] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const [timerConfig, setTimerConfig] = useState<{ duration: number; enabled: boolean }>({ duration: 60, enabled: true });
+  const [timeLeft, setTimeLeft] = useState<number>(60);
+  const timeLeftRef = useRef<number>(60);
 
   // Game Engine Refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -259,6 +262,23 @@ export default function GameCanvas({
     }).catch(() => {
       // Graceful fallback to built-in presets
     });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Load Admin Game Settings (Timer Duration & Active Status)
+  useEffect(() => {
+    let isMounted = true;
+    api.getGameStatus().then((res) => {
+      if (isMounted && res.success) {
+        const duration = res.game_duration !== undefined ? Number(res.game_duration) : 60;
+        const enabled = res.timer_enabled !== undefined ? Boolean(res.timer_enabled) : true;
+        setTimerConfig({ duration, enabled });
+        setTimeLeft(duration);
+        timeLeftRef.current = duration;
+      }
+    }).catch(() => {});
     return () => {
       isMounted = false;
     };
@@ -538,6 +558,32 @@ export default function GameCanvas({
       setIsSubmitting(false);
     }
   }, [gameStartTime, onEndGame, player]);
+
+  // Session Countdown Timer (runs when countdown is over, not paused, and not game over)
+  useEffect(() => {
+    if (countdown !== null || isGameOver || isPaused || showEndGameConfirm || isTabHidden || !timerConfig.enabled) {
+      return;
+    }
+
+    const timerInterval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerInterval);
+          if (!isGameOverRef.current) {
+            endGame();
+          }
+          return 0;
+        }
+        if (prev <= 6 && !isMuted) {
+          sound.playTimerTick(prev <= 3);
+        }
+        timeLeftRef.current = prev - 1;
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, [countdown, isGameOver, isPaused, showEndGameConfirm, isTabHidden, timerConfig.enabled, isMuted, endGame]);
 
   // Request End Game (Pauses gameplay & opens custom confirmation dialog)
   const handleRequestEndGame = () => {
@@ -1096,6 +1142,48 @@ export default function GameCanvas({
           className="absolute inset-0 w-full h-full pointer-events-none"
         />
 
+        {/* Live Countdown Timer Pill in Camera Viewport */}
+        {timerConfig.enabled && countdown === null && !isGameOver && (
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 pointer-events-none transition-all duration-300">
+            <div
+              className={`flex items-center space-x-1.5 sm:space-x-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full backdrop-blur-xl border shadow-2xl transition-all duration-300 ${
+                timeLeft <= 5
+                  ? 'bg-rose-600/90 border-rose-300 text-white animate-pulse shadow-rose-600/60 scale-105 ring-2 ring-rose-400'
+                  : timeLeft <= 15
+                  ? 'bg-amber-500/85 border-amber-300 text-white shadow-amber-500/40'
+                  : 'bg-black/65 border-white/20 text-white shadow-black/60'
+              }`}
+            >
+              {/* Animated Progress Ring */}
+              <div className="relative w-4 h-4 sm:w-4.5 sm:h-4.5 flex items-center justify-center flex-shrink-0">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    className="text-white/20"
+                    strokeWidth="3.5"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className={`transition-all duration-1000 ease-linear ${
+                      timeLeft <= 5 ? 'text-white' : timeLeft <= 15 ? 'text-amber-200' : 'text-[#ff2a6d]'
+                    }`}
+                    strokeDasharray={`${Math.max(0, Math.min(100, (timeLeft / (timerConfig.duration || 60)) * 100))}, 100`}
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+              </div>
+              <span className="font-black font-mono text-xs sm:text-sm tracking-tight drop-shadow-sm">
+                {timeLeft}s
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Loading Overlay */}
         {(loadingAI || loadingCamera) && !cameraError && (
           <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-xl text-white p-6 text-center animate-fade-in">
@@ -1403,6 +1491,9 @@ export default function GameCanvas({
                   scoreRef.current = prevHighScore;
                   catchesRef.current = 0;
                   comboRef.current = 0;
+                  const dur = timerConfig.duration || 60;
+                  setTimeLeft(dur);
+                  timeLeftRef.current = dur;
                   setScore(prevHighScore);
                   setCatches(0);
                   setCombo(0);

@@ -98,6 +98,8 @@ class AdminController extends Controller
             'maintenance_message',
             'The Elephant House AR Game is currently undergoing scheduled maintenance. Please check back shortly!'
         );
+        $gameDuration = (int) Setting::get('game_duration', '60');
+        $timerEnabled = Setting::get('timer_enabled', '1') === '1';
 
         return response()->json([
             'success' => true,
@@ -110,6 +112,8 @@ class AdminController extends Controller
                 'average_score' => $avgScore,
                 'maintenance_mode' => $isMaintenance,
                 'maintenance_message' => $maintenanceMessage,
+                'game_duration' => $gameDuration,
+                'timer_enabled' => $timerEnabled,
             ],
         ]);
     }
@@ -519,6 +523,45 @@ class AdminController extends Controller
             'message' => $enabled ? 'Maintenance mode enabled. Game is now paused for all players.' : 'Maintenance mode disabled. Game is now live.',
             'maintenance_mode' => $enabled,
             'maintenance_message' => Setting::get('maintenance_message'),
+        ]);
+    }
+
+    /**
+     * Update Game Timer & Duration Settings
+     */
+    public function updateGameSettings(Request $request)
+    {
+        $admin = $this->authenticateAdmin($request);
+        if (!$admin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        if ($request->has('game_duration')) {
+            $duration = max(10, min(600, (int) $request->input('game_duration')));
+            Setting::set('game_duration', (string) $duration);
+        }
+
+        if ($request->has('timer_enabled')) {
+            $timerEnabled = filter_var($request->input('timer_enabled'), FILTER_VALIDATE_BOOLEAN);
+            Setting::set('timer_enabled', $timerEnabled ? '1' : '0');
+        }
+
+        $duration = (int) Setting::get('game_duration', '60');
+        $timerEnabled = Setting::get('timer_enabled', '1') === '1';
+
+        // Audit Log
+        AdminLog::record(
+            $admin,
+            'game_timer_update',
+            "Admin updated game session timer: {$duration}s (" . ($timerEnabled ? 'Enabled' : 'Disabled') . ")",
+            $request
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Game timer settings saved successfully ({$duration}s)!",
+            'game_duration' => $duration,
+            'timer_enabled' => $timerEnabled,
         ]);
     }
 

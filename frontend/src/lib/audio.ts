@@ -300,6 +300,28 @@ class SoundFX {
     osc.stop(now + (isFinal ? 0.35 : 0.15));
   }
 
+  public playTimerTick(isUrgent: boolean = false) {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    const freq = isUrgent ? 880 : 587.33; // A5 or D5
+    osc.frequency.setValueAtTime(freq, now);
+
+    gain.gain.setValueAtTime(isUrgent ? 0.18 : 0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + (isUrgent ? 0.12 : 0.06));
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + (isUrgent ? 0.12 : 0.06));
+  }
+
   public playGameOver() {
     if (this.isMuted) return;
     this.init();

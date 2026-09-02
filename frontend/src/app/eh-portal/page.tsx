@@ -172,6 +172,12 @@ export default function AdminPage() {
   const [isSavingPopsicle, setIsSavingPopsicle] = useState(false);
   const [isTogglingPopsicleId, setIsTogglingPopsicleId] = useState<number | null>(null);
 
+  // Game Session Timer Settings States
+  const [gameDurationInput, setGameDurationInput] = useState<number>(60);
+  const [timerEnabledInput, setTimerEnabledInput] = useState<boolean>(true);
+  const [isSavingTimer, setIsSavingTimer] = useState<boolean>(false);
+  const [timerSaveMsg, setTimerSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   // Check stored auth token on mount
   useEffect(() => {
     const token = localStorage.getItem('eh_admin_token');
@@ -216,11 +222,39 @@ export default function AdminPage() {
       const res = await api.getAdminStats();
       if (res.success) {
         setStats(res.stats);
+        if (res.stats.game_duration !== undefined) {
+          setGameDurationInput(res.stats.game_duration);
+        }
+        if (res.stats.timer_enabled !== undefined) {
+          setTimerEnabledInput(res.stats.timer_enabled);
+        }
       }
     } catch (err) {
       console.error('Failed to load stats:', err);
     }
   }, []);
+
+  // Save Game Session Timer Settings
+  const handleSaveTimerSettings = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSavingTimer(true);
+    setTimerSaveMsg(null);
+    try {
+      const res = await api.updateGameSettings({
+        game_duration: Number(gameDurationInput),
+        timer_enabled: timerEnabledInput
+      });
+      if (res.success) {
+        setTimerSaveMsg({ type: 'success', text: res.message || 'Game timer settings saved successfully!' });
+        loadStats();
+        setTimeout(() => setTimerSaveMsg(null), 4000);
+      }
+    } catch (err: any) {
+      setTimerSaveMsg({ type: 'error', text: err.message || 'Failed to update timer settings.' });
+    } finally {
+      setIsSavingTimer(false);
+    }
+  };
 
   // Load Active Tab Data
   const loadTabData = useCallback(async () => {
@@ -1860,6 +1894,130 @@ export default function AdminPage() {
                   {stats?.maintenance_message ||
                     'The Elephant House AR Game is currently undergoing scheduled maintenance. Please check back shortly!'}
                 </p>
+              </div>
+            </div>
+
+            {/* Game Session Timer & Duration Control Card */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-800">
+                <div className="flex items-center space-x-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <h3 className="text-base font-black text-white">Game Session Timer & Countdown</h3>
+                      <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
+                        timerEnabledInput
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          : 'bg-slate-700/50 text-slate-300 border-slate-600/40'
+                      }`}>
+                        {timerEnabledInput ? `${gameDurationInput}s Active Timer` : 'Timer Disabled'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Configure the time limit for players to catch popsicles before their score is finalized and submitted.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Toggle Enable Switch */}
+                <button
+                  type="button"
+                  onClick={() => setTimerEnabledInput(!timerEnabledInput)}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center space-x-2 transition-all cursor-pointer border ${
+                    timerEnabledInput
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                      : 'bg-slate-800 text-slate-400 border-slate-700'
+                  }`}
+                >
+                  <div className={`w-3.5 h-3.5 rounded-full transition-all ${
+                    timerEnabledInput ? 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'bg-slate-600'
+                  }`} />
+                  <span>{timerEnabledInput ? 'Timer Enabled' : 'Timer Disabled'}</span>
+                </button>
+              </div>
+
+              {/* Timer Duration Selection */}
+              <div className="space-y-4">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                  Select Game Session Duration (Seconds)
+                </label>
+
+                {/* Quick Presets */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                  {[30, 45, 60, 90, 120].map((sec) => (
+                    <button
+                      key={sec}
+                      type="button"
+                      onClick={() => setGameDurationInput(sec)}
+                      className={`py-3 px-3 rounded-2xl text-xs font-black transition-all border cursor-pointer flex flex-col items-center justify-center ${
+                        gameDurationInput === sec
+                          ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white border-pink-400/50 shadow-lg shadow-pink-600/30 scale-[1.02]'
+                          : 'bg-slate-800/80 text-slate-300 border-slate-700/80 hover:bg-slate-800 hover:text-white'
+                      }`}
+                    >
+                      <span className="text-base">{sec}s</span>
+                      <span className="text-[10px] font-semibold opacity-75">
+                        {sec === 60 ? 'Standard Default' : sec < 60 ? 'Quick Sprint' : 'Extended Play'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Duration Input */}
+                <div className="p-4 bg-slate-800/50 rounded-2xl border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <span className="text-xs font-bold text-white block">Custom Duration (10s – 600s)</span>
+                    <span className="text-[11px] text-slate-400">Set any custom playtime limit for special competitions or events.</span>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      min={10}
+                      max={600}
+                      value={gameDurationInput}
+                      onChange={(e) => setGameDurationInput(Math.max(10, Math.min(600, parseInt(e.target.value) || 60)))}
+                      className="w-24 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-center text-sm font-black text-white focus:outline-none focus:border-pink-500 font-mono"
+                    />
+                    <span className="text-xs text-slate-400 font-bold">seconds</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Message Banner */}
+              {timerSaveMsg && (
+                <div className={`p-3.5 rounded-2xl text-xs font-bold flex items-center space-x-2 border animate-fade-in ${
+                  timerSaveMsg.type === 'success'
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                    : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                }`}>
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                  <span>{timerSaveMsg.text}</span>
+                </div>
+              )}
+
+              {/* Save Settings Action */}
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleSaveTimerSettings()}
+                  disabled={isSavingTimer}
+                  className="px-6 py-3 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-black text-xs rounded-xl shadow-lg shadow-pink-600/25 flex items-center space-x-2 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  {isSavingTimer ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Saving Timer Settings...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Save Timer Settings</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>

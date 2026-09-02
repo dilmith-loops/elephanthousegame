@@ -369,8 +369,8 @@ export const api = {
     return data;
   },
 
-  // Public: Get Game Status / Maintenance Check
-  async getGameStatus(): Promise<{ success: boolean; maintenance_mode: boolean; maintenance_message?: string }> {
+  // Public: Get Game Status / Maintenance & Timer Config Check
+  async getGameStatus(): Promise<{ success: boolean; maintenance_mode: boolean; maintenance_message?: string; game_duration?: number; timer_enabled?: boolean }> {
     try {
       const res = await fetch(`${getApiBaseUrl()}/game/status`, {
         cache: 'no-store',
@@ -378,7 +378,7 @@ export const api = {
       });
       return await res.json();
     } catch {
-      return { success: true, maintenance_mode: false };
+      return { success: true, maintenance_mode: false, game_duration: 60, timer_enabled: true };
     }
   },
 
@@ -397,6 +397,23 @@ export const api = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to update maintenance mode');
     return data;
+  },
+
+  // Admin: Update Game Timer & Duration Settings
+  async updateGameSettings(data: { game_duration?: number; timer_enabled?: boolean }): Promise<{ success: boolean; message: string; game_duration: number; timer_enabled: boolean }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${getApiBaseUrl()}/admin/game-settings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Failed to update game timer settings');
+    return result;
   },
 
   // Admin: Export CSV

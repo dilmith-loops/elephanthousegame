@@ -23,6 +23,7 @@ Route::get('/leaderboard', [ScoreController::class, 'leaderboard']);
 Route::post('/admin/login', [AdminController::class, 'login']);
 Route::get('/admin/stats', [AdminController::class, 'stats']);
 Route::post('/admin/maintenance', [AdminController::class, 'toggleMaintenance']);
+Route::post('/admin/game-settings', [AdminController::class, 'updateGameSettings']);
 Route::get('/admin/active-users', [AdminController::class, 'activeUsers']);
 Route::post('/admin/password', [AdminController::class, 'updatePassword']);
 Route::get('/admin/logs', [AdminController::class, 'logs']);

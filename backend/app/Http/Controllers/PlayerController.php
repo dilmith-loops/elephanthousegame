@@ -19,11 +19,15 @@ class PlayerController extends Controller
             'maintenance_message',
             'The Elephant House AR Game is currently undergoing scheduled maintenance. Please check back shortly!'
         );
+        $gameDuration = (int) Setting::get('game_duration', '60');
+        $timerEnabled = Setting::get('timer_enabled', '1') === '1';
 
         return response()->json([
             'success' => true,
             'maintenance_mode' => $isMaintenance,
             'maintenance_message' => $message,
+            'game_duration' => $gameDuration,
+            'timer_enabled' => $timerEnabled,
         ]);
     }
 

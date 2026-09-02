@@ -125,10 +125,14 @@ export interface AdminStats {
   average_score: number;
   maintenance_mode?: boolean;
   maintenance_message?: string;
+  game_duration?: number;
+  timer_enabled?: boolean;
 }
 
 export interface GameStatus {
   success: boolean;
   maintenance_mode: boolean;
   maintenance_message?: string;
+  game_duration?: number;
+  timer_enabled?: boolean;
 }
