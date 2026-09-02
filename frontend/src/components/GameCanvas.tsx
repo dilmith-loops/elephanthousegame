@@ -1380,23 +1380,24 @@ export default function GameCanvas({
 
       {/* Game Over / Results Summary Modal */}
       {isGameOver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg animate-fade-in">
-          <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 text-center shadow-2xl border border-pink-500/30">
-            <div className="w-20 h-20 mx-auto -mt-12 bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-400 rounded-3xl p-1 shadow-xl flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-12 pb-6 bg-black/80 backdrop-blur-lg animate-fade-in overflow-y-auto">
+          <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 pt-8 text-center shadow-2xl border border-pink-500/30 my-auto">
+            {/* Floating Top Trophy Badge with Ample Breathing Room */}
+            <div className="w-18 h-18 sm:w-20 sm:h-20 mx-auto -mt-16 sm:-mt-18 bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-400 rounded-3xl p-1 shadow-2xl flex items-center justify-center filter drop-shadow-[0_10px_15px_rgba(244,63,94,0.35)]">
               <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[22px] flex items-center justify-center">
-                <Trophy className="w-10 h-10 text-amber-400 animate-bounce" />
+                <Trophy className="w-9 h-9 sm:w-10 sm:h-10 text-amber-500 drop-shadow-[0_2px_8px_rgba(245,158,11,0.6)] animate-pulse" />
               </div>
             </div>
 
-            <h2 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white mt-4">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white mt-3">
               Game Finished!
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-1">
               Great catch session, {player.name}! 🍦
             </p>
 
             {/* Score Showcase */}
-            <div className="my-6 p-4 bg-gradient-to-br from-pink-50 to-amber-50 dark:from-pink-950/40 dark:to-amber-950/30 rounded-2xl border border-pink-200 dark:border-pink-800/40">
+            <div className="my-4 p-4 bg-gradient-to-br from-pink-50 to-amber-50 dark:from-pink-950/40 dark:to-amber-950/30 rounded-2xl border border-pink-200 dark:border-pink-800/40 shadow-xs">
               <div className="text-xs uppercase tracking-wider font-extrabold text-pink-600 dark:text-pink-400">
                 Your Total Score
               </div>
