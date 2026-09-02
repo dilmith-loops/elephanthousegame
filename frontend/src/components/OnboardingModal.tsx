@@ -93,28 +93,20 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
 
       <div className="relative w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] border border-white/50 dark:border-slate-700/80 p-6 md:p-8 text-slate-800 dark:text-slate-100 transform transition-all duration-300">
         
-        {/* Top Elephant House Branding Badge */}
-        <div className="flex flex-col items-center text-center mb-6">
-          <div className="relative mb-3">
-            <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-3xl p-2 shadow-xl shadow-pink-500/20 flex items-center justify-center border border-white/60 dark:border-slate-700/80 transform hover:scale-105 transition-transform">
-              <img
-                src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`}
-                alt="Elephant House"
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div className="absolute -top-1.5 -right-1.5 bg-amber-400 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">
-              AR FUN
-            </div>
+        {/* Top Elephant House WONDER Branding Logo */}
+        <div className="flex flex-col items-center text-center mb-5">
+          <div className="w-full max-w-[260px] sm:max-w-[290px] h-18 sm:h-22 flex items-center justify-center mb-2 transform hover:scale-105 transition-transform duration-300">
+            <img
+              src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/wonder_logo.png`}
+              alt="Elephant House Wonder"
+              className="w-full h-full object-contain filter drop-shadow-md"
+            />
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 bg-clip-text text-transparent tracking-tight">
-            ELEPHANT HOUSE
-          </h1>
           <p className="text-xs uppercase tracking-widest font-extrabold text-pink-600 dark:text-pink-400 mt-0.5">
             Tongue Catch Ice Cream Game
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-xs">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 max-w-xs">
             Open camera & catch falling popsicles with your mouth & tongue to score! 🍦👅
           </p>
         </div>
