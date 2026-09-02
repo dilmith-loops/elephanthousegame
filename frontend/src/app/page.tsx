@@ -65,11 +65,11 @@ export default function HomePage() {
         {/* Maintenance Box */}
         <div className="relative w-full max-w-lg bg-slate-900/90 backdrop-blur-2xl border border-rose-500/30 rounded-3xl p-8 md:p-10 shadow-2xl text-center z-10">
           {/* Brand Logo Badge */}
-          <div className="w-24 h-24 mx-auto mb-6 bg-white dark:bg-slate-800 rounded-3xl p-2 shadow-2xl shadow-rose-500/20 flex items-center justify-center border border-white/60 dark:border-slate-700/80 transform hover:scale-105 transition-transform">
+          <div className="w-full max-w-[240px] sm:max-w-[280px] h-16 sm:h-20 mx-auto mb-5 flex items-center justify-center transform hover:scale-105 transition-transform duration-300">
             <img
-              src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`}
-              alt="Elephant House"
-              className="w-full h-full object-contain"
+              src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/wonder_logo.png`}
+              alt="Elephant House Wonder"
+              className="w-full h-full object-contain filter drop-shadow-md"
             />
           </div>
 

@@ -1091,16 +1091,16 @@ export default function GameCanvas({
         {(loadingAI || loadingCamera) && !cameraError && (
           <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-xl text-white p-6 text-center animate-fade-in">
             {/* Animated Brand Pulse Badge */}
-            <div className="relative mb-6">
-              <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-pink-500/30 to-amber-500/30 border border-pink-500/40 p-3 shadow-2xl shadow-pink-500/25 flex items-center justify-center animate-pulse">
+            <div className="relative mb-5 flex flex-col items-center">
+              <div className="w-full max-w-[220px] h-16 flex items-center justify-center animate-pulse">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/logo.png`}
-                  alt="Elephant House"
-                  className="w-full h-full object-contain"
+                  src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/wonder_logo.png`}
+                  alt="Elephant House Wonder"
+                  className="w-full h-full object-contain filter drop-shadow-md"
                 />
               </div>
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-slate-900 border-2 border-pink-500 flex items-center justify-center shadow-lg">
-                <div className="w-4 h-4 border-2 border-pink-400 border-t-transparent rounded-full animate-spin"></div>
+              <div className="mt-2 w-7 h-7 rounded-full bg-slate-900 border-2 border-pink-500 flex items-center justify-center shadow-lg">
+                <div className="w-3.5 h-3.5 border-2 border-pink-400 border-t-transparent rounded-full animate-spin"></div>
               </div>
             </div>
 
