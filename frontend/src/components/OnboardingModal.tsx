@@ -197,7 +197,6 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
               <>
                 <Play className="w-5 h-5 fill-current" />
                 <span>Start Game</span>
-                <Sparkles className="w-4 h-4" />
               </>
             )}
           </button>
