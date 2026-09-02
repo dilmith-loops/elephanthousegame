@@ -84,7 +84,7 @@ interface Props {
   player: Player;
   isPaused?: boolean;
   onEndGame: (finalScore: number) => void;
-  onOpenLeaderboard: () => void;
+  onOpenLeaderboard?: () => void;
   onChangePlayer: () => void;
 }
 
@@ -209,6 +209,8 @@ export default function GameCanvas({
   const [timerConfig, setTimerConfig] = useState<{ duration: number; enabled: boolean }>({ duration: 60, enabled: true });
   const [timeLeft, setTimeLeft] = useState<number>(60);
   const timeLeftRef = useRef<number>(60);
+  const [topThreePlayers, setTopThreePlayers] = useState<Array<{ id: number; name: string; highest_score: number }>>([]);
+  const [loadingTopThree, setLoadingTopThree] = useState(false);
 
   // Game Engine Refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -570,6 +572,20 @@ export default function GameCanvas({
       );
     } finally {
       setIsSubmitting(false);
+      // Fetch latest Top 3 Players for Game Finished dialog
+      setLoadingTopThree(true);
+      api.getLeaderboard(3)
+        .then((lbRes) => {
+          if (lbRes && lbRes.success && lbRes.leaderboard) {
+            setTopThreePlayers(lbRes.leaderboard.slice(0, 3));
+          }
+        })
+        .catch((err) => {
+          console.warn('Leaderboard top 3 fetch failed:', err);
+        })
+        .finally(() => {
+          setLoadingTopThree(false);
+        });
     }
   }, [gameStartTime, onEndGame, player]);
 
@@ -1127,15 +1143,6 @@ export default function GameCanvas({
             )}
           </button>
 
-          {/* Leaderboard Trophy Button */}
-          <button
-            onClick={onOpenLeaderboard}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 active:scale-90 transition-all flex items-center justify-center cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.25)]"
-            title="Hall of Fame Leaderboard"
-          >
-            <Trophy className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-amber-300 filter drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
-          </button>
-
           {/* End Game Action Button */}
           <button
             onClick={handleRequestEndGame}
@@ -1433,8 +1440,88 @@ export default function GameCanvas({
               )
             )}
 
+            {/* Top 3 Champions Leaderboard Showcase */}
+            <div className="my-4 p-3.5 bg-gradient-to-b from-slate-900/95 to-slate-950/95 rounded-2xl border border-amber-500/30 text-left shadow-lg">
+              <div className="flex items-center justify-between mb-2 px-0.5">
+                <div className="flex items-center space-x-1.5">
+                  <Trophy className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                    Top 3 Champions
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-semibold">Hall of Fame</span>
+              </div>
+
+              {loadingTopThree ? (
+                <div className="flex items-center justify-center py-3.5 space-x-2 text-xs text-slate-400">
+                  <div className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Loading top players...</span>
+                </div>
+              ) : topThreePlayers.length === 0 ? (
+                <div className="text-center py-2.5 text-xs text-slate-400">
+                  Be the first on the Leaderboard!
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {topThreePlayers.map((tp, idx) => {
+                    const isCurrent = tp.name?.toLowerCase() === player.name?.toLowerCase() || tp.id === player.id;
+                    const medals = ['🥇', '🥈', '🥉'];
+
+                    return (
+                      <div
+                        key={tp.id || idx}
+                        className={`flex items-center justify-between px-3 py-1.5 rounded-xl border transition-all ${
+                          isCurrent
+                            ? 'bg-pink-500/20 border-pink-400/60 ring-1 ring-pink-400/50'
+                            : 'bg-white/5 border-white/10'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2 overflow-hidden">
+                          <span className="text-sm flex-shrink-0">{medals[idx]}</span>
+                          <span className={`text-xs font-bold truncate ${isCurrent ? 'text-pink-300' : 'text-slate-100'}`}>
+                            {tp.name} {isCurrent && <span className="text-[10px] text-pink-400 font-normal">(You)</span>}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
+                          <span className="text-xs font-black text-amber-300">{tp.highest_score}</span>
+                          <span className="text-[10px] text-slate-400">pts</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* Action Buttons */}
             <div className="space-y-2.5">
+              {/* Play Again (Primary CTA) */}
+              <button
+                onClick={() => {
+                  setIsGameOver(false);
+                  isGameOverRef.current = false;
+                  popsiclesRef.current = [];
+                  particlesRef.current = [];
+                  scorePopupsRef.current = [];
+                  lastSpawnTimeRef.current = 0;
+                  const prevHighScore = player.highest_score || 0;
+                  scoreRef.current = prevHighScore;
+                  catchesRef.current = 0;
+                  comboRef.current = 0;
+                  const dur = timerConfig.duration || 60;
+                  setTimeLeft(dur);
+                  timeLeftRef.current = dur;
+                  setScore(prevHighScore);
+                  setCatches(0);
+                  setCombo(0);
+                  setCountdown(3);
+                }}
+                className="w-full py-3 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-2xl shadow-lg shadow-pink-500/30 flex items-center justify-center space-x-2 cursor-pointer transition-all active:scale-98 text-xs sm:text-sm"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Play Again</span>
+              </button>
+
               {/* Share Score Card to Socials Button */}
               <button
                 type="button"
@@ -1463,7 +1550,7 @@ export default function GameCanvas({
                   }
                 }}
                 disabled={isSharing}
-                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#b21f85] via-[#c22d95] to-[#8d1468] hover:from-[#c22d95] hover:to-[#b21f85] text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-[#b21f85]/30 border border-white/25 flex items-center justify-center space-x-2 transition-all active:scale-98 cursor-pointer disabled:opacity-50"
+                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#b21f85] via-[#c22d95] to-[#8d1468] hover:from-[#c22d95] hover:to-[#b21f85] text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-[#b21f85]/30 border border-white/25 flex items-center justify-center space-x-2 transition-all active:scale-98 cursor-pointer disabled:opacity-50"
               >
                 {isSharing ? (
                   <>
@@ -1483,48 +1570,13 @@ export default function GameCanvas({
                 )}
               </button>
 
+              {/* Switch Player Button */}
               <button
-                onClick={() => {
-                  setIsGameOver(false);
-                  isGameOverRef.current = false;
-                  popsiclesRef.current = [];
-                  particlesRef.current = [];
-                  scorePopupsRef.current = [];
-                  lastSpawnTimeRef.current = 0;
-                  const prevHighScore = player.highest_score || 0;
-                  scoreRef.current = prevHighScore;
-                  catchesRef.current = 0;
-                  comboRef.current = 0;
-                  const dur = timerConfig.duration || 60;
-                  setTimeLeft(dur);
-                  timeLeftRef.current = dur;
-                  setScore(prevHighScore);
-                  setCatches(0);
-                  setCombo(0);
-                  setCountdown(3);
-                }}
-                className="w-full py-3 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-2xl shadow-lg shadow-pink-500/30 flex items-center justify-center space-x-2 cursor-pointer transition-all active:scale-98 text-xs sm:text-sm"
+                onClick={onChangePlayer}
+                className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
               >
-                <RotateCcw className="w-4 h-4" />
-                <span>Play Again</span>
+                <span>Switch Player</span>
               </button>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={onOpenLeaderboard}
-                  className="py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
-                >
-                  <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Leaderboard</span>
-                </button>
-
-                <button
-                  onClick={onChangePlayer}
-                  className="py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
-                >
-                  <span>Switch Player</span>
-                </button>
-              </div>
             </div>
           </div>
         </div>

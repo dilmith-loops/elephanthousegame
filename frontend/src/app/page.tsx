@@ -126,9 +126,7 @@ export default function HomePage() {
       ) : (
         <GameCanvas
           player={currentPlayer}
-          isPaused={showLeaderboard}
           onEndGame={() => {}}
-          onOpenLeaderboard={() => setShowLeaderboard(true)}
           onChangePlayer={handleChangePlayer}
         />
       )}
