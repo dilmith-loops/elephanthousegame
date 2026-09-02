@@ -113,20 +113,13 @@ export default function HomePage() {
     <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center relative overflow-hidden">
       {/* If no active player, show onboarding registration/login modal */}
       {!currentPlayer ? (
-        <div className="relative w-full min-h-screen flex flex-col items-center justify-center p-4 bg-radial from-pink-900/30 via-slate-950 to-slate-950">
-          {/* Animated Popsicle floating background decorations */}
-          <div className="absolute top-12 left-10 text-5xl opacity-20 animate-bounce pointer-events-none">
-            🍦
-          </div>
-          <div className="absolute top-1/3 right-12 text-6xl opacity-20 animate-pulse pointer-events-none">
-            🍧
-          </div>
-          <div className="absolute bottom-16 left-16 text-5xl opacity-25 animate-spin pointer-events-none">
-            🍭
-          </div>
-          <div className="absolute bottom-24 right-20 text-6xl opacity-20 animate-bounce pointer-events-none">
-            🍨
-          </div>
+        <div className="relative w-full min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden select-none">
+          {/* Background Image: Wonder Gates */}
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ''}/wonder_background.jpg)` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-slate-950/70 backdrop-blur-[1px]" />
 
           <OnboardingModal
             onStartGame={handleStartGame}

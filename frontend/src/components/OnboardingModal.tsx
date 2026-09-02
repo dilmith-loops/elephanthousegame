@@ -78,12 +78,20 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto">
-      {/* Background Animated Gradient Blobs */}
-      <div className="absolute top-10 left-1/4 w-72 h-72 bg-pink-500/20 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-      <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-amber-500/20 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto select-none">
+      {/* Wonder Gates Full Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-100 transition-transform duration-1000"
+        style={{ backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ''}/wonder_background.jpg)` }}
+      />
+      {/* Subtle cinematic gradient vignette & ambient light overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-slate-950/70 backdrop-blur-[1.5px]" />
 
-      <div className="relative w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 dark:border-slate-800/80 p-6 md:p-8 text-slate-800 dark:text-slate-100 transform transition-all duration-300">
+      {/* Ambient Glows */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-600/25 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+
+      <div className="relative w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] border border-white/50 dark:border-slate-700/80 p-6 md:p-8 text-slate-800 dark:text-slate-100 transform transition-all duration-300">
         
         {/* Top Elephant House Branding Badge */}
         <div className="flex flex-col items-center text-center mb-6">
