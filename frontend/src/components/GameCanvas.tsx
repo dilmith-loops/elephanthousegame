@@ -974,15 +974,15 @@ export default function GameCanvas({
         backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ''}/gameplay_background.jpg)`,
       }}
     >
-      {/* Ambient background overlay to ensure UI elements & HUD pop with high contrast */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-950/30 to-slate-950/75 pointer-events-none"></div>
+      {/* Ambient background overlay */}
+      <div className="absolute inset-0 bg-slate-950/25 pointer-events-none"></div>
 
       {/* Top Header Controls (Player profile, Score, Sound, Leaderboard, End) */}
       <header
         style={{
-          paddingTop: 'max(16px, calc(env(safe-area-inset-top, 0px) + 2px))',
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 4px)',
         }}
-        className="w-full max-w-lg md:max-w-none md:absolute md:top-0 md:inset-x-0 z-30 px-2 sm:px-4 md:px-6 pb-0.5 md:pt-6 flex items-center justify-between pointer-events-auto flex-shrink-0 md:bg-gradient-to-b md:from-black/90 md:via-black/50 md:to-transparent"
+        className="w-full max-w-lg md:max-w-none md:absolute md:top-0 md:inset-x-0 z-30 px-2.5 sm:px-4 md:px-6 pb-1 md:pt-6 flex items-center justify-between pointer-events-auto flex-shrink-0 md:bg-gradient-to-b md:from-black/90 md:via-black/50 md:to-transparent"
       >
         {/* Left: Player Profile & Live Score Pill (Reference Design) */}
         <div className="flex items-center space-x-1.5 sm:space-x-3.5 bg-[#181922]/95 backdrop-blur-2xl border border-[#38394a] sm:border-2 shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full py-0.5 px-2 sm:py-2 sm:px-4 ring-1 ring-white/10 select-none transition-all flex-shrink min-w-0">
@@ -1071,7 +1071,7 @@ export default function GameCanvas({
       {/* Camera Viewport: 3:4 on Mobile (Uncropped Portrait) | Full Screen on Desktop */}
       <div
         ref={containerRef}
-        className="relative w-full max-w-md md:max-w-none md:fixed md:inset-0 md:w-full md:h-full md:aspect-auto md:max-h-none md:my-0 md:rounded-none md:border-0 md:shadow-none aspect-[3/4] max-h-[76vh] mt-1 mb-auto flex items-center justify-center overflow-hidden rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-white/10 bg-slate-900"
+        className="relative w-full max-w-md md:max-w-none md:fixed md:inset-0 md:w-full md:h-full md:aspect-auto md:max-h-none md:my-0 md:rounded-none md:border-0 md:shadow-none aspect-[3/4] max-h-[76vh] mt-2.5 sm:mt-3.5 mb-auto flex items-center justify-center overflow-hidden rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-white/10 bg-slate-900"
       >
         {/* Native Camera Video Feed */}
         <video
