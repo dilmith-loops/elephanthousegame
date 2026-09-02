@@ -820,19 +820,19 @@ export default function GameCanvas({
         if (mouth.isTongueOut) {
           const tx = mouth.mouthCenter.x;
           const ty = mouth.mouthCenter.y;
-          // Scale tongue generously for iconic floppy Snapchat puppy look
-          const tongueW = Math.max(72, Math.min(120, (mouth.mouthWidth || 45) * 1.65));
-          const tongueH = tongueW * (727 / 497); // ~1.46 aspect ratio
+          // Cute, compact floppy puppy tongue proportion
+          const tongueW = Math.max(54, Math.min(84, (mouth.mouthWidth || 40) * 1.25));
+          const tongueH = tongueW * (521 / 497); // ~1.05 compact aspect ratio
 
           if (dogTongueImageRef.current && dogTongueImageRef.current.complete && dogTongueImageRef.current.naturalWidth > 0) {
-            // Render 3D Snapchat Dog Tongue Sprite hanging downward from mouth
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-            ctx.shadowBlur = 10;
-            ctx.shadowOffsetY = 4;
+            // Render compact 3D puppy tongue
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetY = 3;
             ctx.drawImage(
               dogTongueImageRef.current,
               tx - tongueW * 0.5,
-              ty - tongueH * 0.08,
+              ty - tongueH * 0.1,
               tongueW,
               tongueH
             );
