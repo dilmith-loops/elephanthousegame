@@ -1089,7 +1089,7 @@ export default function GameCanvas({
           playsInline
           muted
           autoPlay
-          className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-3xl opacity-40 pointer-events-none scale-110"
+          className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-2xl opacity-65 pointer-events-none scale-105"
         />
 
         {/* 100% Full-Sensor Unzoomed Selfie Camera Feed with Soft Feated Edges */}
