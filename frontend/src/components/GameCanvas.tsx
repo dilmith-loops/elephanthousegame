@@ -30,7 +30,6 @@ import {
   Clock
 } from 'lucide-react';
 import { generateAndShareScoreCard } from '../lib/shareCard';
-import StopwatchTimer from './StopwatchTimer';
 
 function SoftServeIcon({ className = 'w-6 h-6 sm:w-7 sm:h-7' }: { className?: string }) {
   return (
@@ -1070,18 +1069,31 @@ export default function GameCanvas({
           </div>
         </div>
 
-        {/* Center: Active Multiplier/Combo Indicator */}
-        {combo > 1 && (
-          <div
-            style={{
-              top: 'max(72px, calc(env(safe-area-inset-top, 0px) + 54px))',
-            }}
-            className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300 animate-bounce"
-          >
-            <span className="inline-flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-rose-600 to-amber-500 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/30 shadow-xl shadow-rose-600/40">
-              <Flame className="w-4 h-4 fill-amber-300 text-amber-300 animate-pulse" />
-              <span className="tracking-wide">{combo}x Combo!</span>
-            </span>
+        {/* Center: Sleek Live Countdown Timer Capsule in Header */}
+        {timerConfig.enabled && countdown === null && !isGameOver && (
+          <div className="flex items-center justify-center flex-shrink-0 select-none pointer-events-none mx-1 sm:mx-2">
+            <div
+              className={`flex items-center space-x-1.5 sm:space-x-2 py-1 px-2.5 sm:py-2 sm:px-4 rounded-full backdrop-blur-2xl border transition-all duration-300 shadow-[0_8px_25px_rgba(0,0,0,0.85)] ${
+                timeLeft <= 5
+                  ? 'bg-gradient-to-r from-rose-600 via-red-600 to-pink-600 border-white text-white animate-pulse shadow-rose-600/70 scale-105 ring-2 ring-white/60'
+                  : timeLeft <= 15
+                  ? 'bg-gradient-to-r from-amber-600/90 to-orange-600/90 border-amber-300 text-white shadow-amber-500/50'
+                  : 'bg-[#181922]/95 border border-[#38394a] sm:border-2 text-white ring-1 ring-white/10'
+              }`}
+            >
+              <Clock className={`w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 ${
+                timeLeft <= 5 ? 'text-white animate-spin' : timeLeft <= 15 ? 'text-amber-200' : 'text-[#ff2a6d]'
+              }`} />
+              <span className={`font-black font-mono tracking-tight leading-none ${
+                timeLeft <= 5
+                  ? 'text-xs sm:text-base text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'
+                  : timeLeft <= 15
+                  ? 'text-xs sm:text-sm text-amber-100'
+                  : 'text-xs sm:text-sm text-white'
+              }`}>
+                {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
+              </span>
+            </div>
           </div>
         )}
 
@@ -1144,13 +1156,13 @@ export default function GameCanvas({
           className="absolute inset-0 w-full h-full pointer-events-none"
         />
 
-        {/* Stopwatch Countdown Timer Centered in Camera Viewport */}
-        {timerConfig.enabled && countdown === null && !isGameOver && (
-          <div className="absolute top-1 sm:top-2 left-1/2 -translate-x-1/2 z-30 pointer-events-none select-none transition-all duration-300">
-            <StopwatchTimer
-              timeLeft={timeLeft}
-              totalDuration={timerConfig.duration || 60}
-            />
+        {/* Active Multiplier/Combo Indicator inside camera viewport with clean clearance */}
+        {combo > 1 && (
+          <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300 animate-bounce">
+            <span className="inline-flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-rose-600 to-amber-500 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/30 shadow-xl shadow-rose-600/40">
+              <Flame className="w-4 h-4 fill-amber-300 text-amber-300 animate-pulse" />
+              <span className="tracking-wide">{combo}x Combo!</span>
+            </span>
           </div>
         )}
 
