@@ -996,9 +996,12 @@ export default function GameCanvas({
 
           {/* Name & Live Score */}
           <div className="flex flex-col justify-center min-w-0 pr-0.5 sm:pr-1">
-            {/* Top row: Name */}
+            {/* Top row: SCORE on mobile, Player Name on desktop */}
             <div className="leading-tight">
-              <span className="text-white font-black text-[9px] sm:text-sm tracking-[0.12em] sm:tracking-[0.14em] uppercase truncate max-w-[70px] xs:max-w-[100px] sm:max-w-[160px] drop-shadow-sm block">
+              <span className="text-slate-300 font-black text-[9px] tracking-[0.14em] uppercase block md:hidden">
+                SCORE
+              </span>
+              <span className="text-white font-black text-sm tracking-[0.14em] uppercase truncate max-w-[160px] drop-shadow-sm hidden md:block">
                 {player.name}
               </span>
             </div>
