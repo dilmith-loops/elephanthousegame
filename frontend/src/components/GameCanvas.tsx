@@ -968,15 +968,13 @@ export default function GameCanvas({
   }, [loadingAI, loadingCamera, countdown, isGameOver, handleCatch]);
 
   return (
-    <div className="relative w-full h-[100dvh] max-h-[100dvh] flex flex-col bg-slate-950 overflow-hidden select-none">
-      {/* Top HUD Header with Guaranteed Safe Area Clearance for iOS Notch, Dynamic Island, & Status Bar */}
+    <div className="relative w-full h-full min-h-[100dvh] flex flex-col justify-between items-center bg-slate-950 overflow-hidden select-none">
+      {/* Top Header Controls (Player profile, Score, Sound, Leaderboard, End) */}
       <header
         style={{
-          paddingTop: 'max(52px, calc(env(safe-area-inset-top, 0px) + 12px))',
-          paddingLeft: 'max(12px, calc(env(safe-area-inset-left, 0px) + 12px))',
-          paddingRight: 'max(12px, calc(env(safe-area-inset-right, 0px) + 12px))',
+          paddingTop: 'max(48px, calc(env(safe-area-inset-top, 0px) + 10px))',
         }}
-        className="absolute top-0 inset-x-0 z-30 flex items-center justify-between pb-3 bg-gradient-to-b from-black/95 via-black/60 to-transparent pointer-events-auto select-none gap-2"
+        className="w-full max-w-lg z-30 px-3 sm:px-4 pb-2 flex items-center justify-between pointer-events-auto flex-shrink-0"
       >
         {/* Left: Player Profile & Live Score Pill (Reference Design) */}
         <div className="flex items-center space-x-2 sm:space-x-3.5 bg-[#181922]/95 backdrop-blur-2xl border border-[#38394a] sm:border-2 shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full py-1 px-2.5 sm:py-2 sm:px-4 ring-1 ring-white/10 select-none transition-all flex-shrink min-w-0">
@@ -1062,9 +1060,12 @@ export default function GameCanvas({
         </div>
       </header>
 
-      {/* Main Canvas Viewport Container */}
-      <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* Portrait Full-Height Native Camera Video Feed */}
+      {/* 3:4 Portrait Camera Viewport (Matches Native iOS Camera App Framing) */}
+      <div
+        ref={containerRef}
+        className="relative w-full max-w-md aspect-[3/4] max-h-[68vh] my-auto flex items-center justify-center overflow-hidden rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] border border-white/10 bg-slate-900"
+      >
+        {/* Native 3:4 Portrait Camera Video Feed */}
         <video
           ref={videoRef}
           playsInline
