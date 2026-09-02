@@ -8,114 +8,122 @@ interface Props {
   className?: string;
 }
 
-// Crisp 7-Segment SVG Segment Paths (viewBox: 0 0 20 36)
-const SEGMENTS: Record<string, string> = {
-  a: 'M 3.5 2.5 L 16.5 2.5 L 14.5 5.5 L 5.5 5.5 Z', // top
-  b: 'M 17.5 3.5 L 17.5 16.5 L 14.5 14.5 L 14.5 5.5 Z', // top right
-  c: 'M 17.5 19.5 L 17.5 32.5 L 14.5 30.5 L 14.5 21.5 Z', // bottom right
-  d: 'M 3.5 33.5 L 16.5 33.5 L 14.5 30.5 L 5.5 30.5 Z', // bottom
-  e: 'M 2.5 19.5 L 5.5 21.5 L 5.5 30.5 L 2.5 32.5 Z', // bottom left
-  f: 'M 2.5 3.5 L 5.5 5.5 L 5.5 14.5 L 2.5 16.5 Z', // top left
-  g: 'M 3.5 18 L 5.8 15.8 L 14.2 15.8 L 16.5 18 L 14.2 20.2 L 5.8 20.2 Z', // middle
-};
-
-const DIGIT_MAP: Record<string, string[]> = {
-  '0': ['a', 'b', 'c', 'd', 'e', 'f'],
-  '1': ['b', 'c'],
-  '2': ['a', 'b', 'd', 'e', 'g'],
-  '3': ['a', 'b', 'c', 'd', 'g'],
-  '4': ['b', 'c', 'f', 'g'],
-  '5': ['a', 'c', 'd', 'f', 'g'],
-  '6': ['a', 'c', 'd', 'e', 'f', 'g'],
-  '7': ['a', 'b', 'c'],
-  '8': ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
-  '9': ['a', 'b', 'c', 'd', 'f', 'g'],
-};
-
-function SevenSegmentDigit({ digit, activeColor, inactiveColor }: { digit: string; activeColor: string; inactiveColor: string }) {
-  const activeSegments = DIGIT_MAP[digit] || [];
-
-  return (
-    <svg viewBox="0 0 20 36" className="w-3.5 h-6 sm:w-4 sm:h-7 flex-shrink-0">
-      {Object.entries(SEGMENTS).map(([segKey, pathD]) => {
-        const isActive = activeSegments.includes(segKey);
-        return (
-          <path
-            key={segKey}
-            d={pathD}
-            fill={isActive ? activeColor : inactiveColor}
-            className="transition-colors duration-150"
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
-export default function StopwatchTimer({ timeLeft, className = '' }: Props) {
+export default function StopwatchTimer({ timeLeft, totalDuration = 60, className = '' }: Props) {
   const safeTime = Math.max(0, timeLeft);
   const minutes = Math.floor(safeTime / 60);
   const seconds = safeTime % 60;
-
-  const mStr = minutes.toString().padStart(2, '0');
-  const sStr = seconds.toString().padStart(2, '0');
+  const timeFormatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
   const isUrgent = timeLeft <= 5;
   const isWarning = timeLeft <= 15 && !isUrgent;
 
-  const activeColor = isUrgent ? '#dc2626' : isWarning ? '#d97706' : '#141419';
-  const inactiveColor = 'rgba(0, 0, 0, 0.04)';
+  // Percentage of time remaining for circular SVG progress ring (0 to 100)
+  const progressPercent = Math.max(0, Math.min(100, (safeTime / totalDuration) * 100));
+  // Circle perimeter for r=42 is 2 * PI * 42 = 263.89
+  const circumference = 263.89;
+  const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center select-none pointer-events-none transition-all duration-300 ${
+      className={`relative flex flex-col items-center select-none pointer-events-none transition-transform duration-300 ${
         isUrgent
-          ? 'scale-110 drop-shadow-[0_0_20px_rgba(235,30,120,0.95)] animate-pulse'
+          ? 'scale-105 animate-pulse'
           : isWarning
-          ? 'scale-105 drop-shadow-[0_0_14px_rgba(245,158,11,0.6)]'
-          : 'drop-shadow-[0_10px_22px_rgba(0,0,0,0.85)]'
+          ? 'scale-102'
+          : ''
       } ${className}`}
-      style={{
-        width: '84px',
-      }}
     >
-      {/* 3D Realistic Stopwatch Base Image with Pristine Clean Dial */}
-      <img
-        src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/stopwatch_frame.png`}
-        alt="Stopwatch Timer"
-        className="w-full h-auto object-contain select-none pointer-events-none"
-        draggable={false}
-      />
-
-      {/* 7-Segment Digital LCD Display Centered on Dial */}
-      <div
-        className="absolute flex items-center justify-center pointer-events-none space-x-[2px] sm:space-x-[3px]"
-        style={{
-          top: '59.8%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '64%',
-        }}
-      >
-        {/* Minute Digits */}
-        <SevenSegmentDigit digit={mStr[0]} activeColor={activeColor} inactiveColor={inactiveColor} />
-        <SevenSegmentDigit digit={mStr[1]} activeColor={activeColor} inactiveColor={inactiveColor} />
-
-        {/* Blinking Colon Dots */}
-        <div className="flex flex-col justify-center items-center space-y-1 sm:space-y-1.5 px-[1px]">
+      {/* Sleek Modern Vector Stopwatch */}
+      <div className="relative flex flex-col items-center">
+        {/* Top Metallic Crown Knob & Loop Accent */}
+        <div className="flex flex-col items-center -mb-1 z-10">
           <div
-            className="w-1 h-1 sm:w-1.2 sm:h-1.2 rounded-[0.5px] transition-colors duration-150"
-            style={{ backgroundColor: activeColor }}
-          />
-          <div
-            className="w-1 h-1 sm:w-1.2 sm:h-1.2 rounded-[0.5px] transition-colors duration-150"
-            style={{ backgroundColor: activeColor }}
+            className={`w-3.5 h-1.5 rounded-t-sm border border-b-0 shadow-sm ${
+              isUrgent
+                ? 'bg-gradient-to-r from-red-600 via-rose-400 to-red-600 border-red-300'
+                : 'bg-gradient-to-r from-slate-400 via-white to-slate-400 border-slate-300'
+            }`}
           />
         </div>
 
-        {/* Second Digits */}
-        <SevenSegmentDigit digit={sStr[0]} activeColor={activeColor} inactiveColor={inactiveColor} />
-        <SevenSegmentDigit digit={sStr[1]} activeColor={activeColor} inactiveColor={inactiveColor} />
+        {/* Circular Stopwatch Body */}
+        <div
+          className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full p-[2.5px] sm:p-[3px] flex items-center justify-center transition-all duration-300 ${
+            isUrgent
+              ? 'bg-gradient-to-tr from-red-600 via-rose-500 to-pink-600 shadow-[0_0_25px_rgba(225,29,72,0.9)] ring-2 ring-white/80'
+              : isWarning
+              ? 'bg-gradient-to-tr from-amber-600 via-orange-500 to-yellow-400 shadow-[0_0_20px_rgba(245,158,11,0.7)] ring-1 ring-amber-300/80'
+              : 'bg-gradient-to-tr from-[#8d1468] via-[#b21f85] to-[#ff4785] shadow-[0_8px_25px_rgba(0,0,0,0.85)] ring-1 ring-white/25'
+          }`}
+        >
+          {/* Inner Dark Dial with Glassmorphism */}
+          <div className="relative w-full h-full rounded-full bg-[#101016]/95 backdrop-blur-xl flex items-center justify-center overflow-hidden border border-white/10 shadow-inner">
+            {/* SVG Radial Countdown Progress Ring */}
+            <svg className="absolute inset-0 w-full h-full -rotate-90 p-1" viewBox="0 0 100 100">
+              {/* Background Track Ring */}
+              <circle
+                cx="50"
+                cy="50"
+                r="42"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="4.5"
+                className="text-white/10"
+              />
+
+              {/* Active Depleting Countdown Arc */}
+              <circle
+                cx="50"
+                cy="50"
+                r="42"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                className={`transition-all duration-1000 ease-linear ${
+                  isUrgent
+                    ? 'text-rose-500'
+                    : isWarning
+                    ? 'text-amber-400'
+                    : 'text-[#ff2a6d]'
+                }`}
+              />
+            </svg>
+
+            {/* Dial Tick Marks at 12, 3, 6, 9 Cardinal Points */}
+            <div className="absolute inset-0 pointer-events-none p-1.5 flex items-center justify-center">
+              <div className="absolute top-1.5 w-0.5 h-1.5 bg-white/40 rounded-full" />
+              <div className="absolute bottom-1.5 w-0.5 h-1.5 bg-white/40 rounded-full" />
+              <div className="absolute left-1.5 w-1.5 h-0.5 bg-white/40 rounded-full" />
+              <div className="absolute right-1.5 w-1.5 h-0.5 bg-white/40 rounded-full" />
+            </div>
+
+            {/* Centered Large Bold Time Display: 00:53 */}
+            <div className="relative z-10 flex flex-col items-center justify-center">
+              <span
+                className={`font-black font-mono tracking-tight leading-none text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] ${
+                  isUrgent
+                    ? 'text-[15px] sm:text-[18px] text-rose-200'
+                    : isWarning
+                    ? 'text-[14px] sm:text-[17px] text-amber-100'
+                    : 'text-[13px] sm:text-[16px] text-white'
+                }`}
+              >
+                {timeFormatted}
+              </span>
+            </div>
+
+            {/* Subtle Glass Sheen */}
+            <div
+              className="absolute inset-0 rounded-full pointer-events-none opacity-25"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 50%)',
+              }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
