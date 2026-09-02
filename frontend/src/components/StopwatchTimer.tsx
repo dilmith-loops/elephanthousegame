@@ -102,15 +102,6 @@ export default function StopwatchTimer({ timeLeft, totalDuration = 60, className
             strokeWidth="3"
             strokeLinecap="round"
           />
-
-          {/* Playful Golden Sparkle on Cloud Top Right */}
-          <g transform="translate(126, 18) scale(0.7)">
-            <path
-              d="M 10 0 L 12.5 7.5 L 20 10 L 12.5 12.5 L 10 20 L 7.5 12.5 L 0 10 L 7.5 7.5 Z"
-              fill={isUrgent ? '#F43F5E' : '#F59E0B'}
-              className="animate-pulse"
-            />
-          </g>
         </svg>
 
         {/* Large Playful Bold Timer Digits Centered Inside Cloud Belly */}
