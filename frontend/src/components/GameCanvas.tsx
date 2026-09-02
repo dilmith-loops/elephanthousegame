@@ -26,7 +26,8 @@ import {
   Star,
   Share2,
   Download,
-  Check
+  Check,
+  Clock
 } from 'lucide-react';
 import { generateAndShareScoreCard } from '../lib/shareCard';
 
@@ -1072,7 +1073,7 @@ export default function GameCanvas({
         {combo > 1 && (
           <div
             style={{
-              top: 'max(65px, calc(env(safe-area-inset-top, 0px) + 48px))',
+              top: 'max(72px, calc(env(safe-area-inset-top, 0px) + 54px))',
             }}
             className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300 animate-bounce"
           >
@@ -1142,44 +1143,74 @@ export default function GameCanvas({
           className="absolute inset-0 w-full h-full pointer-events-none"
         />
 
-        {/* Live Countdown Timer Pill in Camera Viewport */}
+        {/* Interactive Centered Session Countdown Timer */}
         {timerConfig.enabled && countdown === null && !isGameOver && (
-          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 pointer-events-none transition-all duration-300">
-            <div
-              className={`flex items-center space-x-1.5 sm:space-x-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full backdrop-blur-xl border shadow-2xl transition-all duration-300 ${
-                timeLeft <= 5
-                  ? 'bg-rose-600/90 border-rose-300 text-white animate-pulse shadow-rose-600/60 scale-105 ring-2 ring-rose-400'
-                  : timeLeft <= 15
-                  ? 'bg-amber-500/85 border-amber-300 text-white shadow-amber-500/40'
-                  : 'bg-black/65 border-white/20 text-white shadow-black/60'
-              }`}
-            >
-              {/* Animated Progress Ring */}
-              <div className="relative w-4 h-4 sm:w-4.5 sm:h-4.5 flex items-center justify-center flex-shrink-0">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-white/20"
-                    strokeWidth="3.5"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    className={`transition-all duration-1000 ease-linear ${
-                      timeLeft <= 5 ? 'text-white' : timeLeft <= 15 ? 'text-amber-200' : 'text-[#ff2a6d]'
-                    }`}
-                    strokeDasharray={`${Math.max(0, Math.min(100, (timeLeft / (timerConfig.duration || 60)) * 100))}, 100`}
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
+          <div className="absolute top-2.5 sm:top-3.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none select-none transition-all duration-300">
+            <div className="relative flex items-center justify-center">
+              {/* Expanding Pulse Sonar Ring for Final 5 Seconds */}
+              {timeLeft <= 5 && (
+                <div className="absolute -inset-1 rounded-full bg-rose-500/50 animate-ping pointer-events-none"></div>
+              )}
+
+              {/* Main Interactive Timer Capsule */}
+              <div
+                className={`flex items-center space-x-2 sm:space-x-2.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full backdrop-blur-2xl border transition-all duration-300 ${
+                  timeLeft <= 5
+                    ? 'bg-gradient-to-r from-rose-600 via-red-600 to-pink-600 border-white text-white shadow-[0_0_25px_rgba(225,29,72,0.85)] scale-110 ring-2 ring-white/70'
+                    : timeLeft <= 15
+                    ? 'bg-gradient-to-r from-amber-600/95 to-orange-600/95 border-amber-300 text-white shadow-[0_0_20px_rgba(245,158,11,0.6)] scale-105 ring-1 ring-amber-300/60'
+                    : 'bg-[#181922]/90 border border-white/20 text-white shadow-[0_10px_25px_rgba(0,0,0,0.8)]'
+                }`}
+              >
+                {/* Radial Progress Ring */}
+                <div className="relative w-5 h-5 sm:w-5.5 sm:h-5.5 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      className="text-white/15"
+                      strokeWidth="3.5"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className={`transition-all duration-1000 ease-linear ${
+                        timeLeft <= 5
+                          ? 'text-white'
+                          : timeLeft <= 15
+                          ? 'text-amber-200'
+                          : 'text-[#ff2a6d]'
+                      }`}
+                      strokeDasharray={`${Math.max(0, Math.min(100, (timeLeft / (timerConfig.duration || 60)) * 100))}, 100`}
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Clock className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${
+                      timeLeft <= 5 ? 'text-white animate-spin' : timeLeft <= 15 ? 'text-amber-200' : 'text-pink-400'
+                    }`} />
+                  </div>
+                </div>
+
+                {/* Digits Display */}
+                <div className="flex items-baseline space-x-0.5">
+                  <span className={`font-black font-mono tracking-tight leading-none ${
+                    timeLeft <= 5
+                      ? 'text-base sm:text-xl text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]'
+                      : timeLeft <= 15
+                      ? 'text-sm sm:text-lg text-amber-100'
+                      : 'text-sm sm:text-base text-white'
+                  }`}>
+                    {timeLeft}
+                  </span>
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-300/90 uppercase tracking-wide">
+                    s
+                  </span>
+                </div>
               </div>
-              <span className="font-black font-mono text-xs sm:text-sm tracking-tight drop-shadow-sm">
-                {timeLeft}s
-              </span>
             </div>
           </div>
         )}
