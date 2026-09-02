@@ -201,7 +201,6 @@ export default function GameCanvas({
 
   // Game Engine Refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
@@ -362,12 +361,19 @@ export default function GameCanvas({
           return;
         }
 
-        if (bgVideoRef.current) {
-          bgVideoRef.current.setAttribute('playsinline', 'true');
-          bgVideoRef.current.setAttribute('webkit-playsinline', 'true');
-          bgVideoRef.current.muted = true;
-          bgVideoRef.current.srcObject = stream;
-          bgVideoRef.current.play().catch(() => {});
+        // Activate hardware 0.5x ultra-wide lens if supported by phone camera
+        const track = stream.getVideoTracks()[0];
+        if (track && 'getCapabilities' in track) {
+          try {
+            const caps = (track as unknown as { getCapabilities: () => { zoom?: { min: number } } }).getCapabilities();
+            if (caps && caps.zoom && typeof caps.zoom.min === 'number') {
+              (track as unknown as { applyConstraints: (c: unknown) => Promise<void> }).applyConstraints({
+                advanced: [{ zoom: caps.zoom.min }]
+              }).catch(() => {});
+            }
+          } catch {
+            // Hardware zoom constraint handled silently
+          }
         }
 
         if (videoRef.current) {
@@ -1083,26 +1089,13 @@ export default function GameCanvas({
 
       {/* Main Canvas Viewport Container */}
       <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* Full-Screen Ambient Live Video Backdrop (Fills vertical edges smoothly) */}
-        <video
-          ref={bgVideoRef}
-          playsInline
-          muted
-          autoPlay
-          className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-2xl opacity-65 pointer-events-none scale-105"
-        />
-
-        {/* 100% Full-Sensor Unzoomed Selfie Camera Feed with Soft Feated Edges */}
+        {/* 100% Full-Screen Hardware-Accelerated Native Camera Video Feed */}
         <video
           ref={videoRef}
           playsInline
           muted
           autoPlay
-          style={{
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%)',
-          }}
-          className="absolute inset-0 w-full h-full object-contain -scale-x-100 pointer-events-none"
+          className="absolute inset-0 w-full h-full object-cover -scale-x-100 pointer-events-none"
         />
 
         <canvas
