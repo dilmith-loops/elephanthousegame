@@ -313,35 +313,43 @@ export default function GameCanvas({
           typeof window !== 'undefined' &&
           /FBAN|FBAV|Instagram|TikTok|Line\/|MicroMessenger|Snapchat|Twitter|ByteLocale/i.test(navigator.userAgent);
 
-        // Stage 1: Request optimal portrait 9:16 aspect ratio (avoids 4:3 zoom cropping on tall mobile screens)
+        // Stage 1: Request natural mobile portrait camera (1080x1920) without over-constraining Safari/Android
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: isMobile
               ? {
                   facingMode: 'user',
-                  width: { ideal: 720, max: 1080 },
-                  height: { ideal: 1280, max: 1920 },
-                  aspectRatio: { ideal: 9 / 16 }
+                  width: { ideal: 1080 },
+                  height: { ideal: 1920 }
                 }
               : {
                   facingMode: 'user',
-                  width: { ideal: 1280, max: 1920 },
-                  height: { ideal: 720, max: 1080 },
-                  aspectRatio: { ideal: 16 / 9 }
+                  width: { ideal: 1920 },
+                  height: { ideal: 1080 }
                 },
             audio: false
           });
         } catch {
-          // Stage 2: Fallback to basic user camera constraint
+          // Stage 2: 720p portrait fallback (720x1280)
           try {
             stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: 'user' },
+              video: isMobile
+                ? {
+                    facingMode: 'user',
+                    width: { ideal: 720 },
+                    height: { ideal: 1280 }
+                  }
+                : {
+                    facingMode: 'user',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                  },
               audio: false
             });
           } catch {
-            // Stage 3: Universal fallback to any video input
+            // Stage 3: Universal fallback
             stream = await navigator.mediaDevices.getUserMedia({
-              video: true,
+              video: { facingMode: 'user' },
               audio: false
             });
           }
@@ -970,8 +978,15 @@ export default function GameCanvas({
 
   return (
     <div className="relative w-full h-[100dvh] max-h-[100dvh] flex flex-col bg-slate-950 overflow-hidden select-none">
-      {/* Top HUD Header with Safe Area Insets for iOS Notch / Dynamic Island */}
-      <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between pt-[max(env(safe-area-inset-top,0px),12px)] pb-3 px-2.5 sm:px-5 bg-gradient-to-b from-black/90 via-black/50 to-transparent pointer-events-auto select-none gap-2">
+      {/* Top HUD Header with Guaranteed Safe Area Clearance for iOS Notch, Dynamic Island, & Status Bar */}
+      <header
+        style={{
+          paddingTop: 'max(52px, calc(env(safe-area-inset-top, 0px) + 12px))',
+          paddingLeft: 'max(12px, calc(env(safe-area-inset-left, 0px) + 12px))',
+          paddingRight: 'max(12px, calc(env(safe-area-inset-right, 0px) + 12px))',
+        }}
+        className="absolute top-0 inset-x-0 z-30 flex items-center justify-between pb-3 bg-gradient-to-b from-black/95 via-black/60 to-transparent pointer-events-auto select-none gap-2"
+      >
         {/* Left: Player Profile & Live Score Pill (Reference Design) */}
         <div className="flex items-center space-x-2 sm:space-x-3.5 bg-[#181922]/95 backdrop-blur-2xl border border-[#38394a] sm:border-2 shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full py-1 px-2.5 sm:py-2 sm:px-4 ring-1 ring-white/10 select-none transition-all flex-shrink min-w-0">
           {/* Avatar Ring */}
@@ -1003,7 +1018,12 @@ export default function GameCanvas({
 
         {/* Center: Active Multiplier/Combo Indicator */}
         {combo > 1 && (
-          <div className="absolute top-[calc(max(env(safe-area-inset-top,0px),12px)+52px)] left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300 animate-bounce">
+          <div
+            style={{
+              top: 'max(116px, calc(env(safe-area-inset-top, 0px) + 76px))',
+            }}
+            className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300 animate-bounce"
+          >
             <span className="inline-flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-rose-600 to-amber-500 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/30 shadow-xl shadow-rose-600/40">
               <Flame className="w-4 h-4 fill-amber-300 text-amber-300 animate-pulse" />
               <span className="tracking-wide">{combo}x Combo!</span>
@@ -1212,9 +1232,14 @@ export default function GameCanvas({
           </div>
         )}
 
-        {/* Bottom Live Tongue Guidance Pill with Safe Area Inset */}
+        {/* Bottom Live Tongue Guidance Pill with Guaranteed Bottom Safe Area Inset */}
         {countdown === null && !isGameOver && !isPaused && (
-          <div className="absolute bottom-[max(env(safe-area-inset-bottom,0px),24px)] inset-x-0 z-20 flex justify-center pointer-events-none px-4">
+          <div
+            style={{
+              bottom: 'max(32px, calc(env(safe-area-inset-bottom, 0px) + 24px))',
+            }}
+            className="absolute inset-x-0 z-20 flex justify-center pointer-events-none px-4"
+          >
             <div
               className={`px-4 py-2 rounded-full backdrop-blur-md text-xs font-black flex items-center space-x-2 border transition-all duration-300 shadow-xl ${
                 isMouthOpen
