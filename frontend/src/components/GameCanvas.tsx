@@ -201,6 +201,7 @@ export default function GameCanvas({
 
   // Game Engine Refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
@@ -359,6 +360,14 @@ export default function GameCanvas({
         if (!isMounted) {
           stream.getTracks().forEach((track) => track.stop());
           return;
+        }
+
+        if (bgVideoRef.current) {
+          bgVideoRef.current.setAttribute('playsinline', 'true');
+          bgVideoRef.current.setAttribute('webkit-playsinline', 'true');
+          bgVideoRef.current.muted = true;
+          bgVideoRef.current.srcObject = stream;
+          bgVideoRef.current.play().catch(() => {});
         }
 
         if (videoRef.current) {
@@ -663,9 +672,9 @@ export default function GameCanvas({
       // Always clear the canvas before drawing frame to eliminate any streaking/trails
       ctx.clearRect(0, 0, width, height);
 
-      // Calculate object-fit: cover transform for portrait camera feed
-      const videoW = video.videoWidth || 720;
-      const videoH = video.videoHeight || 1280;
+      // Calculate wide-angle uncropped transform for camera feed (zero zoom)
+      const videoW = video.videoWidth || 1280;
+      const videoH = video.videoHeight || 720;
       const videoAspect = videoW / videoH;
       const screenAspect = width / height;
 
@@ -674,16 +683,17 @@ export default function GameCanvas({
       let offsetX: number;
       let offsetY: number;
 
+      // On mobile portrait (where videoAspect > screenAspect), fit by width so 100% of horizontal field of view is visible without digital zoom
       if (videoAspect > screenAspect) {
-        renderH = height;
-        renderW = height * videoAspect;
-        offsetX = (width - renderW) / 2;
-        offsetY = 0;
-      } else {
         renderW = width;
         renderH = width / videoAspect;
         offsetX = 0;
         offsetY = (height - renderH) / 2;
+      } else {
+        renderH = height;
+        renderW = height * videoAspect;
+        offsetX = (width - renderW) / 2;
+        offsetY = 0;
       }
 
       // Note: Video frame is rendered directly by GPU hardware via the native <video> tag behind the transparent canvas!
@@ -1074,13 +1084,26 @@ export default function GameCanvas({
 
       {/* Main Canvas Viewport Container */}
       <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* Full-Height Native Portrait Selfie Camera Feed */}
+        {/* Full-Screen Ambient Live Video Backdrop (Fills vertical edges smoothly) */}
+        <video
+          ref={bgVideoRef}
+          playsInline
+          muted
+          autoPlay
+          className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-3xl opacity-40 pointer-events-none scale-110"
+        />
+
+        {/* Wide-Angle Uncropped Selfie Camera Feed (Zero Digital Zoom) */}
         <video
           ref={videoRef}
           playsInline
           muted
           autoPlay
-          className="absolute inset-0 w-full h-full object-cover -scale-x-100 pointer-events-none"
+          style={{
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%)',
+          }}
+          className="absolute inset-0 w-full h-full object-contain -scale-x-100 pointer-events-none"
         />
 
         <canvas
