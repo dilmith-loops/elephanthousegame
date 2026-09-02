@@ -180,6 +180,7 @@ export default function GameCanvas({
   onChangePlayer
 }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -358,6 +359,29 @@ export default function GameCanvas({
         if (!isMounted) {
           stream.getTracks().forEach((track) => track.stop());
           return;
+        }
+
+        // Try hardware minimum zoom (0.5x ultra-wide lens if available)
+        const track = stream.getVideoTracks()[0];
+        if (track && 'getCapabilities' in track) {
+          try {
+            const caps = (track as unknown as { getCapabilities: () => { zoom?: { min: number } } }).getCapabilities();
+            if (caps && caps.zoom && typeof caps.zoom.min === 'number') {
+              (track as unknown as { applyConstraints: (c: unknown) => Promise<void> }).applyConstraints({
+                advanced: [{ zoom: caps.zoom.min }]
+              }).catch(() => {});
+            }
+          } catch {
+            // Hardware zoom constraint handled silently
+          }
+        }
+
+        if (bgVideoRef.current) {
+          bgVideoRef.current.setAttribute('playsinline', 'true');
+          bgVideoRef.current.setAttribute('webkit-playsinline', 'true');
+          bgVideoRef.current.muted = true;
+          bgVideoRef.current.srcObject = stream;
+          bgVideoRef.current.play().catch(() => {});
         }
 
         if (videoRef.current) {
@@ -662,28 +686,31 @@ export default function GameCanvas({
       // Always clear the canvas before drawing frame to eliminate any streaking/trails
       ctx.clearRect(0, 0, width, height);
 
-      // Calculate object-fit: cover transform for full screen camera feed
+      // Calculate full screen transform with natural zoom-out for mobile
       const videoW = video.videoWidth || 1280;
       const videoH = video.videoHeight || 720;
       const videoAspect = videoW / videoH;
       const screenAspect = width / height;
 
-      let renderW: number;
-      let renderH: number;
-      let offsetX: number;
-      let offsetY: number;
+      // On mobile portrait screens, apply 0.70 zoom factor so the face/shoulders are wide-angle and zoomed out
+      const isMobilePortrait = height > width;
+      const zoomFactor = isMobilePortrait ? 0.70 : 1.0;
+
+      let baseW: number;
+      let baseH: number;
 
       if (videoAspect > screenAspect) {
-        renderH = height;
-        renderW = height * videoAspect;
-        offsetX = (width - renderW) / 2;
-        offsetY = 0;
+        baseH = height;
+        baseW = height * videoAspect;
       } else {
-        renderW = width;
-        renderH = width / videoAspect;
-        offsetX = 0;
-        offsetY = (height - renderH) / 2;
+        baseW = width;
+        baseH = width / videoAspect;
       }
+
+      const renderW = baseW * zoomFactor;
+      const renderH = baseH * zoomFactor;
+      const offsetX = (width - renderW) / 2;
+      const offsetY = (height - renderH) / 2;
 
       // Note: Video frame is rendered directly by GPU hardware via the native <video> tag behind the transparent canvas!
       // This eliminates 100% of the canvas drawImage video copy lag on mobile devices.
@@ -1073,13 +1100,28 @@ export default function GameCanvas({
 
       {/* Main Canvas Viewport Container */}
       <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* Full-Screen Hardware-Accelerated Native Camera Video Feed */}
+        {/* Full-Screen Ambient Live Video Backdrop (Fills entire screen with live movement & color) */}
+        <video
+          ref={bgVideoRef}
+          playsInline
+          muted
+          autoPlay
+          className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-2xl opacity-40 pointer-events-none scale-110"
+        />
+
+        {/* Main Crisp Live Camera Video (Zoomed Out to Wide-Angle, Full Natural View) */}
         <video
           ref={videoRef}
           playsInline
           muted
           autoPlay
-          className="absolute inset-0 w-full h-full object-cover -scale-x-100 pointer-events-none"
+          style={{
+            transform: 'scale(0.70) scaleX(-1)',
+            transformOrigin: 'center center',
+            maskImage: 'radial-gradient(ellipse 96% 96% at 50% 50%, black 80%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 96% 96% at 50% 50%, black 80%, transparent 100%)',
+          }}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
 
         <canvas
