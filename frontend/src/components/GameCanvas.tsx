@@ -30,6 +30,7 @@ import {
   Clock
 } from 'lucide-react';
 import { generateAndShareScoreCard } from '../lib/shareCard';
+import StopwatchTimer from './StopwatchTimer';
 
 function SoftServeIcon({ className = 'w-6 h-6 sm:w-7 sm:h-7' }: { className?: string }) {
   return (
@@ -1128,56 +1129,17 @@ export default function GameCanvas({
           className="absolute inset-0 w-full h-full pointer-events-none"
         />
 
-        {/* Top-Center In-Camera HUD (Timer & Combo Pill Stack) */}
-        <div className="absolute top-2.5 sm:top-3.5 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center space-y-2 pointer-events-none select-none transition-all duration-300">
-          {/* 1. Live Countdown Timer Capsule inside Camera Window */}
+        {/* Top-Center In-Camera HUD (Stopwatch Timer & Combo Pill Stack) */}
+        <div className="absolute top-1.5 sm:top-2 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center space-y-1.5 pointer-events-none select-none transition-all duration-300">
+          {/* 1. Realistic 3D Stopwatch Timer inside Camera Window */}
           {timerConfig.enabled && countdown === null && !isGameOver && (
-            <div
-              className={`flex items-center space-x-1.5 sm:space-x-2 py-1 px-3 sm:py-1.5 sm:px-3.5 rounded-full backdrop-blur-2xl border transition-all duration-300 shadow-[0_8px_20px_rgba(0,0,0,0.85)] ${
-                timeLeft <= 5
-                  ? 'bg-gradient-to-r from-rose-600 via-red-600 to-pink-600 border-white text-white animate-pulse shadow-rose-600/80 scale-105 ring-2 ring-white/70'
-                  : timeLeft <= 15
-                  ? 'bg-gradient-to-r from-amber-600/90 to-orange-600/90 border-amber-300 text-white shadow-amber-500/50'
-                  : 'bg-black/65 border border-white/20 text-white'
-              }`}
-            >
-              {/* Animated Progress Ring */}
-              <div className="relative w-4 h-4 sm:w-4.5 sm:h-4.5 flex items-center justify-center flex-shrink-0">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-white/20"
-                    strokeWidth="3.5"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    className={`transition-all duration-1000 ease-linear ${
-                      timeLeft <= 5 ? 'text-white' : timeLeft <= 15 ? 'text-amber-200' : 'text-[#ff2a6d]'
-                    }`}
-                    strokeDasharray={`${Math.max(0, Math.min(100, (timeLeft / (timerConfig.duration || 60)) * 100))}, 100`}
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-              </div>
-
-              <span className={`font-black font-mono tracking-tight leading-none ${
-                timeLeft <= 5
-                  ? 'text-xs sm:text-sm text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'
-                  : timeLeft <= 15
-                  ? 'text-xs sm:text-sm text-amber-100'
-                  : 'text-xs sm:text-sm text-white'
-              }`}>
-                {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
-              </span>
-            </div>
+            <StopwatchTimer
+              timeLeft={timeLeft}
+              totalDuration={timerConfig.duration || 60}
+            />
           )}
 
-          {/* 2. Active Multiplier / Combo Indicator (Stacked below timer) */}
+          {/* 2. Active Multiplier / Combo Indicator (Stacked below stopwatch) */}
           {combo > 1 && (
             <div className="transition-all duration-300 animate-bounce">
               <span className="inline-flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-rose-600 to-amber-500 backdrop-blur-md px-3 py-1 rounded-full border border-white/30 shadow-xl shadow-rose-600/40">
