@@ -201,7 +201,6 @@ export default function GameCanvas({
 
   // Game Engine Refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
@@ -313,24 +312,26 @@ export default function GameCanvas({
           typeof window !== 'undefined' &&
           /FBAN|FBAV|Instagram|TikTok|Line\/|MicroMessenger|Snapchat|Twitter|ByteLocale/i.test(navigator.userAgent);
 
-        // Stage 1: Request natural mobile portrait camera (1080x1920) without over-constraining Safari/Android
+        // Stage 1: Request 9:16 native mobile portrait camera stream
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: isMobile
               ? {
                   facingMode: 'user',
-                  width: { ideal: 1080 },
-                  height: { ideal: 1920 }
+                  aspectRatio: { ideal: 9 / 16 },
+                  width: { ideal: 720, max: 1080 },
+                  height: { ideal: 1280, max: 1920 }
                 }
               : {
                   facingMode: 'user',
-                  width: { ideal: 1920 },
-                  height: { ideal: 1080 }
+                  aspectRatio: { ideal: 16 / 9 },
+                  width: { ideal: 1280, max: 1920 },
+                  height: { ideal: 720, max: 1080 }
                 },
             audio: false
           });
         } catch {
-          // Stage 2: 720p portrait fallback (720x1280)
+          // Stage 2: Resolution fallback
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               video: isMobile
@@ -358,29 +359,6 @@ export default function GameCanvas({
         if (!isMounted) {
           stream.getTracks().forEach((track) => track.stop());
           return;
-        }
-
-        // Try hardware minimum zoom (0.5x ultra-wide lens if available)
-        const track = stream.getVideoTracks()[0];
-        if (track && 'getCapabilities' in track) {
-          try {
-            const caps = (track as unknown as { getCapabilities: () => { zoom?: { min: number } } }).getCapabilities();
-            if (caps && caps.zoom && typeof caps.zoom.min === 'number') {
-              (track as unknown as { applyConstraints: (c: unknown) => Promise<void> }).applyConstraints({
-                advanced: [{ zoom: caps.zoom.min }]
-              }).catch(() => {});
-            }
-          } catch {
-            // Hardware zoom constraint handled silently
-          }
-        }
-
-        if (bgVideoRef.current) {
-          bgVideoRef.current.setAttribute('playsinline', 'true');
-          bgVideoRef.current.setAttribute('webkit-playsinline', 'true');
-          bgVideoRef.current.muted = true;
-          bgVideoRef.current.srcObject = stream;
-          bgVideoRef.current.play().catch(() => {});
         }
 
         if (videoRef.current) {
@@ -685,9 +663,9 @@ export default function GameCanvas({
       // Always clear the canvas before drawing frame to eliminate any streaking/trails
       ctx.clearRect(0, 0, width, height);
 
-      // Calculate wide-angle selfie transform for camera feed
-      const videoW = video.videoWidth || 1280;
-      const videoH = video.videoHeight || 720;
+      // Calculate object-fit: cover transform for portrait camera feed
+      const videoW = video.videoWidth || 720;
+      const videoH = video.videoHeight || 1280;
       const videoAspect = videoW / videoH;
       const screenAspect = width / height;
 
@@ -696,24 +674,16 @@ export default function GameCanvas({
       let offsetX: number;
       let offsetY: number;
 
-      // On portrait mobile screens, fit by width with gentle 1.15x bleed so face & shoulders are unzoomed & wide-angle
-      if (height > width) {
-        renderW = width * 1.15;
-        renderH = renderW / videoAspect;
+      if (videoAspect > screenAspect) {
+        renderH = height;
+        renderW = height * videoAspect;
         offsetX = (width - renderW) / 2;
-        offsetY = (height - renderH) / 2;
+        offsetY = 0;
       } else {
-        if (videoAspect > screenAspect) {
-          renderH = height;
-          renderW = height * videoAspect;
-          offsetX = (width - renderW) / 2;
-          offsetY = 0;
-        } else {
-          renderW = width;
-          renderH = width / videoAspect;
-          offsetX = 0;
-          offsetY = (height - renderH) / 2;
-        }
+        renderW = width;
+        renderH = width / videoAspect;
+        offsetX = 0;
+        offsetY = (height - renderH) / 2;
       }
 
       // Note: Video frame is rendered directly by GPU hardware via the native <video> tag behind the transparent canvas!
@@ -1103,31 +1073,14 @@ export default function GameCanvas({
       </header>
 
       {/* Main Canvas Viewport Container */}
-      <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-[#07070e]">
-        {/* Full-Screen Ambient Live Video Backdrop */}
-        <video
-          ref={bgVideoRef}
-          playsInline
-          muted
-          autoPlay
-          className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-3xl opacity-35 pointer-events-none scale-125"
-        />
-
-        {/* Wide-Angle Unzoomed Selfie Camera Feed with Soft Feathered Edge Blend */}
+      <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
+        {/* Full-Height Native Portrait Selfie Camera Feed */}
         <video
           ref={videoRef}
           playsInline
           muted
           autoPlay
-          style={{
-            width: '115%',
-            height: 'auto',
-            maxHeight: '100%',
-            objectFit: 'contain',
-            maskImage: 'radial-gradient(ellipse 92% 88% at 50% 50%, black 72%, transparent 100%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 92% 88% at 50% 50%, black 72%, transparent 100%)',
-          }}
-          className="absolute -scale-x-100 pointer-events-none"
+          className="absolute inset-0 w-full h-full object-cover -scale-x-100 pointer-events-none"
         />
 
         <canvas
