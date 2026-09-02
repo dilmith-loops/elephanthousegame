@@ -82,7 +82,12 @@ async function getFaceLandmarker(): Promise<FaceLandmarker> {
               delegate: 'GPU'
             },
             runningMode: 'VIDEO',
-            numFaces: 1
+            numFaces: 1,
+            minFaceDetectionConfidence: 0.5,
+            minFacePresenceConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+            outputFaceBlendshapes: false,
+            outputFacialTransformationMatrixes: false
           });
           if (globalLandmarker) return globalLandmarker;
         } catch (gpuErr) {
@@ -94,7 +99,12 @@ async function getFaceLandmarker(): Promise<FaceLandmarker> {
                 delegate: 'CPU'
               },
               runningMode: 'VIDEO',
-              numFaces: 1
+              numFaces: 1,
+              minFaceDetectionConfidence: 0.5,
+              minFacePresenceConfidence: 0.5,
+              minTrackingConfidence: 0.5,
+              outputFaceBlendshapes: false,
+              outputFacialTransformationMatrixes: false
             });
             if (globalLandmarker) return globalLandmarker;
           } catch (cpuErr) {
@@ -597,12 +607,8 @@ export default function GameCanvas({
         offsetY = (height - renderH) / 2;
       }
 
-      // Draw Mirrored Camera Frame
-      ctx.save();
-      ctx.translate(width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(video, -(offsetX + renderW - width), offsetY, renderW, renderH);
-      ctx.restore();
+      // Note: Video frame is rendered directly by GPU hardware via the native <video> tag behind the transparent canvas!
+      // This eliminates 100% of the canvas drawImage video copy lag on mobile devices.
 
       // Adaptive FaceLandmarker detection interval:
       // Mobile (~19 FPS / 52ms interval) prevents mobile CPU overheating & frame stutter while LERP keeps cursor silky-smooth at 60 FPS
@@ -615,6 +621,7 @@ export default function GameCanvas({
         !currentlyPaused &&
         landmarker &&
         video.readyState >= 2 &&
+        video.currentTime !== lastVideoTimeRef.current &&
         timestamp - lastDetectTimestampRef.current >= detectInterval
       ) {
         lastDetectTimestampRef.current = timestamp;
@@ -893,15 +900,6 @@ export default function GameCanvas({
 
   return (
     <div className="relative w-full h-[100dvh] max-h-[100dvh] flex flex-col bg-slate-950 overflow-hidden select-none">
-      {/* Hidden Video for Camera Stream (Invisible without display:none for iOS Safari decoding) */}
-      <video
-        ref={videoRef}
-        playsInline
-        muted
-        autoPlay
-        className="fixed top-0 left-0 -z-50 opacity-0 pointer-events-none w-1 h-1"
-      />
-
       {/* Top HUD Header */}
       <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between pt-3 pb-4 px-3 sm:px-5 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-auto select-none">
         {/* Left: Player Profile & Live Score Capsule */}
@@ -969,9 +967,18 @@ export default function GameCanvas({
 
       {/* Main Canvas Viewport Container */}
       <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden">
+        {/* Hardware-Accelerated Native Camera Video Feed (Zero-Copy 60/120 FPS Native Playback) */}
+        <video
+          ref={videoRef}
+          playsInline
+          muted
+          autoPlay
+          className="absolute inset-0 w-full h-full object-cover -scale-x-100 pointer-events-none"
+        />
+
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full pointer-events-none"
         />
 
         {/* Loading Overlay */}
