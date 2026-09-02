@@ -672,7 +672,7 @@ export default function GameCanvas({
       // Always clear the canvas before drawing frame to eliminate any streaking/trails
       ctx.clearRect(0, 0, width, height);
 
-      // Calculate wide-angle uncropped transform for camera feed (zero zoom)
+      // Calculate balanced 3:4 portrait transform for camera feed (tall vertical view, zero face zoom)
       const videoW = video.videoWidth || 1280;
       const videoH = video.videoHeight || 720;
       const videoAspect = videoW / videoH;
@@ -683,17 +683,25 @@ export default function GameCanvas({
       let offsetX: number;
       let offsetY: number;
 
-      // On mobile portrait (where videoAspect > screenAspect), fit by width so 100% of horizontal field of view is visible without digital zoom
-      if (videoAspect > screenAspect) {
-        renderW = width;
-        renderH = width / videoAspect;
-        offsetX = 0;
+      if (height > width) {
+        // Mobile portrait: use 3:4 balanced aspect ratio (~0.72) for tall portrait view without cutting off face
+        const portraitH = Math.min(height, width / 0.72);
+        renderH = portraitH;
+        renderW = portraitH * videoAspect;
+        offsetX = (width - renderW) / 2;
         offsetY = (height - renderH) / 2;
       } else {
-        renderH = height;
-        renderW = height * videoAspect;
-        offsetX = (width - renderW) / 2;
-        offsetY = 0;
+        if (videoAspect > screenAspect) {
+          renderH = height;
+          renderW = height * videoAspect;
+          offsetX = (width - renderW) / 2;
+          offsetY = 0;
+        } else {
+          renderW = width;
+          renderH = width / videoAspect;
+          offsetX = 0;
+          offsetY = (height - renderH) / 2;
+        }
       }
 
       // Note: Video frame is rendered directly by GPU hardware via the native <video> tag behind the transparent canvas!
@@ -1084,27 +1092,32 @@ export default function GameCanvas({
 
       {/* Main Canvas Viewport Container */}
       <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* Full-Screen Ambient Live Video Backdrop (Fills vertical edges smoothly) */}
+        {/* Full-Screen Ambient Live Video Backdrop (Fills full screen smoothly) */}
         <video
           ref={bgVideoRef}
           playsInline
           muted
           autoPlay
-          className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-3xl opacity-40 pointer-events-none scale-110"
+          className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-3xl opacity-35 pointer-events-none scale-110"
         />
 
-        {/* Wide-Angle Uncropped Selfie Camera Feed (Zero Digital Zoom) */}
-        <video
-          ref={videoRef}
-          playsInline
-          muted
-          autoPlay
+        {/* Tall Portrait Selfie Video Feed (Balanced 3:4 portrait view - Unzoomed) */}
+        <div
           style={{
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%)',
+            width: '100%',
+            height: 'min(100%, calc(100vw / 0.72))',
+            maxHeight: '100%',
           }}
-          className="absolute inset-0 w-full h-full object-contain -scale-x-100 pointer-events-none"
-        />
+          className="relative overflow-hidden rounded-3xl shadow-2xl border border-white/10"
+        >
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            autoPlay
+            className="absolute inset-0 w-full h-full object-cover -scale-x-100 pointer-events-none"
+          />
+        </div>
 
         <canvas
           ref={canvasRef}
