@@ -954,27 +954,21 @@ export default function GameCanvas({
       <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between pt-3 pb-4 px-3 sm:px-5 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-auto select-none">
         {/* Left: Player Profile & Live Score Pill (Reference Design) */}
         <div className="flex items-center space-x-2.5 sm:space-x-3.5 bg-[#181922]/95 backdrop-blur-2xl border-2 border-[#38394a] shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full py-1.5 px-3 sm:py-2 sm:px-4 ring-1 ring-white/10 select-none transition-all">
-          {/* Avatar Ring with TOP Badge */}
+          {/* Avatar Ring */}
           <div className="relative flex-shrink-0">
             {/* Glowing Sunset Ring */}
             <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-[2px] bg-gradient-to-tr from-[#ff2a6d] via-[#ff6a00] to-[#ffaa00] shadow-[0_0_14px_rgba(255,106,0,0.45)] flex items-center justify-center overflow-hidden">
               <CartoonAvatar name={player.name} size="md" className="w-full h-full" />
             </div>
-
-            {/* TOP Badge */}
-            <div className="absolute -top-1 -right-1.5 sm:-right-2 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-full shadow-md border border-white/60 tracking-wider uppercase leading-none">
-              TOP
-            </div>
           </div>
 
           {/* Name & Live Score */}
           <div className="flex flex-col justify-center min-w-0 pr-1">
-            {/* Top row: Name + Star */}
-            <div className="flex items-center space-x-1.5 leading-tight">
-              <span className="text-white font-black text-xs sm:text-sm tracking-[0.14em] uppercase truncate max-w-[95px] sm:max-w-[150px] drop-shadow-sm">
+            {/* Top row: Name */}
+            <div className="leading-tight">
+              <span className="text-white font-black text-xs sm:text-sm tracking-[0.14em] uppercase truncate max-w-[105px] sm:max-w-[160px] drop-shadow-sm block">
                 {player.name}
               </span>
-              <Star className="w-3.5 h-3.5 fill-[#ffb000] text-[#ffb000] flex-shrink-0 drop-shadow-[0_1px_4px_rgba(255,176,0,0.5)]" />
             </div>
 
             {/* Bottom row: Score + Soft Serve Ice Cream Cone */}
