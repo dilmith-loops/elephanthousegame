@@ -239,6 +239,18 @@ export default function GameCanvas({
   const comboRef = useRef(0);
   const isGameOverRef = useRef(false);
   const popsicleAssetsRef = useRef<PopsicleAsset[]>([]);
+  const dogTongueImageRef = useRef<HTMLImageElement | null>(null);
+
+  // Preload Snapchat Dog Tongue AR Asset
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const img = new Image();
+      img.src = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/dog_tongue.png`;
+      img.onload = () => {
+        dogTongueImageRef.current = img;
+      };
+    }
+  }, []);
 
   // Sound toggle
   const toggleMute = () => {
@@ -801,67 +813,57 @@ export default function GameCanvas({
         }
       }
 
-      // Draw Mouth Target / Cartoon Tongue Filter if detected
+      // Draw Mouth Target / Snapchat Dog Tongue Filter if detected
       const mouth = mouthStateRef.current;
       if (mouth.isDetected && !currentlyPaused) {
         ctx.save();
         if (mouth.isTongueOut) {
           const tx = mouth.mouthCenter.x;
-          const ty = mouth.mouthCenter.y + 4;
-          const tongueW = Math.max(54, Math.min(85, (mouth.mouthWidth || 40) * 1.3));
-          const tongueH = Math.max(50, Math.min(78, tongueW * 0.95));
+          const ty = mouth.mouthCenter.y;
+          // Scale tongue generously for iconic floppy Snapchat puppy look
+          const tongueW = Math.max(72, Math.min(120, (mouth.mouthWidth || 45) * 1.65));
+          const tongueH = tongueW * (727 / 497); // ~1.46 aspect ratio
 
-          // Soft clean pink contact aura (No yellow glare)
-          const pinkAura = ctx.createRadialGradient(tx, ty + tongueH * 0.4, 4, tx, ty + tongueH * 0.4, tongueW * 0.85);
-          pinkAura.addColorStop(0, 'rgba(255, 64, 129, 0.25)');
-          pinkAura.addColorStop(1, 'rgba(255, 64, 129, 0)');
-          ctx.fillStyle = pinkAura;
-          ctx.beginPath();
-          ctx.arc(tx, ty + tongueH * 0.4, tongueW * 0.85, 0, Math.PI * 2);
-          ctx.fill();
+          if (dogTongueImageRef.current && dogTongueImageRef.current.complete && dogTongueImageRef.current.naturalWidth > 0) {
+            // Render 3D Snapchat Dog Tongue Sprite hanging downward from mouth
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetY = 4;
+            ctx.drawImage(
+              dogTongueImageRef.current,
+              tx - tongueW * 0.5,
+              ty - tongueH * 0.08,
+              tongueW,
+              tongueH
+            );
+          } else {
+            // High quality vector fallback
+            const fallbackH = tongueW * 0.95;
+            ctx.beginPath();
+            ctx.moveTo(tx - tongueW * 0.46, ty);
+            ctx.bezierCurveTo(
+              tx - tongueW * 0.52, ty + fallbackH * 0.55,
+              tx - tongueW * 0.38, ty + fallbackH,
+              tx, ty + fallbackH
+            );
+            ctx.bezierCurveTo(
+              tx + tongueW * 0.38, ty + fallbackH,
+              tx + tongueW * 0.52, ty + fallbackH * 0.55,
+              tx + tongueW * 0.46, ty
+            );
+            ctx.closePath();
 
-          // Cartoon Tongue Contour
-          ctx.beginPath();
-          ctx.moveTo(tx - tongueW * 0.46, ty);
-          ctx.bezierCurveTo(
-            tx - tongueW * 0.52, ty + tongueH * 0.55,
-            tx - tongueW * 0.38, ty + tongueH,
-            tx, ty + tongueH
-          );
-          ctx.bezierCurveTo(
-            tx + tongueW * 0.38, ty + tongueH,
-            tx + tongueW * 0.52, ty + tongueH * 0.55,
-            tx + tongueW * 0.46, ty
-          );
-          ctx.closePath();
+            const tongueGrad = ctx.createLinearGradient(tx, ty, tx, ty + fallbackH);
+            tongueGrad.addColorStop(0, '#FF4081');
+            tongueGrad.addColorStop(0.65, '#F50057');
+            tongueGrad.addColorStop(1, '#C2185B');
+            ctx.fillStyle = tongueGrad;
+            ctx.fill();
 
-          // Vibrant Wonder Strawberry Tongue Gradient
-          const tongueGrad = ctx.createLinearGradient(tx, ty, tx, ty + tongueH);
-          tongueGrad.addColorStop(0, '#FF4081');
-          tongueGrad.addColorStop(0.65, '#F50057');
-          tongueGrad.addColorStop(1, '#C2185B');
-          ctx.fillStyle = tongueGrad;
-          ctx.fill();
-
-          // Smooth Tongue Border Outline
-          ctx.lineWidth = 3;
-          ctx.strokeStyle = '#880E4F';
-          ctx.stroke();
-
-          // Central Tongue Groove Crease
-          ctx.beginPath();
-          ctx.moveTo(tx, ty + 6);
-          ctx.lineTo(tx, ty + tongueH * 0.68);
-          ctx.lineWidth = 2.5;
-          ctx.lineCap = 'round';
-          ctx.strokeStyle = 'rgba(136, 14, 79, 0.45)';
-          ctx.stroke();
-
-          // Glossy Saliva / Light Highlight
-          ctx.beginPath();
-          ctx.ellipse(tx - tongueW * 0.18, ty + tongueH * 0.36, tongueW * 0.1, tongueH * 0.22, -0.25, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-          ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#880E4F';
+            ctx.stroke();
+          }
         } else {
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
           ctx.lineWidth = 2;
