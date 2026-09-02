@@ -968,7 +968,15 @@ export default function GameCanvas({
   }, [loadingAI, loadingCamera, countdown, isGameOver, handleCatch]);
 
   return (
-    <div className="relative w-full h-full min-h-[100dvh] flex flex-col justify-between items-center bg-slate-950 overflow-hidden select-none">
+    <div
+      className="relative w-full h-full min-h-[100dvh] flex flex-col justify-between items-center bg-slate-950 overflow-hidden select-none bg-cover bg-center"
+      style={{
+        backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ''}/gameplay_background.jpg)`,
+      }}
+    >
+      {/* Ambient background overlay to ensure UI elements & HUD pop with high contrast */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-950/30 to-slate-950/75 pointer-events-none"></div>
+
       {/* Top Header Controls (Player profile, Score, Sound, Leaderboard, End) */}
       <header
         style={{
