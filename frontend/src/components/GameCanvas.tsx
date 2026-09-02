@@ -21,8 +21,57 @@ import {
   Pause,
   Play,
   X,
-  CheckCircle2
+  CheckCircle2,
+  Star
 } from 'lucide-react';
+
+function SoftServeIcon({ className = 'w-6 h-6 sm:w-7 sm:h-7' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 64 80"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`${className} filter drop-shadow-[0_2px_8px_rgba(255,200,100,0.4)] flex-shrink-0 select-none pointer-events-none`}
+    >
+      <defs>
+        <linearGradient id="softVanilla" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="40%" stopColor="#FFF9EB" />
+          <stop offset="85%" stopColor="#F7E6C4" />
+          <stop offset="100%" stopColor="#E4CCA2" />
+        </linearGradient>
+        <linearGradient id="waffleCone" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#E69F54" />
+          <stop offset="50%" stopColor="#F5C080" />
+          <stop offset="100%" stopColor="#C87A2C" />
+        </linearGradient>
+      </defs>
+
+      {/* Waffle Cone Body */}
+      <path d="M18 44 L32 76 L46 44 Z" fill="url(#waffleCone)" stroke="#B3651C" strokeWidth="1.2" strokeLinejoin="round" />
+      {/* Waffle Grid lines */}
+      <path d="M22 50 L42 50 M25 58 L39 58 M28 66 L36 66" stroke="#964E10" strokeWidth="0.9" strokeLinecap="round" opacity="0.6" />
+      <path d="M22 45 L38 68 M42 45 L26 68" stroke="#964E10" strokeWidth="0.9" strokeLinecap="round" opacity="0.4" />
+
+      {/* Bottom Swirl Layer */}
+      <path d="M12 44 C12 36 20 38 32 38 C44 38 52 36 52 44 C52 47 48 49 32 49 C16 49 12 47 12 44 Z" fill="url(#softVanilla)" stroke="#E4CCA2" strokeWidth="0.8" />
+      
+      {/* Middle Swirl Layer */}
+      <path d="M16 34 C16 26 22 28 32 28 C42 28 48 26 48 34 C48 37 44 39 32 39 C20 39 16 37 16 34 Z" fill="url(#softVanilla)" stroke="#E4CCA2" strokeWidth="0.8" />
+      
+      {/* Top Swirl Layer */}
+      <path d="M22 24 C22 17 26 18 32 18 C38 18 42 17 42 24 C42 27 38 29 32 29 C26 29 22 27 22 24 Z" fill="url(#softVanilla)" stroke="#E4CCA2" strokeWidth="0.8" />
+
+      {/* Swirl Tip / Crest */}
+      <path d="M32 6 C35 9 37 14 36 19 C34 19 30 19 28 19 C27 15 29 8 32 6 Z" fill="url(#softVanilla)" stroke="#E4CCA2" strokeWidth="0.8" />
+      
+      {/* Swirl Gloss Highlights */}
+      <path d="M26 19 C28 20 34 20 37 19" stroke="#FFFFFF" strokeWidth="1.2" strokeLinecap="round" opacity="0.85" />
+      <path d="M20 29 C24 30 38 30 43 29" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" opacity="0.85" />
+      <path d="M16 39 C22 41 42 41 47 39" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" opacity="0.85" />
+    </svg>
+  );
+}
 
 interface Props {
   player: Player;
@@ -902,26 +951,39 @@ export default function GameCanvas({
     <div className="relative w-full h-[100dvh] max-h-[100dvh] flex flex-col bg-slate-950 overflow-hidden select-none">
       {/* Top HUD Header */}
       <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between pt-3 pb-4 px-3 sm:px-5 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-auto select-none">
-        {/* Left: Player Profile & Live Score Capsule */}
-        <div className="flex items-center space-x-2.5 bg-slate-950/75 backdrop-blur-xl border border-white/20 shadow-xl shadow-black/40 rounded-2xl py-1 pl-1.5 pr-3.5">
-          {/* Avatar Ring */}
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-400 p-0.5 shadow-md flex items-center justify-center flex-shrink-0">
-            <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center text-white font-black text-xs sm:text-sm">
-              {player.name.charAt(0).toUpperCase()}
+        {/* Left: Player Profile & Live Score Pill (Reference Design) */}
+        <div className="flex items-center space-x-2.5 sm:space-x-3.5 bg-[#181922]/95 backdrop-blur-2xl border-2 border-[#38394a] shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full py-1.5 px-3 sm:py-2 sm:px-4 ring-1 ring-white/10 select-none transition-all">
+          {/* Avatar Ring with TOP Badge */}
+          <div className="relative flex-shrink-0">
+            {/* Glowing Sunset Ring */}
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-[2px] bg-gradient-to-tr from-[#ff2a6d] via-[#ff6a00] to-[#ffaa00] shadow-[0_0_14px_rgba(255,106,0,0.45)] flex items-center justify-center">
+              <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#ff3366] via-[#ff7700] to-[#ffbb00] flex items-center justify-center overflow-hidden border border-white/25 text-white font-black text-base sm:text-lg drop-shadow-md">
+                {player.name ? player.name.charAt(0).toUpperCase() : '★'}
+              </div>
+            </div>
+
+            {/* TOP Badge */}
+            <div className="absolute -top-1 -right-1.5 sm:-right-2 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-full shadow-md border border-white/60 tracking-wider uppercase leading-none">
+              TOP
             </div>
           </div>
 
-          {/* Name & Live Score Info */}
-          <div className="flex flex-col min-w-0 pr-1">
-            <span className="text-xs sm:text-sm font-extrabold text-white max-w-[150px] sm:max-w-[220px] truncate leading-tight drop-shadow-sm">
-              {player.name}
-            </span>
-            <div className="flex items-center space-x-1.5 mt-0.5">
-              <span className="text-xs sm:text-sm font-black bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-sm leading-none flex items-center">
-                <span>{score}</span>
-                <span className="text-[10px] uppercase font-extrabold text-amber-300/90 ml-1">pts</span>
+          {/* Name & Live Score */}
+          <div className="flex flex-col justify-center min-w-0 pr-1">
+            {/* Top row: Name + Star */}
+            <div className="flex items-center space-x-1.5 leading-tight">
+              <span className="text-white font-black text-xs sm:text-sm tracking-[0.14em] uppercase truncate max-w-[95px] sm:max-w-[150px] drop-shadow-sm">
+                {player.name}
               </span>
-              <span className="text-xs">🍦</span>
+              <Star className="w-3.5 h-3.5 fill-[#ffb000] text-[#ffb000] flex-shrink-0 drop-shadow-[0_1px_4px_rgba(255,176,0,0.5)]" />
+            </div>
+
+            {/* Bottom row: Score + Soft Serve Ice Cream Cone */}
+            <div className="flex items-center space-x-1.5 mt-0.5">
+              <span className="font-black text-xl sm:text-2xl text-[#ffaa00] tracking-tight leading-none drop-shadow-[0_2px_8px_rgba(255,170,0,0.35)]">
+                {score.toLocaleString()}
+              </span>
+              <SoftServeIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
@@ -937,10 +999,10 @@ export default function GameCanvas({
         )}
 
         {/* Right: Sound, Leaderboard & End Game Controls Capsule */}
-        <div className="flex items-center space-x-1.5 bg-slate-950/75 backdrop-blur-xl border border-white/20 shadow-xl shadow-black/40 rounded-2xl p-1 flex-shrink-0">
+        <div className="flex items-center space-x-1.5 bg-[#181922]/95 backdrop-blur-2xl border-2 border-[#38394a] shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full p-1.5 ring-1 ring-white/10 flex-shrink-0">
           <button
             onClick={toggleMute}
-            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 active:scale-95 text-white flex items-center justify-center transition-all cursor-pointer"
+            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 active:scale-95 text-white flex items-center justify-center transition-all cursor-pointer"
             title={isMuted ? 'Unmute' : 'Mute'}
           >
             {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
@@ -948,7 +1010,7 @@ export default function GameCanvas({
 
           <button
             onClick={onOpenLeaderboard}
-            className="w-8 h-8 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 text-amber-300 flex items-center justify-center transition-all cursor-pointer"
+            className="w-8 h-8 rounded-full bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 text-amber-300 flex items-center justify-center transition-all cursor-pointer"
             title="Leaderboard"
           >
             <Trophy className="w-4 h-4" />
@@ -957,7 +1019,7 @@ export default function GameCanvas({
           <button
             onClick={handleRequestEndGame}
             disabled={countdown !== null || isGameOver}
-            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white text-xs font-black flex items-center space-x-1 shadow-md shadow-red-600/30 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white text-xs font-black flex items-center space-x-1 shadow-md shadow-red-600/30 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <StopCircle className="w-3.5 h-3.5 fill-white" />
             <span>End</span>
