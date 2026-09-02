@@ -801,31 +801,67 @@ export default function GameCanvas({
         }
       }
 
-      // Draw Mouth Target / Catch Glow Aura if detected
+      // Draw Mouth Target / Cartoon Tongue Filter if detected
       const mouth = mouthStateRef.current;
       if (mouth.isDetected && !currentlyPaused) {
         ctx.save();
         if (mouth.isTongueOut) {
-          const grad = ctx.createRadialGradient(
-            mouth.mouthCenter.x,
-            mouth.mouthCenter.y + 8,
-            4,
-            mouth.mouthCenter.x,
-            mouth.mouthCenter.y + 8,
-            48
-          );
-          grad.addColorStop(0, 'rgba(255, 64, 129, 0.7)');
-          grad.addColorStop(0.5, 'rgba(255, 171, 0, 0.45)');
-          grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          ctx.fillStyle = grad;
+          const tx = mouth.mouthCenter.x;
+          const ty = mouth.mouthCenter.y + 4;
+          const tongueW = Math.max(54, Math.min(85, (mouth.mouthWidth || 40) * 1.3));
+          const tongueH = Math.max(50, Math.min(78, tongueW * 0.95));
+
+          // Soft clean pink contact aura (No yellow glare)
+          const pinkAura = ctx.createRadialGradient(tx, ty + tongueH * 0.4, 4, tx, ty + tongueH * 0.4, tongueW * 0.85);
+          pinkAura.addColorStop(0, 'rgba(255, 64, 129, 0.25)');
+          pinkAura.addColorStop(1, 'rgba(255, 64, 129, 0)');
+          ctx.fillStyle = pinkAura;
           ctx.beginPath();
-          ctx.arc(mouth.mouthCenter.x, mouth.mouthCenter.y + 8, 48, 0, Math.PI * 2);
+          ctx.arc(tx, ty + tongueH * 0.4, tongueW * 0.85, 0, Math.PI * 2);
           ctx.fill();
 
-          ctx.font = '28px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('👅', mouth.mouthCenter.x, mouth.mouthCenter.y + 12);
+          // Cartoon Tongue Contour
+          ctx.beginPath();
+          ctx.moveTo(tx - tongueW * 0.46, ty);
+          ctx.bezierCurveTo(
+            tx - tongueW * 0.52, ty + tongueH * 0.55,
+            tx - tongueW * 0.38, ty + tongueH,
+            tx, ty + tongueH
+          );
+          ctx.bezierCurveTo(
+            tx + tongueW * 0.38, ty + tongueH,
+            tx + tongueW * 0.52, ty + tongueH * 0.55,
+            tx + tongueW * 0.46, ty
+          );
+          ctx.closePath();
+
+          // Vibrant Wonder Strawberry Tongue Gradient
+          const tongueGrad = ctx.createLinearGradient(tx, ty, tx, ty + tongueH);
+          tongueGrad.addColorStop(0, '#FF4081');
+          tongueGrad.addColorStop(0.65, '#F50057');
+          tongueGrad.addColorStop(1, '#C2185B');
+          ctx.fillStyle = tongueGrad;
+          ctx.fill();
+
+          // Smooth Tongue Border Outline
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = '#880E4F';
+          ctx.stroke();
+
+          // Central Tongue Groove Crease
+          ctx.beginPath();
+          ctx.moveTo(tx, ty + 6);
+          ctx.lineTo(tx, ty + tongueH * 0.68);
+          ctx.lineWidth = 2.5;
+          ctx.lineCap = 'round';
+          ctx.strokeStyle = 'rgba(136, 14, 79, 0.45)';
+          ctx.stroke();
+
+          // Glossy Saliva / Light Highlight
+          ctx.beginPath();
+          ctx.ellipse(tx - tongueW * 0.18, ty + tongueH * 0.36, tongueW * 0.1, tongueH * 0.22, -0.25, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+          ctx.fill();
         } else {
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
           ctx.lineWidth = 2;
