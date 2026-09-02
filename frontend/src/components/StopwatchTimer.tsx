@@ -32,9 +32,9 @@ export default function StopwatchTimer({ timeLeft, totalDuration = 60, className
         {/* Cloud SVG Graphic with Soft Pillowy Contours */}
         <svg
           viewBox="0 0 160 90"
-          className="w-24 sm:w-28 h-auto flex-shrink-0"
+          className="w-28 sm:w-32 h-auto flex-shrink-0"
           style={{
-            filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25))',
+            filter: 'drop-shadow(0 5px 15px rgba(0, 0, 0, 0.28))',
           }}
         >
           <defs>
@@ -89,7 +89,7 @@ export default function StopwatchTimer({ timeLeft, totalDuration = 60, className
                 ? '#FBBF24'
                 : '#F472B6'
             }
-            strokeWidth="2.5"
+            strokeWidth="2.8"
             strokeLinejoin="round"
             filter="url(#cloudInnerShadow)"
           />
@@ -99,7 +99,7 @@ export default function StopwatchTimer({ timeLeft, totalDuration = 60, className
             d="M 58 27 A 22 22 0 0 1 92 22"
             fill="none"
             stroke="rgba(255, 255, 255, 0.9)"
-            strokeWidth="3"
+            strokeWidth="3.5"
             strokeLinecap="round"
           />
         </svg>
@@ -116,14 +116,14 @@ export default function StopwatchTimer({ timeLeft, totalDuration = 60, className
           <span
             className={`font-black font-mono tracking-tight leading-none text-center select-none ${
               isUrgent
-                ? 'text-[#E11D48] text-base sm:text-lg'
+                ? 'text-[#E11D48] text-lg sm:text-xl'
                 : isWarning
-                ? 'text-[#B45309] text-sm sm:text-base'
-                : 'text-[#B21F85] text-sm sm:text-base'
+                ? 'text-[#B45309] text-base sm:text-lg'
+                : 'text-[#B21F85] text-base sm:text-lg'
             }`}
             style={{
               letterSpacing: '-0.02em',
-              textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)',
+              textShadow: '0 1px 3px rgba(255, 255, 255, 0.9)',
             }}
           >
             {timeFormatted}
