@@ -1069,34 +1069,6 @@ export default function GameCanvas({
           </div>
         </div>
 
-        {/* Center: Sleek Live Countdown Timer Capsule in Header */}
-        {timerConfig.enabled && countdown === null && !isGameOver && (
-          <div className="flex items-center justify-center flex-shrink-0 select-none pointer-events-none mx-1 sm:mx-2">
-            <div
-              className={`flex items-center space-x-1.5 sm:space-x-2 py-1 px-2.5 sm:py-2 sm:px-4 rounded-full backdrop-blur-2xl border transition-all duration-300 shadow-[0_8px_25px_rgba(0,0,0,0.85)] ${
-                timeLeft <= 5
-                  ? 'bg-gradient-to-r from-rose-600 via-red-600 to-pink-600 border-white text-white animate-pulse shadow-rose-600/70 scale-105 ring-2 ring-white/60'
-                  : timeLeft <= 15
-                  ? 'bg-gradient-to-r from-amber-600/90 to-orange-600/90 border-amber-300 text-white shadow-amber-500/50'
-                  : 'bg-[#181922]/95 border border-[#38394a] sm:border-2 text-white ring-1 ring-white/10'
-              }`}
-            >
-              <Clock className={`w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 ${
-                timeLeft <= 5 ? 'text-white animate-spin' : timeLeft <= 15 ? 'text-amber-200' : 'text-[#ff2a6d]'
-              }`} />
-              <span className={`font-black font-mono tracking-tight leading-none ${
-                timeLeft <= 5
-                  ? 'text-xs sm:text-base text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'
-                  : timeLeft <= 15
-                  ? 'text-xs sm:text-sm text-amber-100'
-                  : 'text-xs sm:text-sm text-white'
-              }`}>
-                {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
-              </span>
-            </div>
-          </div>
-        )}
-
         {/* Right: Sound, Leaderboard & End Game Controls Capsule */}
         <div className="flex items-center space-x-1.5 sm:space-x-2.5 bg-[#181922]/95 backdrop-blur-2xl border border-[#38394a] sm:border-2 shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full p-1 sm:p-2 ring-1 ring-white/10 flex-shrink-0 select-none">
           {/* Sound Toggle Button */}
@@ -1156,15 +1128,65 @@ export default function GameCanvas({
           className="absolute inset-0 w-full h-full pointer-events-none"
         />
 
-        {/* Active Multiplier/Combo Indicator inside camera viewport with clean clearance */}
-        {combo > 1 && (
-          <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 pointer-events-none z-30 transition-all duration-300 animate-bounce">
-            <span className="inline-flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-rose-600 to-amber-500 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/30 shadow-xl shadow-rose-600/40">
-              <Flame className="w-4 h-4 fill-amber-300 text-amber-300 animate-pulse" />
-              <span className="tracking-wide">{combo}x Combo!</span>
-            </span>
-          </div>
-        )}
+        {/* Top-Center In-Camera HUD (Timer & Combo Pill Stack) */}
+        <div className="absolute top-2.5 sm:top-3.5 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center space-y-2 pointer-events-none select-none transition-all duration-300">
+          {/* 1. Live Countdown Timer Capsule inside Camera Window */}
+          {timerConfig.enabled && countdown === null && !isGameOver && (
+            <div
+              className={`flex items-center space-x-1.5 sm:space-x-2 py-1 px-3 sm:py-1.5 sm:px-3.5 rounded-full backdrop-blur-2xl border transition-all duration-300 shadow-[0_8px_20px_rgba(0,0,0,0.85)] ${
+                timeLeft <= 5
+                  ? 'bg-gradient-to-r from-rose-600 via-red-600 to-pink-600 border-white text-white animate-pulse shadow-rose-600/80 scale-105 ring-2 ring-white/70'
+                  : timeLeft <= 15
+                  ? 'bg-gradient-to-r from-amber-600/90 to-orange-600/90 border-amber-300 text-white shadow-amber-500/50'
+                  : 'bg-black/65 border border-white/20 text-white'
+              }`}
+            >
+              {/* Animated Progress Ring */}
+              <div className="relative w-4 h-4 sm:w-4.5 sm:h-4.5 flex items-center justify-center flex-shrink-0">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    className="text-white/20"
+                    strokeWidth="3.5"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className={`transition-all duration-1000 ease-linear ${
+                      timeLeft <= 5 ? 'text-white' : timeLeft <= 15 ? 'text-amber-200' : 'text-[#ff2a6d]'
+                    }`}
+                    strokeDasharray={`${Math.max(0, Math.min(100, (timeLeft / (timerConfig.duration || 60)) * 100))}, 100`}
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+              </div>
+
+              <span className={`font-black font-mono tracking-tight leading-none ${
+                timeLeft <= 5
+                  ? 'text-xs sm:text-sm text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'
+                  : timeLeft <= 15
+                  ? 'text-xs sm:text-sm text-amber-100'
+                  : 'text-xs sm:text-sm text-white'
+              }`}>
+                {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
+              </span>
+            </div>
+          )}
+
+          {/* 2. Active Multiplier / Combo Indicator (Stacked below timer) */}
+          {combo > 1 && (
+            <div className="transition-all duration-300 animate-bounce">
+              <span className="inline-flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-rose-600 to-amber-500 backdrop-blur-md px-3 py-1 rounded-full border border-white/30 shadow-xl shadow-rose-600/40">
+                <Flame className="w-3.5 h-3.5 fill-amber-300 text-amber-300 animate-pulse" />
+                <span className="tracking-wide">{combo}x Combo!</span>
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Loading Overlay */}
         {(loadingAI || loadingCamera) && !cameraError && (
