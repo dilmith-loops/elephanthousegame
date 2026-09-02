@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Player } from '../types/game';
 import { api } from '../lib/api';
 import { Sparkles, User, Phone, Play, Trophy, AlertCircle, ArrowRight } from 'lucide-react';
+import CartoonAvatar from './CartoonAvatar';
 
 interface Props {
   onStartGame: (player: Player) => void;
@@ -113,10 +114,8 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
         {/* Quick Resume Profile Pill if cached */}
         {cachedPlayer && (
           <div className="mb-4 bg-pink-50 dark:bg-pink-950/40 border border-pink-200 dark:border-pink-800/50 rounded-2xl p-3 flex items-center justify-between text-xs">
-            <div className="flex items-center space-x-2 truncate">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-amber-400 text-white font-bold flex items-center justify-center text-xs shadow-sm flex-shrink-0">
-                {cachedPlayer.name.charAt(0).toUpperCase()}
-              </div>
+            <div className="flex items-center space-x-2.5 truncate">
+              <CartoonAvatar name={cachedPlayer.name} size="sm" className="w-9 h-9 flex-shrink-0 shadow-md ring-2 ring-pink-500/40" />
               <div className="truncate">
                 <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">Welcome back, {cachedPlayer.name}</p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">

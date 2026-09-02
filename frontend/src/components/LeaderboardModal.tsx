@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Player } from '../types/game';
 import { api } from '../lib/api';
 import { Trophy, X, Medal, Award, Flame, RotateCcw } from 'lucide-react';
+import CartoonAvatar from './CartoonAvatar';
 
 interface Props {
   onClose: () => void;
@@ -124,6 +125,7 @@ export default function LeaderboardModal({ onClose }: Props) {
                 >
                   <div className="flex items-center space-x-3 truncate">
                     {rankBadge}
+                    <CartoonAvatar name={player.name} size="sm" className="w-8 h-8 flex-shrink-0 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700" />
                     <div className="truncate">
                       <p className="font-extrabold text-sm text-slate-800 dark:text-white truncate">
                         {player.name}

@@ -7,6 +7,7 @@ import { FLAVORS, drawPopsicle, preloadPopsicleImage } from '../lib/sprites';
 import { sound } from '../lib/audio';
 import { api, getPopsicleImageUrl } from '../lib/api';
 import confetti from 'canvas-confetti';
+import CartoonAvatar from './CartoonAvatar';
 import {
   Volume2,
   VolumeX,
@@ -956,10 +957,8 @@ export default function GameCanvas({
           {/* Avatar Ring with TOP Badge */}
           <div className="relative flex-shrink-0">
             {/* Glowing Sunset Ring */}
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-[2px] bg-gradient-to-tr from-[#ff2a6d] via-[#ff6a00] to-[#ffaa00] shadow-[0_0_14px_rgba(255,106,0,0.45)] flex items-center justify-center">
-              <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#ff3366] via-[#ff7700] to-[#ffbb00] flex items-center justify-center overflow-hidden border border-white/25 text-white font-black text-base sm:text-lg drop-shadow-md">
-                {player.name ? player.name.charAt(0).toUpperCase() : '★'}
-              </div>
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-[2px] bg-gradient-to-tr from-[#ff2a6d] via-[#ff6a00] to-[#ffaa00] shadow-[0_0_14px_rgba(255,106,0,0.45)] flex items-center justify-center overflow-hidden">
+              <CartoonAvatar name={player.name} size="md" className="w-full h-full" />
             </div>
 
             {/* TOP Badge */}
