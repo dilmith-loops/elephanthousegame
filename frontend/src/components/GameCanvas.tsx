@@ -1263,6 +1263,22 @@ export default function GameCanvas({
         )}
       </div>
 
+      {/* Bottom Brand Bar (Mobile View - Below Camera) */}
+      <div
+        style={{
+          paddingBottom: 'max(8px, env(safe-area-inset-bottom, 0px))',
+        }}
+        className="w-full max-w-md md:hidden flex flex-col items-center justify-center pt-1.5 pb-2 px-4 z-20 flex-shrink-0"
+      >
+        <div className="h-7 sm:h-9 w-full max-w-[170px] sm:max-w-[200px] flex items-center justify-center filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
+          <img
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/wonder_logo.png`}
+            alt="Elephant House Wonder"
+            className="w-full h-full object-contain"
+          />
+        </div>
+      </div>
+
       {/* Game Over / Results Summary Modal */}
       {isGameOver && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg animate-fade-in">
