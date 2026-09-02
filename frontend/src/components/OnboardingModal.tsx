@@ -117,7 +117,10 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
             <div className="flex items-center space-x-2.5 truncate">
               <CartoonAvatar name={cachedPlayer.name} size="sm" className="w-9 h-9 flex-shrink-0 shadow-md ring-2 ring-pink-500/40" />
               <div className="truncate">
-                <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">Welcome back, {cachedPlayer.name}</p>
+                <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                  <span className="md:hidden">Welcome back!</span>
+                  <span className="hidden md:inline">Welcome back, {cachedPlayer.name}</span>
+                </p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   {(cachedPlayer.highest_score || 0) > 0 ? (
                     <>
