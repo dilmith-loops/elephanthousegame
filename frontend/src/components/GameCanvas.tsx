@@ -1440,12 +1440,12 @@ export default function GameCanvas({
               )
             )}
 
-            {/* Top 3 Champions Leaderboard Showcase */}
-            <div className="my-4 p-3.5 bg-gradient-to-b from-slate-900/95 to-slate-950/95 rounded-2xl border border-amber-500/30 text-left shadow-lg">
-              <div className="flex items-center justify-between mb-2 px-0.5">
+            {/* Top 3 Champions Leaderboard Showcase (Clean Light Theme) */}
+            <div className="my-4 p-3.5 bg-gradient-to-br from-amber-50/90 via-pink-50/60 to-rose-50/90 rounded-2xl border border-pink-200/80 text-left shadow-sm">
+              <div className="flex items-center justify-between mb-2.5 px-0.5">
                 <div className="flex items-center space-x-1.5">
-                  <Trophy className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                  <Trophy className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-900">
                     Top 3 Champions
                   </span>
                 </div>
@@ -1454,7 +1454,7 @@ export default function GameCanvas({
 
               {loadingTopThree ? (
                 <div className="flex items-center justify-center py-3.5 space-x-2 text-xs text-slate-400">
-                  <div className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-3.5 h-3.5 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
                   <span>Loading top players...</span>
                 </div>
               ) : topThreePlayers.length === 0 ? (
@@ -1470,21 +1470,22 @@ export default function GameCanvas({
                     return (
                       <div
                         key={tp.id || idx}
-                        className={`flex items-center justify-between px-3 py-1.5 rounded-xl border transition-all ${
+                        className={`flex items-center justify-between px-3 py-2 rounded-xl border transition-all ${
                           isCurrent
-                            ? 'bg-pink-500/20 border-pink-400/60 ring-1 ring-pink-400/50'
-                            : 'bg-white/5 border-white/10'
+                            ? 'bg-white border-2 border-pink-400 shadow-sm'
+                            : 'bg-white/80 border border-pink-100/80 shadow-xs'
                         }`}
                       >
-                        <div className="flex items-center space-x-2 overflow-hidden">
-                          <span className="text-sm flex-shrink-0">{medals[idx]}</span>
-                          <span className={`text-xs font-bold truncate ${isCurrent ? 'text-pink-300' : 'text-slate-100'}`}>
-                            {tp.name} {isCurrent && <span className="text-[10px] text-pink-400 font-normal">(You)</span>}
+                        <div className="flex items-center space-x-2.5 overflow-hidden">
+                          <span className="text-base flex-shrink-0">{medals[idx]}</span>
+                          <span className={`text-xs truncate ${isCurrent ? 'font-black text-pink-700' : 'font-bold text-slate-700'}`}>
+                            {tp.name} {isCurrent && <span className="text-[10px] text-pink-500 font-bold ml-0.5">(You)</span>}
                           </span>
                         </div>
-                        <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
-                          <span className="text-xs font-black text-amber-300">{tp.highest_score}</span>
-                          <span className="text-[10px] text-slate-400">pts</span>
+                        <div className="flex items-center flex-shrink-0 ml-2">
+                          <span className={`text-sm font-black ${isCurrent ? 'text-pink-600' : 'text-amber-600'}`}>
+                            {tp.highest_score}
+                          </span>
                         </div>
                       </div>
                     );
