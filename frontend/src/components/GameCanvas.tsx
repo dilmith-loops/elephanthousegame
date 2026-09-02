@@ -179,10 +179,6 @@ export default function GameCanvas({
   onOpenLeaderboard,
   onChangePlayer
 }: Props) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
   // States
   const [loadingAI, setLoadingAI] = useState(true);
   const [loadingCamera, setLoadingCamera] = useState(true);
@@ -195,6 +191,8 @@ export default function GameCanvas({
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const [cameraZoom, setCameraZoom] = useState<number>(0.75);
+  const cameraZoomRef = useRef<number>(0.75);
   const [isMouthOpen, setIsMouthOpen] = useState(false);
   const [gameStartTime, setGameStartTime] = useState<number>(0);
   const [gameDuration, setGameDuration] = useState(0);
@@ -204,6 +202,10 @@ export default function GameCanvas({
   const [isTabHidden, setIsTabHidden] = useState(false);
 
   // Game Engine Refs
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const lastVideoTimeRef = useRef<number>(-1);
@@ -373,6 +375,14 @@ export default function GameCanvas({
           } catch {
             // Hardware zoom constraint handled silently
           }
+        }
+
+        if (bgVideoRef.current) {
+          bgVideoRef.current.setAttribute('playsinline', 'true');
+          bgVideoRef.current.setAttribute('webkit-playsinline', 'true');
+          bgVideoRef.current.muted = true;
+          bgVideoRef.current.srcObject = stream;
+          bgVideoRef.current.play().catch(() => {});
         }
 
         if (videoRef.current) {
@@ -677,28 +687,28 @@ export default function GameCanvas({
       // Always clear the canvas before drawing frame to eliminate any streaking/trails
       ctx.clearRect(0, 0, width, height);
 
-      // Calculate object-fit: cover transform for 100% full screen camera feed
+      // Calculate object-fit: cover transform with dynamic camera zoom
       const videoW = video.videoWidth || 1280;
       const videoH = video.videoHeight || 720;
       const videoAspect = videoW / videoH;
       const screenAspect = width / height;
 
-      let renderW: number;
-      let renderH: number;
-      let offsetX: number;
-      let offsetY: number;
+      let baseW: number;
+      let baseH: number;
 
       if (videoAspect > screenAspect) {
-        renderH = height;
-        renderW = height * videoAspect;
-        offsetX = (width - renderW) / 2;
-        offsetY = 0;
+        baseH = height;
+        baseW = height * videoAspect;
       } else {
-        renderW = width;
-        renderH = width / videoAspect;
-        offsetX = 0;
-        offsetY = (height - renderH) / 2;
+        baseW = width;
+        baseH = width / videoAspect;
       }
+
+      const zoom = cameraZoomRef.current;
+      const renderW = baseW * zoom;
+      const renderH = baseH * zoom;
+      const offsetX = (width - renderW) / 2;
+      const offsetY = (height - renderH) / 2;
 
       // Note: Video frame is rendered directly by GPU hardware via the native <video> tag behind the transparent canvas!
       // This eliminates 100% of the canvas drawImage video copy lag on mobile devices.
@@ -1046,12 +1056,25 @@ export default function GameCanvas({
           </div>
         )}
 
-        {/* Right: Sound, Leaderboard & End Game Controls Capsule */}
-        <div className="flex items-center space-x-1.5 sm:space-x-2.5 bg-[#181922]/95 backdrop-blur-2xl border border-[#38394a] sm:border-2 shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full p-1 sm:p-2 ring-1 ring-white/10 flex-shrink-0 select-none">
+        {/* Right: Sound, Zoom, Leaderboard & End Game Controls Capsule */}
+        <div className="flex items-center space-x-1.5 sm:space-x-2 bg-[#181922]/95 backdrop-blur-2xl border border-[#38394a] sm:border-2 shadow-[0_10px_30px_rgba(0,0,0,0.85)] rounded-full p-1 sm:p-1.5 ring-1 ring-white/10 flex-shrink-0 select-none">
+          {/* Camera Zoom Toggle Button */}
+          <button
+            onClick={() => {
+              const nextZoom = cameraZoom === 0.75 ? 1.0 : cameraZoom === 1.0 ? 0.6 : 0.75;
+              setCameraZoom(nextZoom);
+              cameraZoomRef.current = nextZoom;
+            }}
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25 active:scale-90 transition-all flex items-center justify-center cursor-pointer shadow-[0_0_10px_rgba(6,182,212,0.25)] text-[10px] sm:text-[11px] font-black tracking-tight"
+            title="Toggle Camera Zoom (0.7x Wide / 0.6x Ultra / 1.0x)"
+          >
+            <span>{cameraZoom === 0.6 ? '0.6x' : cameraZoom === 0.75 ? '0.7x' : '1.0x'}</span>
+          </button>
+
           {/* Sound Toggle Button */}
           <button
             onClick={toggleMute}
-            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
+            className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
               isMuted
                 ? 'bg-rose-500/15 border border-rose-500/30 text-rose-400 hover:bg-rose-500/25 shadow-[0_0_10px_rgba(244,63,94,0.25)]'
                 : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
@@ -1059,26 +1082,26 @@ export default function GameCanvas({
             title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
           >
             {isMuted ? (
-              <VolumeX className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 filter drop-shadow-[0_0_4px_rgba(244,63,94,0.5)]" />
+              <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 filter drop-shadow-[0_0_4px_rgba(244,63,94,0.5)]" />
             ) : (
-              <Volume2 className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 filter drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+              <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 filter drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
             )}
           </button>
 
           {/* Leaderboard Trophy Button */}
           <button
             onClick={onOpenLeaderboard}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 active:scale-90 transition-all flex items-center justify-center cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.25)]"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 active:scale-90 transition-all flex items-center justify-center cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.25)]"
             title="Hall of Fame Leaderboard"
           >
-            <Trophy className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-amber-300 filter drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+            <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300 filter drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
           </button>
 
           {/* End Game Action Button */}
           <button
             onClick={handleRequestEndGame}
             disabled={countdown !== null || isGameOver}
-            className="px-2.5 py-1 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white text-[11px] sm:text-sm font-black tracking-wider uppercase flex items-center space-x-1 sm:space-x-1.5 shadow-[0_4px_16px_rgba(225,29,72,0.45)] border border-rose-400/40 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 hover:from-red-500 hover:to-rose-500 active:scale-95 text-white text-[11px] sm:text-xs font-black tracking-wider uppercase flex items-center space-x-1 sm:space-x-1.5 shadow-[0_4px_16px_rgba(225,29,72,0.45)] border border-rose-400/40 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-[2px] sm:rounded-[3px] bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)]"></div>
             <span>End</span>
@@ -1088,13 +1111,26 @@ export default function GameCanvas({
 
       {/* Main Canvas Viewport Container */}
       <div ref={containerRef} className="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
-        {/* Full-Screen Hardware-Accelerated Native Camera Video Feed */}
+        {/* Full-Screen Ambient Live Video Backdrop (Fills entire screen with live movement & color) */}
+        <video
+          ref={bgVideoRef}
+          playsInline
+          muted
+          autoPlay
+          className="absolute inset-0 w-full h-full object-cover -scale-x-100 filter blur-xl opacity-45 pointer-events-none scale-105"
+        />
+
+        {/* Main Crisp Live Camera Video Feed (Zoomed Out to Wide-Angle) */}
         <video
           ref={videoRef}
           playsInline
           muted
           autoPlay
-          className="absolute inset-0 w-full h-full object-cover -scale-x-100 pointer-events-none"
+          style={{
+            transform: `scale(${cameraZoom}) scaleX(-1)`,
+            transformOrigin: 'center center',
+          }}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-transform duration-300"
         />
 
         <canvas
