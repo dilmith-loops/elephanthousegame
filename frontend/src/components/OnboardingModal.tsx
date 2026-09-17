@@ -114,30 +114,8 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
       </div>
 
       {/* 1. Global Desktop Header Bar */}
-      <header className="hidden sm:flex items-center justify-between w-full max-w-6xl mx-auto px-6 py-3.5 z-30 flex-shrink-0">
-        {/* Brand identity badge */}
-        <div className="flex items-center space-x-3 bg-white/85 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-pink-200/80 shadow-sm">
-          <div className="w-8 h-8 rounded-xl bg-white p-1 shadow-xs border border-pink-100 flex items-center justify-center">
-            <img
-              src={`${basePath}/logo.png`}
-              alt="Elephant House"
-              className="w-full h-full object-contain"
-            />
-          </div>
-          <div>
-            <div className="flex items-center space-x-1.5">
-              <span className="text-xs font-black tracking-tight text-slate-800">
-                Elephant House <span className="text-pink-600">WONDER</span>
-              </span>
-              <span className="bg-pink-100 text-pink-700 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full border border-pink-200">
-                AR Game
-              </span>
-            </div>
-            <p className="text-[10px] text-slate-500 font-medium">Catch delicious popsicles with your tongue!</p>
-          </div>
-        </div>
-
-        {/* Right Action: Welcome Pill + Leaderboard Button */}
+      <header className="hidden sm:flex items-center justify-end w-full max-w-6xl mx-auto px-6 py-3.5 z-30 flex-shrink-0 min-h-[52px]">
+        {/* Right Action: Welcome Pill */}
         <div className="flex items-center space-x-3">
           {cachedPlayer && (
             <div className="flex items-center space-x-2 bg-white/85 backdrop-blur-md border border-pink-200/80 px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-700 shadow-sm">
