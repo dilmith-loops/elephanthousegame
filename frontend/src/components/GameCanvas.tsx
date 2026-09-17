@@ -18,7 +18,6 @@ import {
   Camera,
   AlertTriangle,
   Flame,
-  Award,
   Pause,
   Play,
   X,
@@ -1188,13 +1187,13 @@ export default function GameCanvas({
           </div>
 
           {/* Name & Live Score */}
-          <div className="flex flex-col justify-center min-w-0 pr-0.5 sm:pr-1">
+          <div className="flex flex-col justify-center min-w-0 pr-1 sm:pr-2.5 md:pr-3">
             {/* Top row: SCORE on mobile, Player Name on desktop */}
             <div className="leading-tight">
               <span className="text-slate-300 font-black text-[9px] tracking-[0.14em] uppercase block md:hidden">
                 SCORE
               </span>
-              <span className="text-white font-black text-sm tracking-[0.14em] uppercase truncate max-w-[160px] drop-shadow-sm hidden md:block">
+              <span className="text-white font-black text-sm tracking-[0.08em] uppercase truncate max-w-[260px] md:max-w-[380px] lg:max-w-[480px] drop-shadow-sm hidden md:block">
                 {player.name}
               </span>
             </div>
@@ -1509,22 +1508,6 @@ export default function GameCanvas({
               </div>
             </div>
 
-            {/* Submission / Ranking Status */}
-            {isSubmitting ? (
-              <div className="flex items-center justify-center space-x-2 text-xs text-slate-500 dark:text-slate-400 my-3">
-                <div className="w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
-                <span>Saving your marks to Elephant House Leaderboard...</span>
-              </div>
-            ) : (
-              submissionResult && (
-                <div className="flex items-center justify-center space-x-2 text-xs text-emerald-600 dark:text-emerald-400 font-bold mb-5">
-                  <Award className="w-4 h-4" />
-                  <span>
-                    Score Saved! {submissionResult.rank ? `Leaderboard Rank: #${submissionResult.rank}` : 'Recorded successfully!'}
-                  </span>
-                </div>
-              )
-            )}
 
             {/* Top 3 Champions Leaderboard Showcase (Clean Light Theme) */}
             <div className="my-4 p-3.5 bg-gradient-to-br from-amber-50/90 via-pink-50/60 to-rose-50/90 rounded-2xl border border-pink-200/80 text-left shadow-sm">

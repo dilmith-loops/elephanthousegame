@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Player } from '../types/game';
 import { api } from '../lib/api';
-import { Trophy, AlertCircle, Sparkles, Camera, Smile, Flame, ChevronRight, Gamepad2 } from 'lucide-react';
+import { Trophy, AlertCircle, Sparkles } from 'lucide-react';
 
 interface Props {
   onStartGame: (player: Player) => void;
@@ -15,11 +15,9 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cachedPlayer, setCachedPlayer] = useState<Player | null>(null);
-  const [topLeaders, setTopLeaders] = useState<Player[]>([]);
-
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
-  // Load cached player and top leaders
+  // Load cached player
   useEffect(() => {
     try {
       const stored = localStorage.getItem('eh_player');
@@ -31,17 +29,6 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
     } catch {
       // ignore
     }
-
-    // Fetch top 3 leaders for the desktop side spotlight
-    api.getLeaderboard(3)
-      .then((res) => {
-        if (res.leaderboard && res.leaderboard.length > 0) {
-          setTopLeaders(res.leaderboard.slice(0, 3));
-        }
-      })
-      .catch(() => {
-        // quiet fallback
-      });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,15 +71,46 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-between select-none overflow-hidden bg-[#fa4ba0]">
-      {/* High-Resolution Brand Background Asset */}
+      {/* High-Resolution Brand Background Asset (Responsive Desktop & Mobile) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        {/* Mobile background (portrait) */}
         <img
-          src={`${basePath}/onboarding_bg.png`}
-          alt=""
-          className="w-full h-full object-cover object-center"
+          src={`${basePath}/onboarding_bg.png?v=6`}
+          alt="Tropical Ice Cream Background"
+          className="md:hidden absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
         />
-        {/* Soft edge vignette on wide desktop */}
-        <div className="hidden lg:block absolute inset-0 bg-gradient-to-r from-pink-950/20 via-transparent to-pink-950/20 pointer-events-none" />
+        {/* Desktop background (wide landscape with flanking popsicles) */}
+        <img
+          src={`${basePath}/onboarding_bg_desktop.png?v=6`}
+          alt="Tropical Ice Cream Background Desktop"
+          className="hidden md:block absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+        />
+      </div>
+
+      {/* Mobile-Only Top Floating Navigation Bar (Safely anchored above poster) */}
+      <div
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+        className="sm:hidden fixed inset-x-3.5 z-40 flex items-center justify-between pointer-events-none"
+      >
+        {cachedPlayer ? (
+          <div className="pointer-events-auto flex items-center space-x-1.5 bg-white/95 backdrop-blur-md border border-pink-200/80 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 shadow-sm max-w-[55%] truncate">
+            <Sparkles className="w-3.5 h-3.5 text-pink-500 fill-pink-500 flex-shrink-0" />
+            <span className="truncate">
+              Hi, <strong className="text-pink-950 font-black">{cachedPlayer.name}</strong>
+            </span>
+          </div>
+        ) : (
+          <div />
+        )}
+
+        <button
+          type="button"
+          onClick={onOpenLeaderboard}
+          className="pointer-events-auto bg-white/95 backdrop-blur-md text-amber-950 px-3.5 py-1.5 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)] text-xs font-black flex items-center space-x-1.5 border border-amber-300/80 active:scale-95 transition-all cursor-pointer"
+        >
+          <Trophy className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+          <span>Leaderboard</span>
+        </button>
       </div>
 
       {/* 1. Global Desktop Header Bar */}
@@ -134,83 +152,21 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
               )}
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={onOpenLeaderboard}
-            className="bg-gradient-to-r from-amber-400 via-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 active:scale-95 text-slate-950 px-4 py-2 rounded-full shadow-[0_4px_12px_rgba(245,158,11,0.25)] text-xs font-black flex items-center space-x-2 transition-all hover:scale-105 cursor-pointer border border-amber-300/60"
-          >
-            <Trophy className="w-4 h-4 text-slate-950 fill-slate-950" />
-            <span>Leaderboard</span>
-          </button>
         </div>
       </header>
 
       {/* 2. Main Center Hero Stage */}
-      <main className="w-full flex-1 flex items-center justify-center relative z-20 px-2 sm:px-6 py-1 sm:py-2 overflow-hidden">
-        <div className="w-full max-w-6xl flex items-center justify-center lg:justify-between gap-6 xl:gap-10 h-full max-h-[85vh]">
+      <main className="w-full flex-1 flex items-center justify-center relative z-20 px-2 sm:px-6 pt-[calc(env(safe-area-inset-top,0px)+52px)] pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:py-2 overflow-hidden">
+        <div className="relative w-full max-w-6xl flex items-center justify-center h-full max-h-[85vh]">
           
-          {/* Left Flank: How To Play Guide (Visible on large desktop) */}
-          <div className="hidden lg:flex w-72 xl:w-80 flex-col gap-4 justify-center z-30">
-            {/* Guide Card */}
-            <div className="bg-white/80 backdrop-blur-xl border border-pink-200/80 rounded-3xl p-5 shadow-[0_15px_35px_rgba(244,63,94,0.08)]">
-              <div className="flex items-center space-x-2 text-pink-600 font-black text-xs uppercase tracking-wider mb-3">
-                <Gamepad2 className="w-4 h-4" />
-                <span>How To Play</span>
-              </div>
-
-              <div className="space-y-3.5">
-                <div className="flex items-start space-x-3">
-                  <div className="w-7 h-7 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Camera className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800">Face the Camera</h4>
-                    <p className="text-[11px] text-slate-500 leading-snug">Allow camera access and keep your face visible in frame.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <div className="w-7 h-7 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Smile className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800">Stick Your Tongue Out</h4>
-                    <p className="text-[11px] text-slate-500 leading-snug">Open mouth & stick tongue out to activate the puppy tongue filter!</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <div className="w-7 h-7 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800">Touch & Catch Treats</h4>
-                    <p className="text-[11px] text-slate-500 leading-snug">Physical contact between your tongue & the popsicle scores marks!</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Pro Tip Card */}
-            <div className="bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-pink-500/15 backdrop-blur-md border border-amber-300/60 rounded-2xl p-4 shadow-sm">
-              <div className="flex items-center space-x-2 text-amber-900 font-extrabold text-xs mb-1">
-                <Flame className="w-4 h-4 text-amber-600 fill-amber-500 animate-pulse" />
-                <span>Combo Multiplier!</span>
-              </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                Catch popsicles consecutively without missing to rack up 2x, 3x, and 4x score multipliers!
-              </p>
-            </div>
-          </div>
 
           {/* Center Phone Showcase Frame */}
           <div
             className="relative flex items-center justify-center flex-shrink-0 select-none"
             style={{
-              width: 'min(94vw, calc(84vh * 576 / 1024))',
+              width: 'min(92vw, calc(80vh * 576 / 1024))',
               aspectRatio: '576 / 1024',
-              maxHeight: '84vh',
+              maxHeight: '80vh',
             }}
           >
             {/* Sleek Outer Glow Bezel & Rounded Card Frame */}
@@ -222,18 +178,6 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
                 alt="Elephant House Wonder Onboarding"
                 className="absolute inset-0 w-full h-full object-fill pointer-events-none select-none"
               />
-
-              {/* Mobile-Only Top-Right Leaderboard Pill */}
-              <div className="sm:hidden absolute top-3 right-3 z-30 pointer-events-auto">
-                <button
-                  type="button"
-                  onClick={onOpenLeaderboard}
-                  className="bg-white/90 backdrop-blur-md text-amber-900 px-3 py-1.5 rounded-full shadow-md text-xs font-black flex items-center space-x-1.5 border border-amber-300/80 active:scale-95 transition-all cursor-pointer"
-                >
-                  <Trophy className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                  <span>Leaderboard</span>
-                </button>
-              </div>
 
               {/* Validation Error Toast Alert */}
               {error && (
@@ -283,66 +227,6 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-
-          {/* Right Flank: Live Leaderboard Spotlight (Visible on large desktop) */}
-          <div className="hidden lg:flex w-72 xl:w-80 flex-col gap-4 justify-center z-30">
-            {/* Top Champions Card */}
-            <div className="bg-white/80 backdrop-blur-xl border border-amber-200/80 rounded-3xl p-5 shadow-[0_15px_35px_rgba(245,158,11,0.08)]">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2 text-amber-700 font-black text-xs uppercase tracking-wider">
-                  <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
-                  <span>Hall of Fame</span>
-                </div>
-                <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">
-                  Top Scores
-                </span>
-              </div>
-
-              {/* Leaders List */}
-              <div className="space-y-2.5 mb-4">
-                {topLeaders.length > 0 ? (
-                  topLeaders.map((leader, idx) => {
-                    const medalColors = [
-                      'from-amber-400 to-amber-500 text-slate-950',
-                      'from-slate-300 to-slate-400 text-slate-900',
-                      'from-amber-700 to-amber-800 text-white'
-                    ];
-                    return (
-                      <div
-                        key={leader.id || idx}
-                        className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100/80"
-                      >
-                        <div className="flex items-center space-x-2.5 min-w-0">
-                          <div className={`w-6 h-6 rounded-full bg-gradient-to-tr ${medalColors[idx] || 'from-slate-200 to-slate-300 text-slate-700'} text-[11px] font-black flex items-center justify-center shadow-xs flex-shrink-0`}>
-                            {idx + 1}
-                          </div>
-                          <span className="text-xs font-bold text-slate-800 truncate">
-                            {leader.name}
-                          </span>
-                        </div>
-                        <span className="text-xs font-black text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-lg ml-2 flex-shrink-0">
-                          {leader.highest_score} pts
-                        </span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="p-3 text-center text-xs text-slate-400 font-medium">
-                    Be the first to set a high score today!
-                  </div>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={onOpenLeaderboard}
-                className="w-full py-2 bg-gradient-to-r from-amber-50 to-pink-50 hover:from-amber-100 hover:to-pink-100 border border-amber-200/80 rounded-2xl text-xs font-black text-amber-900 flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
-              >
-                <span>View Full Leaderboard</span>
-                <ChevronRight className="w-3.5 h-3.5 text-amber-600" />
-              </button>
             </div>
           </div>
 

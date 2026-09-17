@@ -45,63 +45,70 @@ export default function HomePage() {
 
   // Maintenance Screen
   if (isMaintenance) {
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center relative overflow-hidden p-4 select-none">
-        {/* Wonder Gates Full Background Image Asset */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-100"
-          style={{ backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ''}/wonder_background.jpg)` }}
-        />
-        {/* Cinematic gradient vignette & ambient light overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/50 to-slate-950/80 backdrop-blur-[2px]" />
-
-        {/* Ambient Glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-rose-600/20 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-500/15 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-
-        {/* Maintenance Box */}
-        <div className="relative w-full max-w-lg bg-slate-900/90 backdrop-blur-2xl border border-rose-500/30 rounded-3xl p-8 md:p-10 shadow-2xl text-center z-10">
-          {/* Brand Logo Badge */}
-          <div className="w-full max-w-[240px] sm:max-w-[280px] h-16 sm:h-20 mx-auto mb-5 flex items-center justify-center transform hover:scale-105 transition-transform duration-300">
-            <img
-              src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/wonder_logo.png`}
-              alt="Elephant House Wonder"
-              className="w-full h-full object-contain filter drop-shadow-md"
-            />
-          </div>
-
-          <div className="inline-flex items-center space-x-1.5 px-3.5 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 text-xs font-black tracking-wider uppercase mb-3">
-            <Wrench className="w-3.5 h-3.5" />
-            <span>Scheduled Maintenance</span>
-          </div>
-
-          <h1 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-rose-500 via-pink-400 to-amber-400 bg-clip-text text-transparent mb-3">
-            Game Temporarily Unavailable
-          </h1>
-
-          <p className="text-slate-300 text-xs md:text-sm max-w-md mx-auto leading-relaxed mb-6">
-            {maintenanceMessage ||
-              'The Elephant House AR Game is currently undergoing scheduled maintenance and experience upgrades. Please check back in a few moments!'}
-          </p>
-
-          <div className="p-4 bg-slate-800/60 rounded-2xl border border-slate-700/60 text-xs text-slate-400 mb-6 flex items-center justify-center space-x-2">
-            <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />
-            <span>Maintenance is actively underway by the Elephant House team.</span>
-          </div>
-
-          <button
-            onClick={checkStatus}
-            disabled={checkingStatus}
-            className="w-full py-3.5 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-extrabold rounded-2xl shadow-lg shadow-pink-500/30 flex items-center justify-center space-x-2 transition-all cursor-pointer disabled:opacity-50 text-sm"
-          >
-            <RefreshCw className={`w-4 h-4 ${checkingStatus ? 'animate-spin' : ''}`} />
-            <span>{checkingStatus ? 'Checking Status...' : 'Check Status & Refresh'}</span>
-          </button>
-
-          <p className="text-[11px] text-slate-500 mt-6 pt-4 border-t border-slate-800/80">
-            Elephant House Ice Cream AR Experience
-          </p>
+      <main className="min-h-screen bg-[#fa4ba0] text-slate-800 flex flex-col justify-between relative overflow-hidden select-none">
+        {/* Full Artwork Background */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <img
+            src={`${basePath}/maintenance_art.png?v=1`}
+            alt="Elephant House Maintenance"
+            className="w-full h-full object-cover object-center"
+          />
+          {/* Subtle bottom gradient to ensure bottom controls are always readable */}
+          <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/45 via-black/15 to-transparent pointer-events-none" />
         </div>
+
+        {/* Top Header Bar */}
+        <header className="relative z-10 flex items-center justify-between w-full max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+          <div className="flex items-center space-x-2.5 bg-white/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-pink-200/80 shadow-md">
+            <div className="w-7 h-7 rounded-xl bg-white p-0.5 shadow-xs border border-pink-100 flex items-center justify-center">
+              <img
+                src={`${basePath}/logo.png`}
+                alt="Elephant House"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <span className="text-xs font-black tracking-tight text-slate-800">
+              Elephant House <span className="text-pink-600">WONDER</span>
+            </span>
+          </div>
+
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-500/90 text-white backdrop-blur-md shadow-md text-xs font-black tracking-wider uppercase border border-amber-300/60">
+            <Wrench className="w-3.5 h-3.5" />
+            <span>Maintenance Mode</span>
+          </div>
+        </header>
+
+        {/* Center Space: Artwork's signboard speaks for itself */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pointer-events-none">
+          {/* If a custom admin message is set, show it in a glassmorphic banner */}
+          {maintenanceMessage && (
+            <div className="pointer-events-auto max-w-md bg-white/95 backdrop-blur-xl border border-pink-300/80 rounded-2xl px-5 py-3 shadow-xl text-center text-xs font-bold text-slate-800 animate-fadeIn mt-auto sm:mt-0 mb-4">
+              <p className="text-pink-600 uppercase text-[10px] font-black tracking-wider mb-0.5">Admin Notice</p>
+              <p>{maintenanceMessage}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Interactive Bar: Status & Refresh */}
+        <footer className="relative z-10 w-full flex flex-col items-center justify-center px-4 pb-[calc(env(safe-area-inset-bottom,0px)+20px)] pt-2 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row items-center gap-2.5 max-w-sm w-full">
+            <button
+              onClick={checkStatus}
+              disabled={checkingStatus}
+              className="w-full py-3 px-6 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-black rounded-full shadow-lg shadow-pink-600/30 flex items-center justify-center space-x-2 transition-all cursor-pointer disabled:opacity-50 text-xs sm:text-sm active:scale-95 border border-white/30"
+            >
+              <RefreshCw className={`w-4 h-4 ${checkingStatus ? 'animate-spin' : ''}`} />
+              <span>{checkingStatus ? 'Checking Status...' : 'Check Status & Refresh'}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center space-x-1.5 text-[11px] font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] mt-2.5">
+            <Clock className="w-3.5 h-3.5 text-amber-300" />
+            <span>Experience upgrades in progress. Check back shortly!</span>
+          </div>
+        </footer>
       </main>
     );
   }
