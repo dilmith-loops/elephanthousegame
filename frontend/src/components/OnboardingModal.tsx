@@ -83,34 +83,23 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-between select-none overflow-hidden bg-[radial-gradient(ellipse_at_50%_45%,_#fff0f4_0%,_#ffe9ef_30%,_#fff3db_65%,_#ffedb8_100%)]">
-      {/* Radiant Sunburst Background Rays */}
-      <div
-        className="absolute inset-0 opacity-25 pointer-events-none"
-        style={{
-          background: 'repeating-conic-gradient(from 0deg at 50% 45%, rgba(255, 182, 193, 0.4) 0deg 12deg, transparent 12deg 24deg)'
-        }}
-      />
-
-      {/* Ambient glowing color orbs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/6 w-[480px] h-[480px] bg-pink-300/25 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/6 w-[480px] h-[480px] bg-amber-300/25 rounded-full blur-[100px] pointer-events-none" />
-      </div>
-
-      {/* Ambient Floating Decorative Treats on Desktop */}
-      <div className="hidden lg:block absolute inset-0 pointer-events-none overflow-hidden z-10">
-        <div className="absolute top-24 left-16 text-3xl animate-float opacity-75">🍦</div>
-        <div className="absolute bottom-32 left-28 text-2xl animate-float-reverse opacity-60">✨</div>
-        <div className="absolute top-28 right-20 text-3xl animate-float-slow opacity-80">🍊</div>
-        <div className="absolute bottom-28 right-24 text-4xl animate-float opacity-70">🐼</div>
+    <div className="fixed inset-0 z-50 flex flex-col justify-between select-none overflow-hidden bg-[#fa4ba0]">
+      {/* High-Resolution Brand Background Asset */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <img
+          src={`${basePath}/onboarding_bg.png`}
+          alt=""
+          className="w-full h-full object-cover object-center"
+        />
+        {/* Soft edge vignette on wide desktop */}
+        <div className="hidden lg:block absolute inset-0 bg-gradient-to-r from-pink-950/20 via-transparent to-pink-950/20 pointer-events-none" />
       </div>
 
       {/* 1. Global Desktop Header Bar */}
       <header className="hidden sm:flex items-center justify-between w-full max-w-6xl mx-auto px-6 py-3.5 z-30 flex-shrink-0">
         {/* Brand identity badge */}
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-white/90 backdrop-blur-md p-1.5 shadow-sm border border-pink-200/80 flex items-center justify-center">
+        <div className="flex items-center space-x-3 bg-white/85 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-pink-200/80 shadow-sm">
+          <div className="w-8 h-8 rounded-xl bg-white p-1 shadow-xs border border-pink-100 flex items-center justify-center">
             <img
               src={`${basePath}/logo.png`}
               alt="Elephant House"
@@ -119,14 +108,14 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
           </div>
           <div>
             <div className="flex items-center space-x-1.5">
-              <span className="text-sm font-black tracking-tight text-slate-800">
+              <span className="text-xs font-black tracking-tight text-slate-800">
                 Elephant House <span className="text-pink-600">WONDER</span>
               </span>
-              <span className="bg-pink-100 text-pink-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-pink-200">
+              <span className="bg-pink-100 text-pink-700 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full border border-pink-200">
                 AR Game
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 font-medium">Catch delicious popsicles with your tongue!</p>
+            <p className="text-[10px] text-slate-500 font-medium">Catch delicious popsicles with your tongue!</p>
           </div>
         </div>
 
@@ -359,11 +348,6 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
 
         </div>
       </main>
-
-      {/* Footer spacer / subtle brand copyright */}
-      <footer className="w-full text-center py-2 text-[10px] text-slate-400 font-medium z-20 flex-shrink-0">
-        © Elephant House Ceylon Cold Stores PLC • Wonder AR Experience
-      </footer>
     </div>
   );
 }
