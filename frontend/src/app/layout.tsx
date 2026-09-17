@@ -40,6 +40,8 @@ export const viewport: Viewport = {
   themeColor: '#020617'
 };
 
+import SecurityShield from '@/components/SecurityShield';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -48,6 +50,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${outfit.className} antialiased bg-slate-950 text-slate-100 min-h-screen`}>
+        <SecurityShield />
         {children}
       </body>
     </html>
