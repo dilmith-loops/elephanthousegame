@@ -6,7 +6,7 @@ import { api } from '../lib/api';
 import OnboardingModal from '../components/OnboardingModal';
 import GameCanvas from '../components/GameCanvas';
 import LeaderboardModal from '../components/LeaderboardModal';
-import { Wrench, RefreshCw, Sparkles, Clock, AlertTriangle } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 export default function HomePage() {
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
@@ -73,23 +73,10 @@ export default function HomePage() {
               Elephant House <span className="text-pink-600">WONDER</span>
             </span>
           </div>
-
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-500/90 text-white backdrop-blur-md shadow-md text-xs font-black tracking-wider uppercase border border-amber-300/60">
-            <Wrench className="w-3.5 h-3.5" />
-            <span>Maintenance Mode</span>
-          </div>
         </header>
 
         {/* Center Space: Artwork's signboard speaks for itself */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pointer-events-none">
-          {/* If a custom admin message is set, show it in a glassmorphic banner */}
-          {maintenanceMessage && (
-            <div className="pointer-events-auto max-w-md bg-white/95 backdrop-blur-xl border border-pink-300/80 rounded-2xl px-5 py-3 shadow-xl text-center text-xs font-bold text-slate-800 animate-fadeIn mt-auto sm:mt-0 mb-4">
-              <p className="text-pink-600 uppercase text-[10px] font-black tracking-wider mb-0.5">Admin Notice</p>
-              <p>{maintenanceMessage}</p>
-            </div>
-          )}
-        </div>
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pointer-events-none" />
 
         {/* Bottom Interactive Bar: Status & Refresh */}
         <footer className="relative z-10 w-full flex flex-col items-center justify-center px-4 pb-[calc(env(safe-area-inset-bottom,0px)+20px)] pt-2 flex-shrink-0">
@@ -102,11 +89,6 @@ export default function HomePage() {
               <RefreshCw className={`w-4 h-4 ${checkingStatus ? 'animate-spin' : ''}`} />
               <span>{checkingStatus ? 'Checking Status...' : 'Check Status & Refresh'}</span>
             </button>
-          </div>
-
-          <div className="flex items-center space-x-1.5 text-[11px] font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] mt-2.5">
-            <Clock className="w-3.5 h-3.5 text-amber-300" />
-            <span>Experience upgrades in progress. Check back shortly!</span>
           </div>
         </footer>
       </main>
