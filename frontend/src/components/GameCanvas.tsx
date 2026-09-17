@@ -794,8 +794,22 @@ export default function GameCanvas({
             const targetMouthX = (1 - rawVx) * renderW + offsetX;
             const targetMouthY = rawVy * renderH + offsetY;
 
+            // Calculate mouth corner coords for tilt angle
+            const cornerLeftX = (1 - leftCorner.x) * renderW + offsetX;
+            const cornerLeftY = leftCorner.y * renderH + offsetY;
+            const cornerRightX = (1 - rightCorner.x) * renderW + offsetX;
+            const cornerRightY = rightCorner.y * renderH + offsetY;
+
+            // Roll angle (tilt) of mouth in mirrored canvas space
+            // In mirrored coords: cornerRightX is on the left of screen, cornerLeftX is on the right
+            const dx = cornerLeftX - cornerRightX;
+            const dy = cornerLeftY - cornerRightY;
+            let targetAngle = Math.atan2(dy, dx);
+            // Clamp tilt between -32 deg and +32 deg (~0.55 rad) to prevent any inversion
+            targetAngle = Math.max(-0.55, Math.min(0.55, targetAngle));
+
             const lipDistanceY = Math.abs(lowerLip.y - upperLip.y) * renderH;
-            const lipDistanceX = Math.abs(rightCorner.x - leftCorner.x) * renderW;
+            const lipDistanceX = Math.hypot(cornerRightX - cornerLeftX, cornerRightY - cornerLeftY);
             const mar = lipDistanceY / (lipDistanceX || 1);
 
             // Responsive mouth/tongue open threshold
@@ -811,6 +825,18 @@ export default function GameCanvas({
             const smoothY = prevMouth.isDetected
               ? prevMouth.mouthCenter.y + (targetMouthY - prevMouth.mouthCenter.y) * lerpFactor
               : targetMouthY;
+            const smoothAngle = prevMouth.isDetected && prevMouth.mouthAngle !== undefined
+              ? prevMouth.mouthAngle + (targetAngle - prevMouth.mouthAngle) * 0.45
+              : targetAngle;
+
+            // Calculate cute, natural puppy tongue dimensions (compact & proportional to mouth)
+            const baseTongueW = Math.max(46, Math.min(70, (lipDistanceX || 40) * 1.1));
+            const stretchFactor = Math.min(1.22, Math.max(0.92, 0.88 + mar * 0.7));
+            const dynamicTongueH = baseTongueW * 1.25 * stretchFactor;
+
+            // Tip location along the mouth tilt vector (hanging DOWNWARDS past the lower lip)
+            const tipX = smoothX - Math.sin(smoothAngle) * (dynamicTongueH * 0.78);
+            const tipY = smoothY + Math.cos(smoothAngle) * (dynamicTongueH * 0.78);
 
             mouthStateRef.current = {
               isDetected: true,
@@ -818,7 +844,10 @@ export default function GameCanvas({
               mouthWidth: lipDistanceX,
               mouthHeight: lipDistanceY,
               mar: mar,
-              isTongueOut: open
+              isTongueOut: open,
+              mouthAngle: smoothAngle,
+              tongueHeight: dynamicTongueH,
+              tongueTip: { x: tipX, y: tipY }
             };
           } else {
             mouthStateRef.current.isDetected = false;
@@ -836,56 +865,77 @@ export default function GameCanvas({
         if (mouth.isTongueOut) {
           const tx = mouth.mouthCenter.x;
           const ty = mouth.mouthCenter.y;
-          // Cute, compact floppy puppy tongue proportion
-          const tongueW = Math.max(54, Math.min(84, (mouth.mouthWidth || 40) * 1.25));
-          const tongueH = tongueW * (521 / 497); // ~1.05 compact aspect ratio
+          const headAngle = mouth.mouthAngle || 0;
+
+          // Organic floppy tongue waggle & spring animation
+          const waggle = Math.sin(timestamp * 0.012) * 0.035;
+          const bounce = Math.sin(timestamp * 0.018) * 1.8;
+          const tongueW = mouth.mouthWidth ? Math.max(46, Math.min(70, mouth.mouthWidth * 1.1)) : 56;
+          const tongueH = (mouth.tongueHeight || tongueW * 1.25) + bounce;
+
+          ctx.translate(tx, ty);
+          ctx.rotate(headAngle + waggle);
 
           if (dogTongueImageRef.current && dogTongueImageRef.current.complete && dogTongueImageRef.current.naturalWidth > 0) {
-            // Render compact 3D puppy tongue
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
-            ctx.shadowBlur = 8;
-            ctx.shadowOffsetY = 3;
+            // Render 3D glossy puppy tongue with realistic depth shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.32)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetY = 4;
             ctx.drawImage(
               dogTongueImageRef.current,
-              tx - tongueW * 0.5,
-              ty - tongueH * 0.1,
+              -tongueW * 0.5,
+              -tongueH * 0.08, // Root starts smoothly inside the lips
               tongueW,
               tongueH
             );
           } else {
-            // High quality vector fallback
-            const fallbackH = tongueW * 0.95;
+            // High-definition glossy vector fallback
+            const fallbackH = tongueH;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetY = 4;
+
             ctx.beginPath();
-            ctx.moveTo(tx - tongueW * 0.46, ty);
+            ctx.moveTo(-tongueW * 0.45, -fallbackH * 0.05);
             ctx.bezierCurveTo(
-              tx - tongueW * 0.52, ty + fallbackH * 0.55,
-              tx - tongueW * 0.38, ty + fallbackH,
-              tx, ty + fallbackH
+              -tongueW * 0.55, fallbackH * 0.45,
+              -tongueW * 0.4, fallbackH,
+              0, fallbackH
             );
             ctx.bezierCurveTo(
-              tx + tongueW * 0.38, ty + fallbackH,
-              tx + tongueW * 0.52, ty + fallbackH * 0.55,
-              tx + tongueW * 0.46, ty
+              tongueW * 0.4, fallbackH,
+              tongueW * 0.55, fallbackH * 0.45,
+              tongueW * 0.45, -fallbackH * 0.05
             );
             ctx.closePath();
 
-            const tongueGrad = ctx.createLinearGradient(tx, ty, tx, ty + fallbackH);
+            const tongueGrad = ctx.createLinearGradient(0, 0, 0, fallbackH);
             tongueGrad.addColorStop(0, '#FF4081');
-            tongueGrad.addColorStop(0.65, '#F50057');
+            tongueGrad.addColorStop(0.5, '#F50057');
             tongueGrad.addColorStop(1, '#C2185B');
             ctx.fillStyle = tongueGrad;
             ctx.fill();
 
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#880E4F';
+            // Central groove line
+            ctx.beginPath();
+            ctx.moveTo(0, fallbackH * 0.05);
+            ctx.lineTo(0, fallbackH * 0.82);
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = 'rgba(136, 14, 79, 0.45)';
             ctx.stroke();
+
+            // Specular highlight shine
+            ctx.beginPath();
+            ctx.ellipse(-tongueW * 0.18, fallbackH * 0.35, tongueW * 0.12, fallbackH * 0.22, -0.1, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.fill();
           }
         } else {
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
           ctx.lineWidth = 2;
-          ctx.setLineDash([4, 4]);
+          ctx.setLineDash([5, 4]);
           ctx.beginPath();
-          ctx.arc(mouth.mouthCenter.x, mouth.mouthCenter.y + 6, 28, 0, Math.PI * 2);
+          ctx.arc(mouth.mouthCenter.x, mouth.mouthCenter.y + 4, 26, 0, Math.PI * 2);
           ctx.stroke();
           ctx.setLineDash([]);
         }
@@ -966,8 +1016,6 @@ export default function GameCanvas({
       }
 
       // Update & Draw Popsicles
-      const catchRadius = Math.max(45, (mouth.mouthWidth || 35) * 0.8);
-
       for (let i = popsiclesRef.current.length - 1; i >= 0; i--) {
         const item = popsiclesRef.current[i];
 
@@ -975,14 +1023,51 @@ export default function GameCanvas({
           item.y += item.speed * dt;
           item.rotation += item.rotationSpeed * dt;
 
-          // Collision Check with Mouth/Tongue
+          // Precise Physical Tongue Contact Check: ONLY eats when ice cream directly touches the tongue!
           if (!item.caught && mouth.isDetected && mouth.isTongueOut) {
-            const popsicleTipY = item.y + (item.size * 0.28);
-            const dist = Math.hypot(item.x - mouth.mouthCenter.x, popsicleTipY - mouth.mouthCenter.y);
+            const tongueW = mouth.mouthWidth ? Math.max(46, Math.min(70, mouth.mouthWidth * 1.1)) : 56;
+            const tongueH = mouth.tongueHeight || (tongueW * 1.25);
+            const headAngle = mouth.mouthAngle || 0;
 
-            if (dist < catchRadius + (item.size * 0.38)) {
+            // Tongue segment from mouth root to extended floppy tip
+            const p0x = mouth.mouthCenter.x;
+            const p0y = mouth.mouthCenter.y;
+            const p1x = p0x - Math.sin(headAngle) * (tongueH * 0.82);
+            const p1y = p0y + Math.cos(headAngle) * (tongueH * 0.82);
+
+            // Vector along tongue spine
+            const vx = p1x - p0x;
+            const vy = p1y - p0y;
+            const vLenSq = vx * vx + vy * vy;
+
+            // Compute distance from point to tongue spine
+            const getTongueContact = (px: number, py: number) => {
+              if (vLenSq === 0) return { dist: Math.hypot(px - p0x, py - p0y), cx: p0x, cy: p0y };
+              const t = Math.max(0, Math.min(1, ((px - p0x) * vx + (py - p0y) * vy) / vLenSq));
+              const cx = p0x + t * vx;
+              const cy = p0y + t * vy;
+              return { dist: Math.hypot(px - cx, py - cy), cx, cy };
+            };
+
+            // Test popsicle bottom contact point and center point
+            const popsicleBottomY = item.y + (item.size * 0.28);
+            const hitBottom = getTongueContact(item.x, popsicleBottomY);
+            const hitCenter = getTongueContact(item.x, item.y);
+
+            // Physical collision boundary: tongue radius + popsicle radius
+            const tongueRadius = tongueW * 0.44;
+            const popsicleRadius = item.size * 0.26;
+            const contactThreshold = tongueRadius + popsicleRadius;
+
+            const isTouchingTongue = hitBottom.dist <= contactThreshold || hitCenter.dist <= contactThreshold;
+
+            if (isTouchingTongue) {
               item.caught = true;
-              handleCatch(item, mouth.mouthCenter);
+              const contactPoint = hitBottom.dist <= hitCenter.dist
+                ? { x: hitBottom.cx, y: hitBottom.cy }
+                : { x: hitCenter.cx, y: hitCenter.cy };
+
+              handleCatch(item, contactPoint);
               popsiclesRef.current.splice(i, 1);
               continue;
             }

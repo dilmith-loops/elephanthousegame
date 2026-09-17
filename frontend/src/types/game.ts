@@ -113,6 +113,8 @@ export interface FaceMouthState {
   mar: number; // Mouth aspect ratio
   isTongueOut: boolean;
   tongueTip?: { x: number; y: number };
+  mouthAngle?: number;
+  tongueHeight?: number;
   rawLandmarks?: Array<{ x: number; y: number; z: number }>;
 }
 
