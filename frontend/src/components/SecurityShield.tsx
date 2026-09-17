@@ -1,11 +1,61 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { api } from '../lib/api';
 
 export default function SecurityShield() {
   const [isDevToolsDetected, setIsDevToolsDetected] = useState(false);
+  const [isInspectAllowed, setIsInspectAllowed] = useState<boolean | null>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = sessionStorage.getItem('eh_inspect_allowed');
+      if (cached === 'true') return true;
+    }
+    return null;
+  });
 
   useEffect(() => {
+    let isMounted = true;
+
+    // Check IP whitelist / admin status from backend
+    api.getInspectStatus()
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.inspect_allowed) {
+          setIsInspectAllowed(true);
+          try {
+            sessionStorage.setItem('eh_inspect_allowed', 'true');
+            console.info(
+              `%c🛡️ Developer Access Granted: IP (${res.client_ip}) is whitelisted. Inspection and Developer Tools are active.`,
+              'color: #10b981; font-size: 13px; font-weight: bold; background: #064e3b; padding: 4px 8px; border-radius: 6px;'
+            );
+          } catch {
+            // ignore
+          }
+        } else {
+          setIsInspectAllowed(false);
+          try {
+            sessionStorage.removeItem('eh_inspect_allowed');
+          } catch {
+            // ignore
+          }
+        }
+      })
+      .catch(() => {
+        if (isMounted) setIsInspectAllowed(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // If client IP is whitelisted or inspection is allowed, DO NOT restrict anything!
+    if (isInspectAllowed === true) {
+      setIsDevToolsDetected(false);
+      return;
+    }
+
     // 1. Prevent Right-Click Context Menu (Inspect Element, View Source)
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
@@ -76,7 +126,6 @@ export default function SecurityShield() {
 
     // 3. Prevent dragging assets / DOM elements
     const handleDragStart = (e: DragEvent) => {
-      // Allow drag within file inputs if applicable, otherwise prevent
       const target = e.target as HTMLElement | null;
       if (target?.tagName === 'INPUT' && (target as HTMLInputElement).type === 'file') {
         return true;
@@ -118,9 +167,6 @@ export default function SecurityShield() {
       const start = performance.now();
 
       try {
-        // Evaluates debugger statement.
-        // When DevTools is closed, this completes instantaneously (< 0.01ms).
-        // When DevTools is open, the JavaScript engine halts execution.
         const evaluateDebugger = new Function('debugger');
         evaluateDebugger();
       } catch {
@@ -137,7 +183,6 @@ export default function SecurityShield() {
       if (!isMobile) {
         const widthDelta = window.outerWidth - window.innerWidth;
         const heightDelta = window.outerHeight - window.innerHeight;
-        // Large deltas indicate docked DevTools panel
         if (widthDelta > 180 || heightDelta > 220) {
           isDocked = true;
         }
@@ -158,9 +203,9 @@ export default function SecurityShield() {
       document.removeEventListener('keydown', handleKeyDown, { capture: true });
       clearInterval(debugInterval);
     };
-  }, []);
+  }, [isInspectAllowed]);
 
-  if (!isDevToolsDetected) return null;
+  if (isInspectAllowed === true || !isDevToolsDetected) return null;
 
   return (
     <div

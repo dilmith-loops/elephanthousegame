@@ -715,4 +715,175 @@ class AdminController extends Controller
             'Content-Disposition' => 'attachment; filename="elephant_house_players_' . date('Y-m-d') . '.csv"',
         ]);
     }
+
+    /**
+     * Helper to get client IP reliably
+     */
+    public static function getClientIp(Request $request): string
+    {
+        $ip = $request->header('CF-Connecting-IP')
+            ?? $request->header('X-Forwarded-For')
+            ?? $request->ip()
+            ?? '127.0.0.1';
+
+        if (str_contains($ip, ',')) {
+            $ip = trim(explode(',', $ip)[0]);
+        }
+        return $ip;
+    }
+
+    /**
+     * Check whether an IP is whitelisted
+     */
+    public static function isIpWhitelisted(string $clientIp): bool
+    {
+        $whitelistJson = Setting::get('whitelisted_ips', '[]');
+        $whitelist = json_decode($whitelistJson, true) ?: [];
+
+        $localhosts = ['127.0.0.1', '::1', 'localhost', '127.0.0.0'];
+
+        foreach ($whitelist as $item) {
+            $ip = is_array($item) ? ($item['ip'] ?? '') : $item;
+            $ip = trim((string)$ip);
+            if ($ip === '') continue;
+
+            if ($ip === $clientIp) {
+                return true;
+            }
+
+            if (in_array($clientIp, $localhosts, true) && in_array($ip, $localhosts, true)) {
+                return true;
+            }
+
+            if (str_ends_with($ip, '*')) {
+                $prefix = rtrim($ip, '*');
+                if (str_starts_with($clientIp, $prefix)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get IP Whitelist
+     */
+    public function getIpWhitelist(Request $request)
+    {
+        $admin = $this->authenticateAdmin($request);
+        if (!$admin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $clientIp = self::getClientIp($request);
+        $whitelistJson = Setting::get('whitelisted_ips', '[]');
+        $whitelist = json_decode($whitelistJson, true) ?: [];
+
+        return response()->json([
+            'success' => true,
+            'client_ip' => $clientIp,
+            'is_current_whitelisted' => self::isIpWhitelisted($clientIp),
+            'whitelist' => array_values($whitelist),
+        ]);
+    }
+
+    /**
+     * Add IP to Whitelist
+     */
+    public function addIpToWhitelist(Request $request)
+    {
+        $admin = $this->authenticateAdmin($request);
+        if (!$admin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'ip' => 'required|string|max:45',
+            'label' => 'nullable|string|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $rawIp = trim($request->input('ip'));
+        $label = trim($request->input('label', '')) ?: 'Authorized Device';
+
+        $whitelistJson = Setting::get('whitelisted_ips', '[]');
+        $whitelist = json_decode($whitelistJson, true) ?: [];
+
+        // Check if already exists
+        $exists = false;
+        foreach ($whitelist as &$item) {
+            if (($item['ip'] ?? '') === $rawIp) {
+                $item['label'] = $label;
+                $item['updated_at'] = now()->toDateTimeString();
+                $exists = true;
+                break;
+            }
+        }
+        unset($item);
+
+        if (!$exists) {
+            $whitelist[] = [
+                'ip' => $rawIp,
+                'label' => $label,
+                'created_at' => now()->toDateTimeString(),
+            ];
+        }
+
+        Setting::set('whitelisted_ips', json_encode(array_values($whitelist)));
+
+        AdminLog::record($admin, 'whitelist_ip_add', "Whitelisted IP address: {$rawIp} ({$label})", $request);
+
+        $clientIp = self::getClientIp($request);
+
+        return response()->json([
+            'success' => true,
+            'message' => "IP {$rawIp} has been whitelisted successfully!",
+            'client_ip' => $clientIp,
+            'is_current_whitelisted' => self::isIpWhitelisted($clientIp),
+            'whitelist' => array_values($whitelist),
+        ]);
+    }
+
+    /**
+     * Remove IP from Whitelist
+     */
+    public function removeIpFromWhitelist(Request $request)
+    {
+        $admin = $this->authenticateAdmin($request);
+        if (!$admin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $rawIp = trim($request->input('ip', ''));
+        if (!$rawIp) {
+            return response()->json(['success' => false, 'message' => 'IP address is required.'], 422);
+        }
+
+        $whitelistJson = Setting::get('whitelisted_ips', '[]');
+        $whitelist = json_decode($whitelistJson, true) ?: [];
+
+        $filtered = array_filter($whitelist, function ($item) use ($rawIp) {
+            return ($item['ip'] ?? '') !== $rawIp;
+        });
+
+        Setting::set('whitelisted_ips', json_encode(array_values($filtered)));
+
+        AdminLog::record($admin, 'whitelist_ip_remove', "Removed IP address from whitelist: {$rawIp}", $request);
+
+        $clientIp = self::getClientIp($request);
+
+        return response()->json([
+            'success' => true,
+            'message' => "IP {$rawIp} removed from whitelist.",
+            'client_ip' => $clientIp,
+            'is_current_whitelisted' => self::isIpWhitelisted($clientIp),
+            'whitelist' => array_values($filtered),
+        ]);
+    }
 }

@@ -137,4 +137,13 @@ export interface GameStatus {
   maintenance_message?: string;
   game_duration?: number;
   timer_enabled?: boolean;
+  client_ip?: string;
+  inspect_allowed?: boolean;
+}
+
+export interface WhitelistedIp {
+  ip: string;
+  label?: string;
+  created_at?: string;
+  updated_at?: string;
 }

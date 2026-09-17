@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { api, getPopsicleImageUrl } from '../../lib/api';
-import { AdminStats, Player, ScoreRecord, AdminLogRecord, AdminUser, PopsicleAsset } from '../../types/game';
+import { AdminStats, Player, ScoreRecord, AdminLogRecord, AdminUser, PopsicleAsset, WhitelistedIp } from '../../types/game';
 import {
   Users,
   Gamepad2,
@@ -55,7 +55,7 @@ import {
 import Link from 'next/link';
 import { exportToPDF } from '../../lib/pdfExport';
 
-type SidebarTab = 'overview' | 'active_users' | 'users' | 'scores' | 'popsicles' | 'logs' | 'settings' | 'security';
+type SidebarTab = 'overview' | 'active_users' | 'users' | 'scores' | 'popsicles' | 'logs' | 'settings' | 'security' | 'ip_whitelist';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -100,6 +100,16 @@ export default function AdminPage() {
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  // IP Whitelist States
+  const [whitelist, setWhitelist] = useState<WhitelistedIp[]>([]);
+  const [currentClientIp, setCurrentClientIp] = useState<string>('');
+  const [isCurrentIpWhitelisted, setIsCurrentIpWhitelisted] = useState(false);
+  const [loadingWhitelist, setLoadingWhitelist] = useState(false);
+  const [newWhitelistIp, setNewWhitelistIp] = useState('');
+  const [newWhitelistLabel, setNewWhitelistLabel] = useState('');
+  const [isAddingIp, setIsAddingIp] = useState(false);
+  const [whitelistMsg, setWhitelistMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Admin Accounts Management States
   const [adminAccounts, setAdminAccounts] = useState<AdminUser[]>([]);
@@ -256,6 +266,23 @@ export default function AdminPage() {
     }
   };
 
+  // Load IP Whitelist
+  const loadWhitelist = useCallback(async () => {
+    setLoadingWhitelist(true);
+    try {
+      const res = await api.getIpWhitelist();
+      if (res.success) {
+        setWhitelist(res.whitelist || []);
+        setCurrentClientIp(res.client_ip || '');
+        setIsCurrentIpWhitelisted(Boolean(res.is_current_whitelisted));
+      }
+    } catch (err) {
+      console.error('Failed to load IP whitelist:', err);
+    } finally {
+      setLoadingWhitelist(false);
+    }
+  }, []);
+
   // Load Active Tab Data
   const loadTabData = useCallback(async () => {
     setLoadingData(true);
@@ -294,13 +321,16 @@ export default function AdminPage() {
         }
       } else if (activeTab === 'security') {
         await loadAdminAccounts();
+        await loadWhitelist();
+      } else if (activeTab === 'ip_whitelist') {
+        await loadWhitelist();
       }
     } catch (err) {
       console.error('Failed to load tab data:', err);
     } finally {
       setLoadingData(false);
     }
-  }, [activeTab, page, searchQuery, loadStats]);
+  }, [activeTab, page, searchQuery, loadStats, loadWhitelist]);
 
   // Load Popsicle Assets
   const loadPopsicles = useCallback(async () => {
@@ -458,6 +488,52 @@ export default function AdminPage() {
       setLoadingAdmins(false);
     }
   }, []);
+
+  // Handle Add IP to Whitelist
+  const handleAddIp = async (ipOverride?: string, labelOverride?: string) => {
+    const targetIp = (ipOverride || newWhitelistIp).trim();
+    const targetLabel = (labelOverride || newWhitelistLabel).trim();
+
+    if (!targetIp) {
+      setWhitelistMsg({ type: 'error', text: 'Please enter a valid IP address.' });
+      return;
+    }
+
+    setIsAddingIp(true);
+    setWhitelistMsg(null);
+    try {
+      const res = await api.addIpToWhitelist(targetIp, targetLabel);
+      if (res.success) {
+        setWhitelist(res.whitelist || []);
+        setCurrentClientIp(res.client_ip || '');
+        setIsCurrentIpWhitelisted(Boolean(res.is_current_whitelisted));
+        setNewWhitelistIp('');
+        setNewWhitelistLabel('');
+        setWhitelistMsg({ type: 'success', text: res.message || 'IP address added to whitelist!' });
+        setTimeout(() => setWhitelistMsg(null), 4000);
+      }
+    } catch (err: any) {
+      setWhitelistMsg({ type: 'error', text: err.message || 'Failed to add IP to whitelist.' });
+    } finally {
+      setIsAddingIp(false);
+    }
+  };
+
+  // Handle Remove IP from Whitelist
+  const handleRemoveIp = async (ipToRemove: string) => {
+    try {
+      const res = await api.removeIpFromWhitelist(ipToRemove);
+      if (res.success) {
+        setWhitelist(res.whitelist || []);
+        setCurrentClientIp(res.client_ip || '');
+        setIsCurrentIpWhitelisted(Boolean(res.is_current_whitelisted));
+        setWhitelistMsg({ type: 'success', text: res.message || `IP ${ipToRemove} removed from whitelist.` });
+        setTimeout(() => setWhitelistMsg(null), 4000);
+      }
+    } catch (err: any) {
+      setWhitelistMsg({ type: 'error', text: err.message || 'Failed to remove IP.' });
+    }
+  };
 
   // Handle Create New Admin User
   const handleCreateAdmin = async (e: React.FormEvent) => {
@@ -736,6 +812,201 @@ export default function AdminPage() {
     }
   };
 
+  // Render IP Whitelist Management Card
+  const renderIpWhitelistCard = () => (
+    <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-800">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h3 className="text-base font-black text-white">Inspect Element & Developer IP Whitelist</h3>
+              <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] font-extrabold border border-slate-700">
+                {whitelist.length} Whitelisted
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Whitelisted IP addresses bypass client anti-tamper shields and are permitted to use browser Developer Tools, DOM Inspection, and console.
+            </p>
+          </div>
+        </div>
+
+        {/* Detected IP & Quick Whitelist Button */}
+        <div className="flex items-center space-x-3 bg-slate-800/80 border border-slate-700/70 p-2.5 rounded-2xl flex-shrink-0">
+          <div className="text-left">
+            <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Your Detected IP</span>
+            <span className="font-mono text-xs font-black text-white">{currentClientIp || 'Detecting...'}</span>
+          </div>
+          {isCurrentIpWhitelisted ? (
+            <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex items-center space-x-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Whitelisted</span>
+            </span>
+          ) : (
+            <button
+              type="button"
+              disabled={!currentClientIp || isAddingIp}
+              onClick={() => handleAddIp(currentClientIp, 'Admin Console (Current Device)')}
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black flex items-center space-x-1.5 shadow-md shadow-emerald-950/40 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Whitelist My IP</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Notification Toast */}
+      {whitelistMsg && (
+        <div
+          className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center space-x-2 ${
+            whitelistMsg.type === 'success'
+              ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
+              : 'bg-rose-950/60 border-rose-800 text-rose-300'
+          }`}
+        >
+          {whitelistMsg.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          )}
+          <span>{whitelistMsg.text}</span>
+        </div>
+      )}
+
+      {/* Add IP Form */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleAddIp();
+        }}
+        className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-4 flex flex-col md:flex-row items-stretch md:items-end gap-3"
+      >
+        <div className="flex-1 space-y-1">
+          <label className="text-[11px] font-extrabold text-slate-300 block uppercase tracking-wider">
+            IP Address (IPv4 or IPv6)
+          </label>
+          <input
+            type="text"
+            placeholder="e.g. 192.168.1.50 or 203.0.113.1"
+            value={newWhitelistIp}
+            onChange={(e) => setNewWhitelistIp(e.target.value)}
+            required
+            className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+          />
+        </div>
+
+        <div className="flex-1 space-y-1">
+          <label className="text-[11px] font-extrabold text-slate-300 block uppercase tracking-wider">
+            Device / Purpose Label (Optional)
+          </label>
+          <input
+            type="text"
+            placeholder="e.g. Dilmith Laptop, QA Testing Device"
+            value={newWhitelistLabel}
+            onChange={(e) => setNewWhitelistLabel(e.target.value)}
+            className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="submit"
+            disabled={isAddingIp}
+            className="px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-extrabold rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-cyan-600/20 transition-all cursor-pointer disabled:opacity-50 flex-shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{isAddingIp ? 'Adding...' : 'Add to Whitelist'}</span>
+          </button>
+
+          {!whitelist.some((item) => item.ip === '127.0.0.1') && (
+            <button
+              type="button"
+              onClick={() => handleAddIp('127.0.0.1', 'Localhost Development')}
+              className="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex-shrink-0"
+              title="Add 127.0.0.1 to whitelist"
+            >
+              + Localhost
+            </button>
+          )}
+        </div>
+      </form>
+
+      {/* Whitelist Table */}
+      <div className="overflow-x-auto">
+        {loadingWhitelist ? (
+          <div className="py-10 text-center">
+            <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p className="text-xs text-slate-400">Loading IP whitelist...</p>
+          </div>
+        ) : whitelist.length === 0 ? (
+          <div className="py-10 text-center text-xs text-slate-400 bg-slate-800/20 rounded-2xl border border-slate-800">
+            <ShieldCheck className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+            No IP addresses are currently whitelisted. Developer tools and inspect element are locked for all users.
+          </div>
+        ) : (
+          <table className="w-full text-left text-xs min-w-[600px]">
+            <thead className="bg-slate-800/60 text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-700/60">
+              <tr>
+                <th className="py-3 px-4 rounded-l-xl">Whitelisted IP</th>
+                <th className="py-3 px-4">Label / Device</th>
+                <th className="py-3 px-4">Access Status</th>
+                <th className="py-3 px-4">Added Date</th>
+                <th className="py-3 px-4 text-right rounded-r-xl">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {whitelist.map((item) => {
+                const isCurrent =
+                  item.ip === currentClientIp ||
+                  (item.ip === '127.0.0.1' && currentClientIp === '::1');
+                return (
+                  <tr key={item.ip} className="hover:bg-slate-800/30 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-200">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-white">{item.ip}</span>
+                        {isCurrent && (
+                          <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] font-extrabold border border-cyan-500/30">
+                            This Device
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-300 font-medium">
+                      {item.label || 'Authorized Device'}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[11px] font-bold border border-emerald-500/30">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Inspect Allowed</span>
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-400 text-[11px]">
+                      {item.created_at ? new Date(item.created_at).toLocaleString() : 'N/A'}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveIp(item.ip)}
+                        className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-400 hover:text-red-200 transition-colors cursor-pointer"
+                        title="Remove from whitelist"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+
   // Login Screen
   if (!isAuthenticated) {
     return (
@@ -989,6 +1260,18 @@ export default function AdminPage() {
               <KeyRound className="w-4 h-4" />
               <span>Security & Password</span>
             </button>
+
+            <button
+              onClick={() => { setActiveTab('ip_whitelist'); setPage(1); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'ip_whitelist'
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/20'
+                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Inspect IP Whitelist</span>
+            </button>
           </nav>
         </div>
 
@@ -1026,6 +1309,7 @@ export default function AdminPage() {
               {activeTab === 'logs' && 'Admin Audit & Action Logs'}
               {activeTab === 'settings' && 'System & Maintenance Settings'}
               {activeTab === 'security' && 'Admin Profile & Security'}
+              {activeTab === 'ip_whitelist' && 'Developer & Inspect IP Whitelist'}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
               Elephant House AR Tongue Catch Ice Cream Campaign
@@ -2023,9 +2307,18 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 7. SECURITY & ADMIN USERS TAB */}
+        {/* 7. IP WHITELIST TAB */}
+        {activeTab === 'ip_whitelist' && (
+          <div className="w-full space-y-6">
+            {renderIpWhitelistCard()}
+          </div>
+        )}
+
+        {/* 8. SECURITY & ADMIN USERS TAB */}
         {activeTab === 'security' && (
           <div className="w-full space-y-6">
+            {renderIpWhitelistCard()}
+
             {/* Admin Accounts Management Card */}
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 md:p-8 shadow-xl space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">

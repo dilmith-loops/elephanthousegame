@@ -1,4 +1,4 @@
-import { Player, ScoreSubmission, ScoreRecord, AdminStats, AdminLogRecord, AdminUser, PopsicleAsset } from '../types/game';
+import { Player, ScoreRecord, AdminStats, AdminLogRecord, AdminUser, PopsicleAsset, GameStatus, WhitelistedIp } from '../types/game';
 
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
@@ -370,11 +370,16 @@ export const api = {
   },
 
   // Public: Get Game Status / Maintenance & Timer Config Check
-  async getGameStatus(): Promise<{ success: boolean; maintenance_mode: boolean; maintenance_message?: string; game_duration?: number; timer_enabled?: boolean }> {
+  async getGameStatus(): Promise<GameStatus> {
     try {
+      const adminToken = typeof window !== 'undefined' ? localStorage.getItem('eh_admin_token') : null;
+      const headers: Record<string, string> = { Accept: 'application/json' };
+      if (adminToken) {
+        headers['X-Admin-Token'] = adminToken;
+      }
       const res = await fetch(`${getApiBaseUrl()}/game/status`, {
         cache: 'no-store',
-        headers: { Accept: 'application/json' }
+        headers
       });
       return await res.json();
     } catch {
@@ -509,6 +514,72 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to delete popsicle');
+    return data;
+  },
+
+  // Security: Check Inspect / DevTools Permission
+  async getInspectStatus(): Promise<{ success: boolean; client_ip: string; inspect_allowed: boolean }> {
+    try {
+      const adminToken = typeof window !== 'undefined' ? localStorage.getItem('eh_admin_token') : null;
+      const headers: Record<string, string> = { Accept: 'application/json' };
+      if (adminToken) {
+        headers['X-Admin-Token'] = adminToken;
+      }
+      const res = await fetch(`${getApiBaseUrl()}/security/inspect-status`, {
+        cache: 'no-store',
+        headers
+      });
+      return await res.json();
+    } catch {
+      return { success: false, client_ip: '127.0.0.1', inspect_allowed: false };
+    }
+  },
+
+  // Admin: Get IP Whitelist
+  async getIpWhitelist(): Promise<{ success: boolean; client_ip: string; is_current_whitelisted: boolean; whitelist: WhitelistedIp[] }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${getApiBaseUrl()}/admin/ip-whitelist`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to fetch IP whitelist');
+    return data;
+  },
+
+  // Admin: Add IP to Whitelist
+  async addIpToWhitelist(ip: string, label?: string): Promise<{ success: boolean; message: string; client_ip: string; is_current_whitelisted: boolean; whitelist: WhitelistedIp[] }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${getApiBaseUrl()}/admin/ip-whitelist`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ ip, label })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to add IP to whitelist');
+    return data;
+  },
+
+  // Admin: Remove IP from Whitelist
+  async removeIpFromWhitelist(ip: string): Promise<{ success: boolean; message: string; client_ip: string; is_current_whitelisted: boolean; whitelist: WhitelistedIp[] }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${getApiBaseUrl()}/admin/ip-whitelist`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ ip })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to remove IP from whitelist');
     return data;
   }
 };

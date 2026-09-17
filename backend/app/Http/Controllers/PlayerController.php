@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\Validator;
 class PlayerController extends Controller
 {
     /**
-     * Get game status / maintenance mode
+     * Get game status / maintenance mode and inspect permission
      */
-    public function status()
+    public function status(Request $request)
     {
         $isMaintenance = Setting::get('maintenance_mode', '0') === '1';
         $message = Setting::get(
@@ -22,12 +22,48 @@ class PlayerController extends Controller
         $gameDuration = (int) Setting::get('game_duration', '60');
         $timerEnabled = Setting::get('timer_enabled', '1') === '1';
 
+        $clientIp = AdminController::getClientIp($request);
+        $isWhitelisted = AdminController::isIpWhitelisted($clientIp);
+
+        $token = $request->bearerToken() ?? $request->header('X-Admin-Token');
+        if ($token) {
+            $hashed = hash('sha256', $token);
+            if (\App\Models\Admin::where('api_token', $hashed)->exists()) {
+                $isWhitelisted = true;
+            }
+        }
+
         return response()->json([
             'success' => true,
             'maintenance_mode' => $isMaintenance,
             'maintenance_message' => $message,
             'game_duration' => $gameDuration,
             'timer_enabled' => $timerEnabled,
+            'client_ip' => $clientIp,
+            'inspect_allowed' => $isWhitelisted,
+        ]);
+    }
+
+    /**
+     * Dedicated Inspect / DevTools Security Permission Check
+     */
+    public function checkInspectPermission(Request $request)
+    {
+        $clientIp = AdminController::getClientIp($request);
+        $isWhitelisted = AdminController::isIpWhitelisted($clientIp);
+
+        $token = $request->bearerToken() ?? $request->header('X-Admin-Token');
+        if ($token) {
+            $hashed = hash('sha256', $token);
+            if (\App\Models\Admin::where('api_token', $hashed)->exists()) {
+                $isWhitelisted = true;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'client_ip' => $clientIp,
+            'inspect_allowed' => $isWhitelisted,
         ]);
     }
 

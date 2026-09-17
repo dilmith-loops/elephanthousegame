@@ -6,8 +6,9 @@ use App\Http\Controllers\ScoreController;
 use App\Http\Controllers\PopsicleController;
 use Illuminate\Support\Facades\Route;
 
-// Public Game Status & Heartbeat
+// Public Game Status & Heartbeat & Security
 Route::get('/game/status', [PlayerController::class, 'status']);
+Route::get('/security/inspect-status', [PlayerController::class, 'checkInspectPermission']);
 Route::post('/player/ping', [PlayerController::class, 'ping']);
 Route::get('/popsicles', [PopsicleController::class, 'index']);
 Route::get('/popsicles/image/{filename}', [PopsicleController::class, 'serveImage']);
@@ -44,6 +45,11 @@ Route::get('/admin/admins', [AdminController::class, 'listAdmins']);
 Route::post('/admin/admins', [AdminController::class, 'createAdmin']);
 Route::put('/admin/admins/{id}', [AdminController::class, 'updateAdmin']);
 Route::delete('/admin/admins/{id}', [AdminController::class, 'deleteAdmin']);
+
+// Admin IP Whitelist Management
+Route::get('/admin/ip-whitelist', [AdminController::class, 'getIpWhitelist']);
+Route::post('/admin/ip-whitelist', [AdminController::class, 'addIpToWhitelist']);
+Route::delete('/admin/ip-whitelist', [AdminController::class, 'removeIpFromWhitelist']);
 
 // Players & Score Records Management (Edit & Delete)
 Route::put('/admin/users/{id}', [AdminController::class, 'updateUser']);
