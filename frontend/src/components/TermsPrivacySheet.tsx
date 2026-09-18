@@ -15,7 +15,12 @@ import {
   Sparkles,
   Award,
   User,
-  BarChart2
+  BarChart2,
+  Cpu,
+  PhoneOff,
+  Clock,
+  ShieldAlert,
+  AlertTriangle
 } from 'lucide-react';
 
 interface Props {
@@ -225,8 +230,8 @@ export default function TermsPrivacySheet({
 
         {/* Header with Title & Mascot Illustration */}
         <div className="relative px-5 sm:px-7 pt-1 pb-0 flex items-end justify-between min-h-[90px] sm:min-h-[105px] select-none flex-shrink-0">
-          {/* Decorative side sparkle */}
-          <div className="absolute top-3 left-3 text-amber-400 text-xs select-none pointer-events-none opacity-80">
+          {/* Decorative side sparkles */}
+          <div className="absolute top-2.5 left-3 text-amber-400 text-xs select-none pointer-events-none opacity-80">
             ✦
           </div>
 
@@ -306,9 +311,9 @@ export default function TermsPrivacySheet({
                     100% On-Device AR Face Tracking
                   </h3>
                   <p className="text-[11px] sm:text-xs text-[#754f5c] leading-relaxed">
-                    Camera feed is processed strictly in real-time on your device using Google MediaPipe.{' '}
+                    Camera access is used to detect gameplay gestures, such as mouth-opening, required for the AR experience. Camera processing is performed in real time on your device.{' '}
                     <strong className="text-[#9d174d] font-black">
-                      We NEVER record, store, transmit, or share your camera images or facial geometry.
+                      We do not record, store, upload, or share camera images, video, or facial geometry.
                     </strong>
                   </p>
                 </div>
@@ -339,7 +344,7 @@ export default function TermsPrivacySheet({
                     <div>
                       <strong className="block text-xs font-bold text-[#2e1017]">Player Nickname</strong>
                       <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
-                        The name you enter to display on your high score and public leaderboard.
+                        The name you enter may be displayed with your score on the public game leaderboard.
                       </p>
                     </div>
                   </div>
@@ -352,20 +357,33 @@ export default function TermsPrivacySheet({
                     <div>
                       <strong className="block text-xs font-bold text-[#2e1017]">Game Statistics</strong>
                       <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
-                        Scores achieved, popsicles caught, and duration of gameplay sessions.
+                        We may collect gameplay information such as scores, game duration, items caught, and session results.
                       </p>
                     </div>
                   </div>
 
-                  {/* Row: No Contact Info Exposure */}
+                  {/* Row: Technical Information */}
                   <div className="flex items-start space-x-3">
                     <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <EyeOff className="w-3.5 h-3.5" />
+                      <Cpu className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <strong className="block text-xs font-bold text-[#2e1017]">No Contact Info Exposure</strong>
+                      <strong className="block text-xs font-bold text-[#2e1017]">Technical Information</strong>
                       <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
-                        No personal contact numbers or private identifiers are displayed on the public leaderboard.
+                        Limited technical information may be processed where necessary to operate, secure, and improve the game.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Row: No Contact Information Required */}
+                  <div className="flex items-start space-x-3">
+                    <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <PhoneOff className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <strong className="block text-xs font-bold text-[#2e1017]">No Contact Information Required</strong>
+                      <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                        The game does not require you to provide a phone number, email address, or home address to play.
                       </p>
                     </div>
                   </div>
@@ -379,14 +397,14 @@ export default function TermsPrivacySheet({
               <section className="space-y-1.5 pt-0.5">
                 <div className="flex items-start space-x-3">
                   <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Lock className="w-3.5 h-3.5" />
+                    <Camera className="w-3.5 h-3.5" />
                   </div>
                   <div>
                     <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
                       Camera Permissions
                     </strong>
                     <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
-                      Camera permission is requested solely to detect mouth-opening gestures so you can catch falling virtual ice cream popsicles in augmented reality. You may revoke camera permissions at any time via your device settings.
+                      Camera access is required only for AR gameplay features. You can deny or revoke camera permission through your browser or device settings. Some game features may not function without camera access.
                     </p>
                   </div>
                 </div>
@@ -395,7 +413,7 @@ export default function TermsPrivacySheet({
               {/* Divider */}
               <hr className="border-t border-[#f3e3ec] my-1" />
 
-              {/* Section 3: DATA SECURITY & ENCRYPTION */}
+              {/* Section 3: DATA SECURITY */}
               <section className="space-y-1.5 pt-0.5">
                 <div className="flex items-start space-x-3">
                   <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -403,16 +421,39 @@ export default function TermsPrivacySheet({
                   </div>
                   <div>
                     <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
-                      Data Security &amp; Encryption
+                      Data Security
                     </strong>
                     <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
-                      All communication between your device and our servers is secured using modern TLS 1.3/HTTPS encryption with HTTP Strict Transport Security (HSTS). We implement strict access controls and rate limiting to protect your information.
+                      Reasonable technical and organizational measures are used to protect game data against unauthorized access, loss, alteration, or misuse. Internet communications are protected using secure HTTPS connections where supported.
                     </p>
                   </div>
                 </div>
               </section>
 
-              {/* Section 4: CHILDREN & SAFE USE */}
+              {/* Divider */}
+              <hr className="border-t border-[#f3e3ec] my-1" />
+
+              {/* Section 4: LEADERBOARD PRIVACY */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <EyeOff className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      Leaderboard Privacy
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      Your chosen nickname and game score may appear on the public leaderboard. Avoid using your full legal name, phone number, email address, or other sensitive information as your nickname.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Divider */}
+              <hr className="border-t border-[#f3e3ec] my-1" />
+
+              {/* Section 5: CHILDREN & SAFE USE */}
               <section className="space-y-1.5 pt-0.5">
                 <div className="flex items-start space-x-3">
                   <div className="w-7 h-7 rounded-full bg-[#fef3c7] text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -420,43 +461,43 @@ export default function TermsPrivacySheet({
                   </div>
                   <div>
                     <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
-                      Children &amp; Safe Surroundings
+                      Children &amp; Safe Use
                     </strong>
                     <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
-                      Children should use the experience with parent or guardian supervision. Always remain aware of your physical surroundings while playing in AR.
+                      Children should use the experience with appropriate parent or guardian supervision. Players should remain aware of their physical surroundings while using camera-based AR features.
                     </p>
                   </div>
                 </div>
               </section>
 
-              {/* Last Updated */}
-              <div className="pt-1 pb-1 text-center">
-                <span className="text-[10px] sm:text-[11px] text-[#9d808e] font-medium">
-                  Last updated: September 2026 • Elephant House Wonder AR
+              {/* Last Updated Line */}
+              <div className="pt-2 pb-1 text-center">
+                <span className="text-[11px] text-[#9d808e] font-semibold">
+                  Last updated: September 2026
                 </span>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Highlight Card: Fair Play */}
+              {/* Highlight Card: FAIR PLAY & LEADERBOARD RULES */}
               <div className="p-3.5 sm:p-4 rounded-2xl bg-[#fff7ed] border border-amber-200/80 shadow-xs relative flex items-start gap-3 overflow-hidden">
                 <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm shadow-amber-500/20 mt-0.5">
                   <Award className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0 pr-1">
                   <h3 className="font-black text-amber-950 text-xs sm:text-sm mb-1 leading-snug">
-                    Fair Play &amp; Leaderboard Rules
+                    FAIR PLAY &amp; LEADERBOARD RULES
                   </h3>
                   <p className="text-[11px] sm:text-xs text-amber-900/80 leading-relaxed">
-                    The game is intended to be fun, sweet, and competitive for everyone.{' '}
+                    The game is intended to be fun, fair, and competitive.{' '}
                     <strong className="text-amber-950 font-black">
-                      Automated scripts, bots, score manipulation, or tampering are strictly prohibited.
+                      Automated scripts, bots, modified clients, score manipulation, exploitation of vulnerabilities, or other methods of unfairly altering gameplay or leaderboard results are prohibited. Invalid or suspicious scores may be removed.
                     </strong>
                   </p>
                 </div>
               </div>
 
-              {/* Section: Acceptance of Terms */}
+              {/* Section 1: ACCEPTANCE OF TERMS */}
               <section className="space-y-1.5 pt-0.5">
                 <div className="flex items-start space-x-3">
                   <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -467,7 +508,7 @@ export default function TermsPrivacySheet({
                       Acceptance of Terms
                     </strong>
                     <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
-                      By selecting &ldquo;I Understand &amp; Agree&rdquo; and playing Elephant House Wonder AR, you agree to these Terms of Service and the Privacy Policy.
+                      By selecting &ldquo;I Understand &amp; Agree&rdquo; and accessing Elephant House Wonder AR, you agree to follow these Terms of Service and the Privacy Policy. If you do not agree, please do not continue to the game.
                     </p>
                   </div>
                 </div>
@@ -476,7 +517,27 @@ export default function TermsPrivacySheet({
               {/* Divider */}
               <hr className="border-t border-[#f3e3ec] my-1" />
 
-              {/* Section: Intellectual Property */}
+              {/* Section 2: GAMEPLAY & ELIGIBILITY */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      Gameplay &amp; Eligibility
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      Players must use the game only for its intended entertainment purpose. Where a player is a minor, participation should be subject to appropriate parent or guardian supervision or consent where required.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Divider */}
+              <hr className="border-t border-[#f3e3ec] my-1" />
+
+              {/* Section 3: INTELLECTUAL PROPERTY */}
               <section className="space-y-1.5 pt-0.5">
                 <div className="flex items-start space-x-3">
                   <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -487,7 +548,7 @@ export default function TermsPrivacySheet({
                       Intellectual Property
                     </strong>
                     <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
-                      All Elephant House trademarks, popsicle 3D models, branding, artwork, sound effects, and mascot designs are the intellectual property of Ceylon Cold Stores PLC.
+                      All trademarks, logos, brand names, artwork, characters, designs, game content, and other assets remain the property of their respective owners. Unauthorized reproduction, modification, distribution, extraction, or commercial use is prohibited.
                     </p>
                   </div>
                 </div>
@@ -496,7 +557,7 @@ export default function TermsPrivacySheet({
               {/* Divider */}
               <hr className="border-t border-[#f3e3ec] my-1" />
 
-              {/* Section: User Safety */}
+              {/* Section 4: USER SAFETY */}
               <section className="space-y-1.5 pt-0.5">
                 <div className="flex items-start space-x-3">
                   <div className="w-7 h-7 rounded-full bg-[#fef3c7] text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -504,10 +565,10 @@ export default function TermsPrivacySheet({
                   </div>
                   <div>
                     <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
-                      User Safety &amp; Environment
+                      User Safety
                     </strong>
                     <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
-                      Please play in a safe, well-lit area. Be mindful of obstacles, stairs, and people around you while interacting with AR face gestures.
+                      Play in a safe and well-lit environment. Remain aware of people, objects, traffic, steps, and other hazards around you while interacting with the augmented-reality experience.
                     </p>
                   </div>
                 </div>
@@ -516,27 +577,87 @@ export default function TermsPrivacySheet({
               {/* Divider */}
               <hr className="border-t border-[#f3e3ec] my-1" />
 
-              {/* Section: Game Availability */}
+              {/* Section 5: GAME AVAILABILITY */}
               <section className="space-y-1.5 pt-0.5">
                 <div className="flex items-start space-x-3">
                   <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Clock className="w-3.5 h-3.5" />
                   </div>
                   <div>
                     <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
-                      Game Availability &amp; Modifications
+                      Game Availability
                     </strong>
                     <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
-                      We strive to keep the game accessible at all times, though scheduled maintenance or feature upgrades may occur periodically.
+                      The game may be temporarily unavailable due to maintenance, technical issues, updates, or other operational requirements. Features, gameplay mechanics, leaderboard rules, or availability may be updated when necessary.
                     </p>
                   </div>
                 </div>
               </section>
 
-              {/* Last Updated */}
-              <div className="pt-1 pb-1 text-center">
-                <span className="text-[10px] sm:text-[11px] text-[#9d808e] font-medium">
-                  Last updated: September 2026 • Elephant House Wonder AR
+              {/* Divider */}
+              <hr className="border-t border-[#f3e3ec] my-1" />
+
+              {/* Section 6: SCORE & ACCESS MANAGEMENT */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      Score &amp; Access Management
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      Scores obtained through suspected cheating, manipulation, technical exploitation, or violations of these terms may be removed. Access to the game may also be restricted where necessary to protect fair play, security, or other users.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Divider */}
+              <hr className="border-t border-[#f3e3ec] my-1" />
+
+              {/* Section 7: LIMITATION OF RESPONSIBILITY */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      Limitation of Responsibility
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      Players are responsible for using the game safely and appropriately. To the extent permitted by applicable law, the operator is not responsible for losses resulting from misuse of the game or failure to follow the safety instructions provided.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Divider */}
+              <hr className="border-t border-[#f3e3ec] my-1" />
+
+              {/* Section 8: CHANGES TO THESE TERMS */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FileText className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      Changes to These Terms
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      These Terms and the Privacy Policy may be updated when the game, its technology, or applicable requirements change. The latest version should be made available through the game.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Last Updated Line */}
+              <div className="pt-2 pb-1 text-center">
+                <span className="text-[11px] text-[#9d808e] font-semibold">
+                  Last updated: September 2026
                 </span>
               </div>
             </div>
