@@ -233,14 +233,14 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
                 </div>
               </form>
 
-              {/* Terms of use Button Text (centered at bottom edge of card poster) */}
+              {/* Terms of use Button Text (centered at bottom edge of card poster, below chevron banner) */}
               <div
-                className="absolute inset-x-0 bottom-[1.4%] sm:bottom-[1.6%] z-20 flex justify-center pointer-events-auto select-none"
+                className="absolute inset-x-0 bottom-[0.5%] sm:bottom-[0.7%] z-20 flex justify-center pointer-events-auto select-none"
               >
                 <button
                   type="button"
                   onClick={() => handleOpenTerms('terms')}
-                  className="text-[11px] sm:text-xs font-bold text-white/85 hover:text-white underline underline-offset-2 decoration-white/60 hover:decoration-white transition-all active:scale-95 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] py-1 px-3"
+                  className="text-[11px] sm:text-xs font-bold text-white/90 hover:text-white underline underline-offset-2 decoration-white/70 hover:decoration-white transition-all active:scale-95 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] py-0.5 px-3"
                 >
                   Terms of use
                 </button>
