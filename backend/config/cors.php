@@ -12,31 +12,15 @@ return [
     |
     */
 
-    'paths' => ['api/*'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
-    'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
-        'https://ai.loopsintegrated.co',
-        'https://loopsintegrated.co',
-        'http://localhost:3000',
-        'http://localhost',
-        'http://127.0.0.1:3000',
-        'http://127.0.0.1',
-    ],
+    'allowed_origins' => ['*'],
 
-    'allowed_origins_patterns' => [
-        '#^https://.*\.loopsintegrated\.co$#',
-        '#^http://(localhost|127\.0\.0\.1)(:[0-9]+)?$#',
-    ],
+    'allowed_origins_patterns' => [],
 
-    'allowed_headers' => [
-        'Content-Type',
-        'Authorization',
-        'X-Requested-With',
-        'Accept',
-        'X-Admin-Token',
-    ],
+    'allowed_headers' => ['*'],
 
     'exposed_headers' => [],
 

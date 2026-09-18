@@ -5,8 +5,8 @@
     # Prevent directory browsing
     Options -Indexes
 
-    # Custom 404 Error Document
-    ErrorDocument 404 /ElephantHouseGame/frontend/out/404.html
+    # Custom 404 Error Document (relative fallback)
+    ErrorDocument 404 /frontend/out/404.html
 
     # Block access to hidden files and sensitive directories (.git, .env, etc.)
     RewriteRule (^|/)(\.git|\.env|\.htaccess|\.env\..*) - [F,L]
@@ -32,15 +32,18 @@
     RewriteRule ^eh-portal/(.*)$ frontend/out/eh-portal/$1 [L]
     RewriteRule ^terms/?$ frontend/out/terms/index.html [L]
     RewriteRule ^privacy/?$ frontend/out/privacy/index.html [L]
-    RewriteRule ^(logo\.png|icon\.png|favicon\.ico|favicon\.png|file\.svg|globe\.svg|window\.svg)$ frontend/out/$1 [L]
+    RewriteRule ^(logo\.png|icon\.png|favicon\.ico|favicon\.png|og_image\.png|file\.svg|globe\.svg|window\.svg)$ frontend/out/$1 [L]
 
     # 4. Serve root to frontend/out/index.html
     RewriteRule ^$ frontend/out/index.html [L]
 
     # 5. General fallback: if file exists inside frontend/out/, serve it
+    RewriteCond %{DOCUMENT_ROOT}/frontend/out/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/public_html/frontend/out/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/elephanthousegame/frontend/out/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/public_html/elephanthousegame/frontend/out/$1 -f [OR]
     RewriteCond %{DOCUMENT_ROOT}/ElephantHouseGame/frontend/out/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/public_html/ElephantHouseGame/frontend/out/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/frontend/out/$1 -f
+    RewriteCond %{DOCUMENT_ROOT}/public_html/ElephantHouseGame/frontend/out/$1 -f
     RewriteRule ^(.*)$ frontend/out/$1 [L]
 
     # 6. Fallback to frontend/out/index.html for any unhandled routes
@@ -60,8 +63,8 @@
 
 # Security & CORS Headers for Live Mobile/Web APIs
 <IfModule mod_headers.c>
-    # 1. Dynamic Origin-scoped CORS
-    SetEnvIfNoCase Origin "^https?://(ai\.loopsintegrated\.co|loopsintegrated\.co|.*\.loopsintegrated\.co|localhost(:[0-9]+)?|127\.0\.0\.1(:[0-9]+)?)$" CORS_ALLOW_ORIGIN=$0
+    # 1. Dynamic Origin-scoped CORS for all domains & subdomains
+    SetEnvIfNoCase Origin "^https?://.*$" CORS_ALLOW_ORIGIN=$0
     Header set Access-Control-Allow-Origin "%{CORS_ALLOW_ORIGIN}e" env=CORS_ALLOW_ORIGIN
     Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
     Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, X-Admin-Token"
@@ -72,7 +75,7 @@
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 
     # 3. Defense-in-Depth Content Security Policy (CSP)
-    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data:; connect-src 'self' https://ai.loopsintegrated.co https://storage.googleapis.com https://cdn.jsdelivr.net blob: data:; worker-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data:; connect-src 'self' https: http: blob: data:; worker-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
 
     # 4. Anti-Clickjacking & Anti-MIME Sniffing
     Header set X-Content-Type-Options "nosniff"
