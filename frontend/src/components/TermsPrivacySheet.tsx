@@ -276,7 +276,7 @@ export default function TermsPrivacySheet({
         >
           {activeTab === 'privacy' ? (
             <div className="space-y-4">
-              {/* Highlight Card: Zero Camera Storage Guarantee */}
+              {/* Highlight Card: 100% On-Device AR Face Tracking */}
               <div className="p-4 rounded-2xl bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/20 border border-pink-200/80 dark:border-pink-900/50">
                 <div className="flex items-start space-x-3">
                   <div className="p-2 rounded-xl bg-pink-500 text-white flex-shrink-0 mt-0.5">
@@ -287,66 +287,84 @@ export default function TermsPrivacySheet({
                       100% On-Device AR Face Tracking
                     </h3>
                     <p className="text-[12px] text-pink-900/80 dark:text-pink-300/80 leading-normal">
-                      Camera feed is processed strictly in real-time in your device&apos;s browser using Google MediaPipe. <strong>We NEVER record, store, transmit, or share your camera images or facial geometry.</strong>
+                      Camera access is used to detect gameplay gestures, such as mouth-opening, required for the AR experience. Camera processing is performed in real time on your device. We do not record, store, upload, or share camera images, video, or facial geometry.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Section 1: Data We Collect */}
+              {/* INFORMATION WE COLLECT */}
               <section className="space-y-2">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center space-x-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
                   <Database className="w-3.5 h-3.5 text-pink-500" />
                   <span>Information We Collect</span>
                 </h3>
-                <ul className="space-y-1.5 list-disc pl-4 text-[12px] text-slate-600 dark:text-slate-400">
+                <ul className="space-y-2 list-disc pl-4 text-[12px] text-slate-600 dark:text-slate-400">
                   <li>
-                    <strong className="text-slate-900 dark:text-slate-200">Player Nickname:</strong> The name you enter to display on your high score and public leaderboard.
+                    <strong className="text-slate-900 dark:text-slate-200">Player Nickname:</strong> The name you enter may be displayed with your score on the public game leaderboard.
                   </li>
                   <li>
-                    <strong className="text-slate-900 dark:text-slate-200">Game Statistics:</strong> Scores achieved, popsicles caught, and duration of gameplay sessions.
+                    <strong className="text-slate-900 dark:text-slate-200">Game Statistics:</strong> We may collect gameplay information such as scores, game duration, items caught, and session results.
                   </li>
                   <li>
-                    <strong className="text-slate-900 dark:text-slate-200">No Contact Info Exposure:</strong> No personal contact numbers or private identifiers are displayed on the public leaderboard.
+                    <strong className="text-slate-900 dark:text-slate-200">Technical Information:</strong> Limited technical information may be processed where necessary to operate, secure, and improve the game.
+                  </li>
+                  <li>
+                    <strong className="text-slate-900 dark:text-slate-200">No Contact Information Required:</strong> The game does not require you to provide a phone number, email address, or home address to play.
                   </li>
                 </ul>
               </section>
 
-              {/* Section 2: Camera & Permissions */}
-              <section className="space-y-2">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center space-x-1.5">
-                  <Lock className="w-3.5 h-3.5 text-pink-500" />
+              {/* CAMERA PERMISSIONS */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
+                  <Camera className="w-3.5 h-3.5 text-pink-500" />
                   <span>Camera Permissions</span>
                 </h3>
                 <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  Camera permission is requested solely to detect mouth-opening gestures so you can catch falling virtual ice cream popsicles in augmented reality. You may revoke camera permissions at any time via your browser settings.
+                  Camera access is required only for AR gameplay features. You can deny or revoke camera permission through your browser or device settings. Some game features may not function without camera access.
                 </p>
               </section>
 
-              {/* Section 3: Data Security & Storage */}
-              <section className="space-y-2">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center space-x-1.5">
+              {/* DATA SECURITY */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-pink-500" />
-                  <span>Data Security & Encryption</span>
+                  <span>Data Security</span>
                 </h3>
                 <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  All communication between your device and our servers is secured using modern TLS 1.3/HTTPS encryption with HTTP Strict Transport Security (HSTS). We implement strict access controls and rate limiting to protect your information.
+                  Reasonable technical and organizational measures are used to protect game data against unauthorized access, loss, alteration, or misuse. Internet communications are protected using secure HTTPS connections where supported.
                 </p>
               </section>
 
-              {/* Section 4: Contact */}
-              <section className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
-                <p>
-                  Questions about privacy? Contact us at{' '}
-                  <a
-                    href="mailto:security@loopsintegrated.co"
-                    className="text-pink-600 dark:text-pink-400 font-bold underline"
-                  >
-                    security@loopsintegrated.co
-                  </a>
-                  . Operated by Ceylon Cold Stores PLC (Elephant House).
+              {/* LEADERBOARD PRIVACY */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
+                  <EyeOff className="w-3.5 h-3.5 text-pink-500" />
+                  <span>Leaderboard Privacy</span>
+                </h3>
+                <p className="text-[12px] text-slate-600 dark:text-slate-400">
+                  Your chosen nickname and game score may appear on the public leaderboard. Avoid using your full legal name, phone number, email address, or other sensitive information as your nickname.
                 </p>
               </section>
+
+              {/* CHILDREN & SAFE USE */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Children &amp; Safe Use</span>
+                </h3>
+                <p className="text-[12px] text-slate-600 dark:text-slate-400">
+                  Children should use the experience with appropriate parent or guardian supervision. Players should remain aware of their physical surroundings while using camera-based AR features.
+                </p>
+              </section>
+
+              {/* Last Updated */}
+              <div className="pt-2 text-center">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                  Last updated: September 2026
+                </span>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -358,54 +376,109 @@ export default function TermsPrivacySheet({
                   </div>
                   <div>
                     <h3 className="font-extrabold text-amber-950 dark:text-amber-200 text-sm mb-1">
-                      Fair Play & Leaderboard Rules
+                      Fair Play &amp; Leaderboard Rules
                     </h3>
                     <p className="text-[12px] text-amber-900/80 dark:text-amber-300/80 leading-normal">
-                      The game is meant to be fun and challenging. Automated scripts, modified clients, bot manipulation, or exploiting vulnerabilities are prohibited and will result in score disqualification.
+                      The game is intended to be fun, fair, and competitive. Automated scripts, bots, modified clients, score manipulation, exploitation of vulnerabilities, or other methods of unfairly altering gameplay or leaderboard results are prohibited. Invalid or suspicious scores may be removed.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Section 1: Acceptance */}
-              <section className="space-y-2">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center space-x-1.5">
+              {/* ACCEPTANCE OF TERMS */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-pink-500" />
                   <span>Acceptance of Terms</span>
                 </h3>
                 <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  By tapping &quot;PLAY NOW&quot; or accessing the Elephant House Wonder AR Experience, you agree to comply with and be bound by these terms. If you do not agree, please do not use the game.
+                  By selecting &ldquo;I Understand &amp; Agree&rdquo; and accessing Elephant House Wonder AR, you agree to follow these Terms of Service and the Privacy Policy. If you do not agree, please do not continue to the game.
                 </p>
               </section>
 
-              {/* Section 2: Intellectual Property */}
-              <section className="space-y-2">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center space-x-1.5">
+              {/* GAMEPLAY & ELIGIBILITY */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-pink-500" />
+                  <span>Gameplay &amp; Eligibility</span>
+                </h3>
+                <p className="text-[12px] text-slate-600 dark:text-slate-400">
+                  Players must use the game only for its intended entertainment purpose. Where a player is a minor, participation should be subject to appropriate parent or guardian supervision or consent where required.
+                </p>
+              </section>
+
+              {/* INTELLECTUAL PROPERTY */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
+                  <Lock className="w-3.5 h-3.5 text-pink-500" />
                   <span>Intellectual Property</span>
                 </h3>
                 <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  All trademarks, logos (&quot;Elephant House&quot;, &quot;Wonder&quot;), ice cream artwork, audio effects, and 3D visual assets are the exclusive intellectual property of Ceylon Cold Stores PLC. Any unauthorized reproduction, extraction, or scraping is strictly prohibited.
+                  All trademarks, logos, brand names, artwork, characters, designs, game content, and other assets remain the property of their respective owners. Unauthorized reproduction, modification, distribution, extraction, or commercial use is prohibited.
                 </p>
               </section>
 
-              {/* Section 3: Safety & Environment */}
-              <section className="space-y-2">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center space-x-1.5">
+              {/* USER SAFETY */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
                   <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
                   <span>User Safety</span>
                 </h3>
                 <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  Please play in a safe, well-lit environment. Ensure you are mindful of your physical surroundings at all times while interacting with the augmented reality game.
+                  Play in a safe and well-lit environment. Remain aware of people, objects, traffic, steps, and other hazards around you while interacting with the augmented-reality experience.
                 </p>
               </section>
 
-              {/* Section 4: Rights Reserved */}
-              <section className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
-                <p>
-                  Ceylon Cold Stores PLC reserves the right to modify gameplay mechanics, leaderboard standings, or suspend access for maintenance or fair-play violations at its discretion.
+              {/* GAME AVAILABILITY */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-pink-500" />
+                  <span>Game Availability</span>
+                </h3>
+                <p className="text-[12px] text-slate-600 dark:text-slate-400">
+                  The game may be temporarily unavailable due to maintenance, technical issues, updates, or other operational requirements. Features, gameplay mechanics, leaderboard rules, or availability may be updated when necessary.
                 </p>
               </section>
+
+              {/* SCORE & ACCESS MANAGEMENT */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
+                  <Award className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Score &amp; Access Management</span>
+                </h3>
+                <p className="text-[12px] text-slate-600 dark:text-slate-400">
+                  Scores obtained through suspected cheating, manipulation, technical exploitation, or violations of these terms may be removed. Access to the game may also be restricted where necessary to protect fair play, security, or other users.
+                </p>
+              </section>
+
+              {/* LIMITATION OF RESPONSIBILITY */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-pink-500" />
+                  <span>Limitation of Responsibility</span>
+                </h3>
+                <p className="text-[12px] text-slate-600 dark:text-slate-400">
+                  Players are responsible for using the game safely and appropriately. To the extent permitted by applicable law, the operator is not responsible for losses resulting from misuse of the game or failure to follow the safety instructions provided.
+                </p>
+              </section>
+
+              {/* CHANGES TO THESE TERMS */}
+              <section className="space-y-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
+                  <FileText className="w-3.5 h-3.5 text-pink-500" />
+                  <span>Changes to These Terms</span>
+                </h3>
+                <p className="text-[12px] text-slate-600 dark:text-slate-400">
+                  These Terms and the Privacy Policy may be updated when the game, its technology, or applicable requirements change. The latest version should be made available through the game.
+                </p>
+              </section>
+
+              {/* Last Updated */}
+              <div className="pt-2 text-center">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                  Last updated: September 2026
+                </span>
+              </div>
             </div>
           )}
         </div>

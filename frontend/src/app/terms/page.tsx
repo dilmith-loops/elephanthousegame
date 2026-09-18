@@ -2,11 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ShieldCheck, CheckCircle2, Award, AlertCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, CheckCircle2, Award, AlertCircle, Sparkles, Lock, FileText } from 'lucide-react';
 
 export default function TermsPage() {
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 py-10 px-4 sm:px-6 flex flex-col items-center">
       <div className="w-full max-w-3xl bg-slate-900/90 backdrop-blur-xl border border-pink-500/20 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8">
@@ -37,7 +35,7 @@ export default function TermsPage() {
                 Terms of Service
               </h1>
               <p className="text-xs sm:text-sm text-slate-400">
-                Elephant House Wonder AR Tongue Catch Experience • Ceylon Cold Stores PLC
+                Elephant House Wonder AR Experience • Ceylon Cold Stores PLC
               </p>
             </div>
           </div>
@@ -51,10 +49,10 @@ export default function TermsPage() {
             </div>
             <div>
               <h2 className="font-extrabold text-amber-200 text-base mb-1">
-                Fair Play & Leaderboard Conduct
+                FAIR PLAY &amp; LEADERBOARD RULES
               </h2>
               <p className="text-xs sm:text-sm text-amber-300/80 leading-relaxed">
-                The game is designed for genuine, fun player interaction using AR facial detection. Automated scripts, modified clients, bot manipulation, or exploiting vulnerabilities are prohibited and will result in score disqualification.
+                The game is intended to be fun, fair, and competitive. Automated scripts, bots, modified clients, score manipulation, exploitation of vulnerabilities, or other methods of unfairly altering gameplay or leaderboard results are prohibited. Invalid or suspicious scores may be removed.
               </p>
             </div>
           </div>
@@ -65,46 +63,93 @@ export default function TermsPage() {
           <section className="space-y-2">
             <h2 className="text-base font-bold text-white flex items-center space-x-2">
               <CheckCircle2 className="w-4 h-4 text-pink-400" />
-              <span>1. Acceptance of Terms</span>
+              <span>ACCEPTANCE OF TERMS</span>
             </h2>
             <p>
-              By accessing, browsing, or playing the Elephant House Wonder AR Game, you agree to comply with and be bound by these Terms of Service. If you do not agree to these terms, please refrain from using the game.
+              By selecting &ldquo;I Understand &amp; Agree&rdquo; and accessing Elephant House Wonder AR, you agree to follow these Terms of Service and the Privacy Policy. If you do not agree, please do not continue to the game.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-base font-bold text-white flex items-center space-x-2">
               <Sparkles className="w-4 h-4 text-pink-400" />
-              <span>2. Intellectual Property Rights</span>
+              <span>GAMEPLAY &amp; ELIGIBILITY</span>
             </h2>
             <p>
-              All trademarks, brand names (&quot;Elephant House&quot;, &quot;Wonder&quot;), character designs, ice cream popsicle artwork, sound effects, audio tracks, and 3D visual assets are the exclusive intellectual property of Ceylon Cold Stores PLC. Any unauthorized reproduction, commercial exploitation, or scraping is strictly prohibited.
+              Players must use the game only for its intended entertainment purpose. Where a player is a minor, participation should be subject to appropriate parent or guardian supervision or consent where required.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base font-bold text-white flex items-center space-x-2">
+              <Lock className="w-4 h-4 text-pink-400" />
+              <span>INTELLECTUAL PROPERTY</span>
+            </h2>
+            <p>
+              All trademarks, logos, brand names, artwork, characters, designs, game content, and other assets remain the property of their respective owners. Unauthorized reproduction, modification, distribution, extraction, or commercial use is prohibited.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-base font-bold text-white flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 text-amber-400" />
-              <span>3. Physical Safety & Surroundings</span>
+              <span>USER SAFETY</span>
             </h2>
             <p>
-              Please interact with the augmented reality game in a well-lit, stationary, and safe physical environment. Always remain aware of your physical surroundings to prevent accidents while interacting with the AR camera.
+              Play in a safe and well-lit environment. Remain aware of people, objects, traffic, steps, and other hazards around you while interacting with the augmented-reality experience.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-base font-bold text-white flex items-center space-x-2">
               <ShieldCheck className="w-4 h-4 text-pink-400" />
-              <span>4. Modifications & Availability</span>
+              <span>GAME AVAILABILITY</span>
             </h2>
             <p>
-              Ceylon Cold Stores PLC reserves the right to modify gameplay mechanics, suspend the game for scheduled maintenance, or update leaderboard rules at any time without prior notice.
+              The game may be temporarily unavailable due to maintenance, technical issues, updates, or other operational requirements. Features, gameplay mechanics, leaderboard rules, or availability may be updated when necessary.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base font-bold text-white flex items-center space-x-2">
+              <Award className="w-4 h-4 text-amber-400" />
+              <span>SCORE &amp; ACCESS MANAGEMENT</span>
+            </h2>
+            <p>
+              Scores obtained through suspected cheating, manipulation, technical exploitation, or violations of these terms may be removed. Access to the game may also be restricted where necessary to protect fair play, security, or other users.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base font-bold text-white flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 text-pink-400" />
+              <span>LIMITATION OF RESPONSIBILITY</span>
+            </h2>
+            <p>
+              Players are responsible for using the game safely and appropriately. To the extent permitted by applicable law, the operator is not responsible for losses resulting from misuse of the game or failure to follow the safety instructions provided.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base font-bold text-white flex items-center space-x-2">
+              <FileText className="w-4 h-4 text-pink-400" />
+              <span>CHANGES TO THESE TERMS</span>
+            </h2>
+            <p>
+              These Terms and the Privacy Policy may be updated when the game, its technology, or applicable requirements change. The latest version should be made available through the game.
             </p>
           </section>
         </div>
 
+        {/* Last Updated */}
+        <div className="pt-2 text-center border-t border-slate-800">
+          <span className="text-xs text-slate-500 font-medium">
+            Last updated: September 2026
+          </span>
+        </div>
+
         {/* Footer Actions */}
-        <div className="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link
             href="/privacy"
             className="text-xs text-pink-400 hover:text-pink-300 font-semibold underline"
