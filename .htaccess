@@ -30,6 +30,8 @@
     RewriteRule ^wasm/(.*)$ frontend/out/wasm/$1 [L]
     RewriteRule ^eh-portal/?$ frontend/out/eh-portal/index.html [L]
     RewriteRule ^eh-portal/(.*)$ frontend/out/eh-portal/$1 [L]
+    RewriteRule ^terms/?$ frontend/out/terms/index.html [L]
+    RewriteRule ^privacy/?$ frontend/out/privacy/index.html [L]
     RewriteRule ^(logo\.png|icon\.png|favicon\.ico|favicon\.png|file\.svg|globe\.svg|window\.svg)$ frontend/out/$1 [L]
 
     # 4. Serve root to frontend/out/index.html

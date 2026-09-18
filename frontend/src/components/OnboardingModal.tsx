@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Player } from '../types/game';
 import { api } from '../lib/api';
-import { Trophy, AlertCircle, Sparkles } from 'lucide-react';
+import { Trophy, AlertCircle, Sparkles, ShieldCheck } from 'lucide-react';
+import TermsPrivacySheet from './TermsPrivacySheet';
 
 interface Props {
   onStartGame: (player: Player) => void;
@@ -15,7 +16,14 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cachedPlayer, setCachedPlayer] = useState<Player | null>(null);
+  const [showTermsSheet, setShowTermsSheet] = useState(false);
+  const [termsDefaultTab, setTermsDefaultTab] = useState<'privacy' | 'terms'>('privacy');
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
+  const handleOpenTerms = (tab: 'privacy' | 'terms' = 'privacy') => {
+    setTermsDefaultTab(tab);
+    setShowTermsSheet(true);
+  };
 
   // Load cached player
   useEffect(() => {
@@ -28,6 +36,18 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
       }
     } catch {
       // ignore
+    }
+
+    // Check URL parameters or hash to open terms / privacy bottom sheet directly
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('terms') === 'true' || window.location.hash === '#terms') {
+        setTermsDefaultTab('terms');
+        setShowTermsSheet(true);
+      } else if (params.get('privacy') === 'true' || window.location.hash === '#privacy') {
+        setTermsDefaultTab('privacy');
+        setShowTermsSheet(true);
+      }
     }
   }, []);
 
@@ -93,28 +113,59 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
         className="sm:hidden fixed inset-x-3.5 z-40 flex items-center justify-between pointer-events-none"
       >
         {cachedPlayer ? (
-          <div className="pointer-events-auto flex items-center space-x-1.5 bg-white/95 backdrop-blur-md border border-pink-200/80 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 shadow-sm max-w-[55%] truncate">
+          <div className="pointer-events-auto flex items-center space-x-1.5 bg-white/95 backdrop-blur-md border border-pink-200/80 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 shadow-sm max-w-[48%] truncate">
             <Sparkles className="w-3.5 h-3.5 text-pink-500 fill-pink-500 flex-shrink-0" />
             <span className="truncate">
               Hi, <strong className="text-pink-950 font-black">{cachedPlayer.name}</strong>
             </span>
           </div>
         ) : (
-          <div />
+          <button
+            type="button"
+            onClick={() => handleOpenTerms('privacy')}
+            className="pointer-events-auto bg-white/95 backdrop-blur-md text-pink-950 px-3 py-1.5 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)] text-xs font-black flex items-center space-x-1.5 border border-pink-200/80 active:scale-95 transition-all cursor-pointer"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-pink-600" />
+            <span>Privacy</span>
+          </button>
         )}
 
-        <button
-          type="button"
-          onClick={onOpenLeaderboard}
-          className="pointer-events-auto bg-white/95 backdrop-blur-md text-amber-950 px-3.5 py-1.5 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)] text-xs font-black flex items-center space-x-1.5 border border-amber-300/80 active:scale-95 transition-all cursor-pointer"
-        >
-          <Trophy className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-          <span>Leaderboard</span>
-        </button>
+        <div className="pointer-events-auto flex items-center space-x-1.5">
+          {cachedPlayer && (
+            <button
+              type="button"
+              onClick={() => handleOpenTerms('privacy')}
+              className="bg-white/95 backdrop-blur-md text-pink-950 p-1.5 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)] border border-pink-200/80 active:scale-95 transition-all cursor-pointer"
+              title="Terms & Privacy"
+              aria-label="Terms & Privacy"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-pink-600" />
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onOpenLeaderboard}
+            className="bg-white/95 backdrop-blur-md text-amber-950 px-3.5 py-1.5 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)] text-xs font-black flex items-center space-x-1.5 border border-amber-300/80 active:scale-95 transition-all cursor-pointer"
+          >
+            <Trophy className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+            <span>Leaderboard</span>
+          </button>
+        </div>
       </div>
 
       {/* 1. Global Desktop Header Bar */}
-      <header className="hidden sm:flex items-center justify-end w-full max-w-6xl mx-auto px-6 py-3.5 z-30 flex-shrink-0 min-h-[52px]">
+      <header className="hidden sm:flex items-center justify-between w-full max-w-6xl mx-auto px-6 py-3.5 z-30 flex-shrink-0 min-h-[52px]">
+        {/* Left Action: Terms & Privacy Pill */}
+        <button
+          type="button"
+          onClick={() => handleOpenTerms('privacy')}
+          className="flex items-center space-x-1.5 bg-white/85 hover:bg-white backdrop-blur-md border border-pink-200/80 px-3.5 py-1.5 rounded-full text-xs font-black text-slate-700 hover:text-pink-900 shadow-sm transition-all active:scale-95 cursor-pointer"
+        >
+          <ShieldCheck className="w-3.5 h-3.5 text-pink-600" />
+          <span>Terms & Privacy Policy</span>
+        </button>
+
         {/* Right Action: Welcome Pill */}
         <div className="flex items-center space-x-3">
           {cachedPlayer && (
@@ -217,6 +268,34 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
 
         </div>
       </main>
+
+      {/* Footer spacer / subtle brand copyright & interactive Terms links */}
+      <footer className="w-full text-center py-2 px-4 text-[11px] sm:text-xs text-white/90 font-medium z-30 flex-shrink-0 flex items-center justify-center space-x-2 drop-shadow-sm select-none">
+        <span>© Elephant House Ceylon Cold Stores PLC</span>
+        <span className="opacity-60">•</span>
+        <button
+          type="button"
+          onClick={() => handleOpenTerms('terms')}
+          className="underline hover:text-white font-bold transition-all cursor-pointer"
+        >
+          Terms of Service
+        </button>
+        <span className="opacity-60">•</span>
+        <button
+          type="button"
+          onClick={() => handleOpenTerms('privacy')}
+          className="underline hover:text-white font-bold transition-all cursor-pointer"
+        >
+          Privacy Policy
+        </button>
+      </footer>
+
+      {/* Terms & Privacy Bottom Sheet Modal */}
+      <TermsPrivacySheet
+        isOpen={showTermsSheet}
+        onClose={() => setShowTermsSheet(false)}
+        defaultTab={termsDefaultTab}
+      />
     </div>
   );
 }
