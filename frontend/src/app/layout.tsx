@@ -57,6 +57,7 @@ export const viewport: Viewport = {
   themeColor: '#020617'
 };
 
+import Script from 'next/script';
 import SecurityShield from '@/components/SecurityShield';
 
 export default function RootLayout({
@@ -66,6 +67,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        {/* Google tag (gtag.js) - Google Analytics 4 */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-L4JLCRXM3R"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+        >
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-L4JLCRXM3R', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
+      </head>
       <body className={`${outfit.className} antialiased bg-slate-950 text-slate-100 min-h-screen`}>
         <SecurityShield />
         {children}

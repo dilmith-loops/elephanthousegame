@@ -7,6 +7,7 @@ import OnboardingModal from '../components/OnboardingModal';
 import GameCanvas from '../components/GameCanvas';
 import LeaderboardModal from '../components/LeaderboardModal';
 import SocialShareModal from '../components/SocialShareModal';
+import { trackGAEvent } from '../lib/analytics';
 import { RefreshCw, Clock } from 'lucide-react';
 
 export default function HomePage() {
@@ -45,6 +46,10 @@ export default function HomePage() {
 
   const handleStartGame = (player: Player) => {
     setCurrentPlayer(player);
+    trackGAEvent('game_start', {
+      user_id: player.id,
+      player_name: player.name
+    });
   };
 
   const handleChangePlayer = () => {

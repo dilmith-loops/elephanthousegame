@@ -21,6 +21,7 @@ import {
   downloadScoreCard,
   shareViaNative
 } from '../lib/shareCard';
+import { trackGAEvent } from '../lib/analytics';
 
 interface Props {
   isOpen: boolean;
@@ -93,6 +94,7 @@ export default function SocialShareModal({
   const handleInstagramShare = async () => {
     if (!cardResult) return;
     setActiveAction('instagram');
+    trackGAEvent('share', { method: 'instagram', content_type: format, score: score });
     try {
       copyCaptionToClipboard(cardResult.shareText);
       const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
@@ -118,6 +120,7 @@ export default function SocialShareModal({
   const handleFacebookShare = async () => {
     if (!cardResult) return;
     setActiveAction('facebook');
+    trackGAEvent('share', { method: 'facebook', content_type: format, score: score });
     try {
       copyCaptionToClipboard(cardResult.shareText);
       const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
@@ -142,6 +145,7 @@ export default function SocialShareModal({
   const handleWhatsAppShare = async () => {
     if (!cardResult) return;
     setActiveAction('whatsapp');
+    trackGAEvent('share', { method: 'whatsapp', content_type: format, score: score });
     try {
       copyCaptionToClipboard(cardResult.shareText);
       const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(cardResult.shareText)}`;
@@ -157,6 +161,7 @@ export default function SocialShareModal({
   // 4. Download Card Image
   const handleDownload = () => {
     if (!cardResult) return;
+    trackGAEvent('download_score_card', { content_type: format, score: score });
     downloadScoreCard(cardResult.blob, score, format);
     copyCaptionToClipboard(cardResult.shareText);
     showToast('⬇️ High-resolution score card saved to your photos!');
@@ -166,6 +171,7 @@ export default function SocialShareModal({
   const handleSystemShare = async () => {
     if (!cardResult) return;
     setActiveAction('system');
+    trackGAEvent('share', { method: 'native_options', content_type: format, score: score });
     try {
       await copyCaptionToClipboard(cardResult.shareText);
       await shareViaNative(cardResult.file, { filesOnly: true });

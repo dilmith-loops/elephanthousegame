@@ -31,6 +31,7 @@ import {
 import { generateAndShareScoreCard } from '../lib/shareCard';
 import SocialShareModal from './SocialShareModal';
 import StopwatchTimer from './StopwatchTimer';
+import { trackGAEvent } from '../lib/analytics';
 
 function SoftServeIcon({ className = 'w-6 h-6 sm:w-7 sm:h-7' }: { className?: string }) {
   return (
@@ -546,6 +547,12 @@ export default function GameCanvas({
     const elapsed = Math.max(1, Math.round((Date.now() - gameStartTime) / 1000));
     setGameDuration(elapsed);
     setIsSubmitting(true);
+
+    trackGAEvent('game_complete', {
+      score: scoreRef.current,
+      catches: catchesRef.current,
+      duration_seconds: elapsed
+    });
 
     try {
       const res = await api.submitScore({
