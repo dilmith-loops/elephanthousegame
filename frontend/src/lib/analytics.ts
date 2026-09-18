@@ -1,4 +1,4 @@
-export const GA_MEASUREMENT_ID = 'G-L4JLCRXM3R';
+export const GA_MEASUREMENT_ID = 'G-E5F9K3PN4W';
 
 // Helper to log custom Google Analytics events
 export const trackGAEvent = (
