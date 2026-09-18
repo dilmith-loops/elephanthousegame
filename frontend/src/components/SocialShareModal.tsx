@@ -240,11 +240,11 @@ export default function SocialShareModal({
 
         {/* Modal Header */}
         <div className="relative pt-4 sm:pt-5 px-4 sm:px-5 pb-2 flex-shrink-0 overflow-hidden">
-          {/* Close Button - Cute round pink pill matching reference */}
+          {/* Close Button - Crisp white round pill with hot-pink X matching reference */}
           <button
             onClick={onClose}
             aria-label="Close"
-            className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-[#FCE4EC] hover:bg-[#F8BBD0] text-[#D81B60] border border-pink-200/60 shadow-sm flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
+            className="absolute top-3.5 right-3.5 z-30 w-8 h-8 rounded-full bg-white hover:bg-pink-50 text-[#E91E63] border border-pink-100 shadow-md flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
           >
             <X className="w-4 h-4 stroke-[3]" />
           </button>
