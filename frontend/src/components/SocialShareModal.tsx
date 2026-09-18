@@ -11,9 +11,7 @@ import {
   AlertCircle,
   Smartphone,
   Image as ImageIcon,
-  ChevronRight,
-  Copy,
-  Info
+  ChevronRight
 } from 'lucide-react';
 import {
   ScoreCardData,
@@ -52,7 +50,6 @@ export default function SocialShareModal({
   const [cardResult, setCardResult] = useState<GeneratedCardResult | null>(null);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
   const [activeAction, setActiveAction] = useState<string | null>(null);
-  const [copiedCaption, setCopiedCaption] = useState<boolean>(false);
 
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
@@ -62,17 +59,6 @@ export default function SocialShareModal({
       setToastMessage((cur) => (cur?.text === text ? null : cur));
     }, duration);
   }, []);
-
-  // Manual copy caption handler
-  const handleManualCopyCaption = async () => {
-    if (!cardResult) return;
-    const success = await copyCaptionToClipboardAsync(cardResult.shareText);
-    if (success) {
-      setCopiedCaption(true);
-      showToast('📋 Caption copied to clipboard! Paste it into your post.', 'success', 4000);
-      setTimeout(() => setCopiedCaption(false), 2500);
-    }
-  };
 
   // Generate card whenever format or score changes
   const loadCard = useCallback(async () => {
@@ -112,18 +98,18 @@ export default function SocialShareModal({
     trackGAEvent('share', { method: 'instagram', content_type: format, score: score });
     try {
       await copyCaptionToClipboardAsync(cardResult.shareText);
-      setCopiedCaption(true);
-      setTimeout(() => setCopiedCaption(false), 3000);
-
-      const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
+      const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare;
 
       if (hasNativeShare) {
-        showToast('📋 Caption copied! In Instagram, tap the caption area and select PASTE!', 'success', 6000);
-        await new Promise((r) => setTimeout(r, 120));
-        await shareViaNative(cardResult.file, { filesOnly: true });
+        showToast('📸 Share link & score card ready! Select Instagram to share.', 'success', 4000);
+        await shareViaNative(cardResult.file, {
+          title: 'Elephant House AR Catch',
+          text: cardResult.shareText,
+          url: cardResult.shareUrl
+        });
       } else {
         downloadScoreCard(cardResult.blob, score, format);
-        showToast('📸 Card downloaded & caption copied! Open Instagram and paste your caption.', 'success', 6000);
+        showToast('📸 Score card downloaded! Open Instagram to post.', 'success', 4000);
         setTimeout(() => {
           window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
         }, 1200);
@@ -142,18 +128,18 @@ export default function SocialShareModal({
     trackGAEvent('share', { method: 'facebook', content_type: format, score: score });
     try {
       await copyCaptionToClipboardAsync(cardResult.shareText);
-      setCopiedCaption(true);
-      setTimeout(() => setCopiedCaption(false), 3000);
-
-      const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
+      const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare;
 
       if (hasNativeShare) {
-        showToast('📋 Caption copied! In Facebook, tap the caption area and select PASTE!', 'success', 6000);
-        await new Promise((r) => setTimeout(r, 120));
-        await shareViaNative(cardResult.file, { filesOnly: true });
+        showToast('📸 Share link & score card ready! Select Facebook to share.', 'success', 4000);
+        await shareViaNative(cardResult.file, {
+          title: 'Elephant House AR Catch',
+          text: cardResult.shareText,
+          url: cardResult.shareUrl
+        });
       } else {
         downloadScoreCard(cardResult.blob, score, format);
-        showToast('📸 Score card downloaded & caption copied! Open Facebook to post.', 'success', 6000);
+        showToast('📸 Opening Facebook to share your score link!', 'success', 4000);
         const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(cardResult.shareUrl)}`;
         window.open(fbUrl, '_blank', 'width=626,height=436,noopener,noreferrer');
       }
@@ -452,42 +438,6 @@ export default function SocialShareModal({
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400 stroke-[2.5] flex-shrink-0 ml-0.5" />
               </button>
-            </div>
-
-            {/* Post Caption Preview & One-Tap Copy */}
-            <div className="p-2.5 rounded-2xl bg-[#FFF5F8] border border-pink-200/90 shadow-xs flex flex-col space-y-1.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-1.5 min-w-0">
-                  <span className="text-[11px] font-black text-[#481628]">📝 Post Caption</span>
-                  <span className="text-[9px] font-bold text-[#E91E63] bg-pink-100/90 px-1.5 py-0.5 rounded-md">
-                    Auto-Copied
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleManualCopyCaption}
-                  className="py-1 px-2.5 rounded-full bg-white hover:bg-pink-50 text-[#E91E63] border border-pink-200 text-[10px] font-extrabold flex items-center space-x-1 shadow-xs active:scale-95 transition-all cursor-pointer flex-shrink-0"
-                >
-                  {copiedCaption ? (
-                    <>
-                      <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
-                      <span className="text-emerald-700">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3 h-3 text-[#E91E63]" />
-                      <span>Copy Caption</span>
-                    </>
-                  )}
-                </button>
-              </div>
-              <p className="text-[10px] text-slate-700 bg-white/90 p-2 rounded-xl border border-pink-100/80 font-medium select-all leading-snug line-clamp-2">
-                {cardResult?.shareText || 'Loading caption...'}
-              </p>
-              <div className="flex items-center space-x-1 text-[9px] text-[#8C6D7D] font-medium leading-tight">
-                <Info className="w-3 h-3 text-pink-500 flex-shrink-0" />
-                <span>Instagram & Facebook require manual paste: tap caption box & tap <strong>Paste</strong>!</span>
-              </div>
             </div>
 
             {/* 5. System More Options */}

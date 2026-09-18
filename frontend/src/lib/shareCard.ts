@@ -94,38 +94,70 @@ export function downloadScoreCard(blob: Blob, score: number, format: 'story' | '
   setTimeout(() => URL.revokeObjectURL(downloadUrl), 2500);
 }
 
+export interface ShareOptions {
+  text?: string;
+  title?: string;
+  url?: string;
+  filesOnly?: boolean;
+}
+
 export async function shareViaNative(
   file: File,
-  textOrOptions?: string | { text?: string; title?: string; filesOnly?: boolean },
+  textOrOptions?: string | ShareOptions,
   title = 'My Elephant House AR Game Score'
 ): Promise<boolean> {
-  const options = typeof textOrOptions === 'object' && textOrOptions !== null
+  const options: ShareOptions = typeof textOrOptions === 'object' && textOrOptions !== null
     ? textOrOptions
     : { text: typeof textOrOptions === 'string' ? textOrOptions : undefined, title, filesOnly: false };
 
   if (typeof navigator !== 'undefined' && navigator.share) {
     try {
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        if (options.filesOnly) {
-          // CRITICAL: Passing strictly ONLY `files: [file]` ensures iOS & Android treat this as a Photo/Story media share.
-          // If `text` or a URL is passed alongside the file, the Facebook and Instagram app extensions
-          // discard the image file and switch to a URL-preview link share mode.
-          await navigator.share({
-            files: [file]
-          });
-          return true;
-        } else {
-          await navigator.share({
-            title: options.title || 'My Elephant House AR Game Score',
-            text: options.text,
-            files: [file]
-          });
+      if (options.filesOnly) {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file] });
           return true;
         }
-      } else if (options.text) {
+      }
+
+      // 1. First priority: Share File + Text + Link URL together
+      const fullShareData: ShareData = {
+        title: options.title || 'Elephant House AR Catch',
+        text: options.text,
+        url: options.url,
+        files: [file]
+      };
+
+      if (navigator.canShare && navigator.canShare(fullShareData)) {
+        await navigator.share(fullShareData);
+        return true;
+      }
+
+      // 2. Second priority: Share File + Text (which already contains the link)
+      const fileAndTextData: ShareData = {
+        title: options.title || 'Elephant House AR Catch',
+        text: options.text || options.url,
+        files: [file]
+      };
+
+      if (navigator.canShare && navigator.canShare(fileAndTextData)) {
+        await navigator.share(fileAndTextData);
+        return true;
+      }
+
+      // 3. Third priority: Share file only
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: options.title || 'My Elephant House AR Game Score',
-          text: options.text
+          files: [file]
+        });
+        return true;
+      }
+
+      // 4. Fallback: Share Text and Link URL
+      if (options.url || options.text) {
+        await navigator.share({
+          title: options.title || 'Elephant House AR Catch',
+          text: options.text,
+          url: options.url
         });
         return true;
       }
