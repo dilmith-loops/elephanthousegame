@@ -269,9 +269,9 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
   const bannerH = isStory ? 68 : 60;
   const bannerW = isStory ? 440 : 400;
 
-  const scoreTitleY = bannerY + bannerH + (isStory ? 55 : 45);
-  const scoreNumY = scoreTitleY + (isStory ? 100 : 85);
-  const marksY = scoreNumY + (isStory ? 50 : 42);
+  const scoreTitleY = bannerY + bannerH + (isStory ? 92 : 82);
+  const scoreNumY = scoreTitleY + (isStory ? 112 : 98);
+  const marksY = scoreNumY + (isStory ? 54 : 46);
 
   const statsStartY = marksY + (isStory ? 55 : 45);
   const boxW = (cardW - 130) / 2;
