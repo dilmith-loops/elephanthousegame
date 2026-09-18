@@ -4,33 +4,39 @@ Options -Indexes
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /arwonder/
 
     # Custom 404 Error Document
     ErrorDocument 404 /arwonder/404.html
 
     # Block access to hidden and sensitive files
-    RewriteRule (^|/)(\.git|\.env|\.htaccess|\.env\..*) - [F,L]
+    RewriteRule (^|/)(\.git|\.env|\.htaccess|\.env\..*|\.cpanel\.ya?ml) - [F,L]
     RewriteRule ^\.well-known/ - [L]
 
     # 1. Forward all API requests directly to Laravel Backend
     RewriteCond %{REQUEST_URI} api/ [NC]
-    RewriteRule ^(.*)$ index.php [L]
+    RewriteRule ^(.*)$ /arwonder/index.php [L,QSA]
 
     # 2. Forward uploaded media files to backend public storage
-    RewriteRule ^uploads/(.*)$ backend/public/uploads/$1 [L]
+    RewriteRule ^uploads/(.*)$ /arwonder/backend/public/uploads/$1 [L]
 
-    # 3. Route static Next.js assets if they are requested with or without prefix
-    RewriteRule ^frontend/out/(.*)$ $1 [L,R=301]
+    # 3. Route static Next.js assets if they are requested with legacy prefix
+    RewriteRule ^frontend/out/(.*)$ /arwonder/$1 [L,R=301]
 
-    # 4. If physical file exists, serve it directly
+    # 4. If physical file or directory exists, serve it directly
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^ - [L]
+    RewriteRule ^.*$ - [L]
 
-    # 5. Client-side route fallback to root index.html
+    # 5. LiteSpeed subfolder resolution fallback for physical files
+    RewriteCond %{DOCUMENT_ROOT}/arwonder/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/arwonder/$1 -d
+    RewriteRule ^(.*)$ - [L]
+
+    # 6. Client-side route fallback to root index.html
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.html [L]
+    RewriteRule ^.*$ /arwonder/index.html [L]
 </IfModule>
 
 # MIME types for AR MediaPipe WASM and AI models

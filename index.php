@@ -10,8 +10,19 @@ $uri = $_SERVER['REQUEST_URI'] ?? '';
 
 // 1. If requesting API or uploads, forward to Laravel Backend
 if (preg_match('#/api(/|\?|$)#', $uri) || preg_match('#/uploads/#', $uri)) {
-    require_once __DIR__ . '/backend/public/index.php';
-    exit;
+    if (file_exists(__DIR__ . '/backend/public/index.php')) {
+        if (!file_exists(__DIR__ . '/backend/vendor/autoload.php')) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(503);
+            echo json_encode([
+                'status' => 'setup_required',
+                'message' => 'Backend composer dependencies are not yet installed. Please run "composer install --no-dev" in public_html/arwonder/backend/ or upload vendor.zip.',
+            ]);
+            exit;
+        }
+        require_once __DIR__ . '/backend/public/index.php';
+        exit;
+    }
 }
 
 // 2. If DirectoryIndex falls back to index.php or index.php is loaded directly, serve frontend

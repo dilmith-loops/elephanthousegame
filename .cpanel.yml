@@ -1,9 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/$USER/public_html/arwonder/
+    - export DEPLOYPATH=/home/$USER/public_html/arwonder
     - /bin/mkdir -p $DEPLOYPATH
-    - /bin/cp -R .htaccess $DEPLOYPATH
-    - /bin/cp -R index.php $DEPLOYPATH
-    - /bin/cp -R frontend $DEPLOYPATH
-    - /bin/cp -R backend $DEPLOYPATH
+    - /bin/cp -Rf * $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/cp -f .htaccess $DEPLOYPATH/ 2>/dev/null || true
