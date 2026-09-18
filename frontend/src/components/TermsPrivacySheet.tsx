@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
+  Shield,
   ShieldCheck,
   Camera,
   Database,
@@ -12,7 +13,9 @@ import {
   AlertCircle,
   EyeOff,
   Sparkles,
-  Award
+  Award,
+  User,
+  BarChart2
 } from 'lucide-react';
 
 interface Props {
@@ -24,7 +27,7 @@ interface Props {
 export default function TermsPrivacySheet({
   isOpen,
   onClose,
-  defaultTab = 'terms'
+  defaultTab = 'privacy'
 }: Props) {
   const [activeTab, setActiveTab] = useState<'privacy' | 'terms'>(defaultTab);
   const [isRendered, setIsRendered] = useState(false);
@@ -37,6 +40,8 @@ export default function TermsPrivacySheet({
   const currentDragRef = useRef<number>(0);
   const sheetRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
   // Sync activeTab with defaultTab when defaultTab changes
   useEffect(() => {
@@ -169,7 +174,7 @@ export default function TermsPrivacySheet({
     >
       {/* Clickable Backdrop with fade transition */}
       <div
-        className="absolute inset-0 bg-black/65 backdrop-blur-sm transition-opacity duration-300 ease-out cursor-pointer"
+        className="absolute inset-0 bg-black/60 backdrop-blur-[2px] transition-opacity duration-300 ease-out cursor-pointer"
         style={{ opacity: backdropOpacity }}
         onClick={handleClose}
         aria-hidden="true"
@@ -178,7 +183,7 @@ export default function TermsPrivacySheet({
       {/* Bottom Sheet Container */}
       <div
         ref={sheetRef}
-        className="relative z-10 w-full max-w-full sm:max-w-2xl bg-white dark:bg-slate-900 rounded-t-[30px] sm:rounded-t-[36px] shadow-[0_-12px_45px_rgba(0,0,0,0.35)] border-t border-pink-200/80 dark:border-slate-800 flex flex-col max-h-[90vh] sm:max-h-[84vh] overflow-hidden"
+        className="relative z-10 w-full max-w-full sm:max-w-[480px] bg-[#fff9f5] rounded-t-[32px] sm:rounded-t-[36px] shadow-[0_-16px_50px_rgba(0,0,0,0.38)] border-t border-[#f7e3d8] flex flex-col max-h-[92vh] sm:max-h-[86vh] overflow-hidden"
         style={{
           transform: isVisible && !isClosing
             ? `translateY(${Math.max(0, dragOffset)}px)`
@@ -189,7 +194,7 @@ export default function TermsPrivacySheet({
       >
         {/* Swipe-Down Drag Zone & Handle */}
         <div
-          className="w-full pt-3.5 pb-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none touch-none"
+          className="w-full pt-3 pb-1 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing select-none touch-none relative z-20"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -197,79 +202,91 @@ export default function TermsPrivacySheet({
           onMouseMove={handleTouchMove}
           onMouseUp={handleTouchEnd}
         >
-          <div className="w-14 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full hover:bg-slate-400 transition-colors" />
+          <div className="w-14 h-1.5 bg-[#e2cbbe] rounded-full hover:bg-[#dac3b5] transition-colors" />
         </div>
 
-        {/* Header Bar */}
-        <div className="flex items-center justify-between px-5 sm:px-7 pb-3.5 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 select-none">
-          <div className="flex items-center space-x-3 min-w-0 flex-1">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-500 p-0.5 shadow-md shadow-pink-500/25 flex items-center justify-center flex-shrink-0">
-              <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[14px] flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-pink-600 dark:text-pink-400" />
-              </div>
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2
-                id="terms-privacy-title"
-                className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate"
-              >
-                Terms & Privacy Policy
-              </h2>
-            </div>
+        {/* Close Button (Top Right circular soft pink button) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClose();
+          }}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => {
+            e.stopPropagation();
+            handleClose();
+          }}
+          aria-label="Close"
+          className="absolute top-3.5 right-4 sm:top-4 sm:right-6 w-8 h-8 rounded-full bg-[#fdeef2] hover:bg-[#fbdde6] text-[#f43f5e] flex items-center justify-center transition-all cursor-pointer active:scale-95 z-30 shadow-xs"
+        >
+          <X className="w-4 h-4 stroke-[2.5]" />
+        </button>
+
+        {/* Header with Title & Mascot Illustration */}
+        <div className="relative px-5 sm:px-7 pt-1 pb-0 flex items-end justify-between min-h-[90px] sm:min-h-[105px] select-none flex-shrink-0">
+          {/* Decorative side sparkle */}
+          <div className="absolute top-3 left-3 text-amber-400 text-xs select-none pointer-events-none opacity-80">
+            ✦
           </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClose();
-            }}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-              handleClose();
-            }}
-            aria-label="Close"
-            className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 flex-shrink-0 ml-3"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          {/* Left Title & Subtitle */}
+          <div className="relative z-10 pb-1.5 max-w-[65%]">
+            <h2
+              id="terms-privacy-title"
+              className="text-2xl sm:text-[26px] font-black tracking-tight text-[#3d1a16] leading-[1.08]"
+            >
+              Terms &amp;<br />Privacy Policy
+            </h2>
+            <p className="text-xs sm:text-[13px] font-semibold text-[#8e6157] mt-1 tracking-tight">
+              Your trust keeps the fun going!
+            </p>
+          </div>
+
+          {/* Mascot Illustration Peeking Over Tab Bar */}
+          <div className="relative z-10 flex-shrink-0 -mb-1 mr-0.5">
+            <img
+              src={`${basePath}/terms_sheet_mascot.png`}
+              alt="Elephant House Wonder Mascot"
+              className="w-36 sm:w-44 h-auto object-contain pointer-events-none select-none drop-shadow-xs"
+            />
+          </div>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="px-5 sm:px-7 pt-3 pb-2 flex-shrink-0 bg-white dark:bg-slate-900">
-          <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl text-xs font-black">
+        {/* Tab Switcher (Pill Container matching mockup) */}
+        <div className="px-5 sm:px-7 pt-0 pb-2.5 flex-shrink-0 relative z-20">
+          <div className="grid grid-cols-2 p-1 bg-[#efe5ed] rounded-full text-xs sm:text-[13px] font-bold border border-pink-100/60 shadow-xs">
             <button
               type="button"
               onClick={() => setActiveTab('privacy')}
-              className={`py-2 px-3 rounded-xl transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
+              className={`py-2 px-3.5 rounded-full transition-all cursor-pointer flex items-center justify-center space-x-2 ${
                 activeTab === 'privacy'
-                  ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-300 shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  ? 'bg-white text-[#e11d48] shadow-sm font-extrabold'
+                  : 'text-[#786c75] hover:text-[#3d1a16]'
               }`}
             >
-              <EyeOff className="w-3.5 h-3.5" />
+              <Shield className={`w-4 h-4 ${activeTab === 'privacy' ? 'text-[#e11d48]' : 'text-[#786c75]'}`} />
               <span>Privacy Policy</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('terms')}
-              className={`py-2 px-3 rounded-xl transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
+              className={`py-2 px-3.5 rounded-full transition-all cursor-pointer flex items-center justify-center space-x-2 ${
                 activeTab === 'terms'
-                  ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-300 shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  ? 'bg-white text-[#e11d48] shadow-sm font-extrabold'
+                  : 'text-[#786c75] hover:text-[#3d1a16]'
               }`}
             >
-              <FileText className="w-3.5 h-3.5" />
+              <FileText className={`w-4 h-4 ${activeTab === 'terms' ? 'text-[#e11d48]' : 'text-[#786c75]'}`} />
               <span>Terms of Service</span>
             </button>
           </div>
         </div>
 
-        {/* Scrollable Content Body (Hidden custom scrollbars to prevent edge glitches on mobile) */}
+        {/* Scrollable Content Body */}
         <div
           ref={contentRef}
-          className="flex-1 overflow-y-auto px-5 sm:px-7 py-3 space-y-4 text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          className="flex-1 overflow-y-auto px-5 sm:px-7 py-2 space-y-4 text-[#3d1a16] text-xs sm:text-[13px] leading-relaxed [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           style={{
             WebkitOverflowScrolling: 'touch',
           }}
@@ -277,224 +294,283 @@ export default function TermsPrivacySheet({
           {activeTab === 'privacy' ? (
             <div className="space-y-4">
               {/* Highlight Card: 100% On-Device AR Face Tracking */}
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/20 border border-pink-200/80 dark:border-pink-900/50">
-                <div className="flex items-start space-x-3">
-                  <div className="p-2 rounded-xl bg-pink-500 text-white flex-shrink-0 mt-0.5">
-                    <Camera className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-pink-950 dark:text-pink-200 text-sm mb-1">
-                      100% On-Device AR Face Tracking
-                    </h3>
-                    <p className="text-[12px] text-pink-900/80 dark:text-pink-300/80 leading-normal">
-                      Camera access is used to detect gameplay gestures, such as mouth-opening, required for the AR experience. Camera processing is performed in real time on your device. We do not record, store, upload, or share camera images, video, or facial geometry.
-                    </p>
-                  </div>
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-[#fff0f4] border border-[#fed7e2]/80 shadow-xs relative flex items-start gap-3 overflow-hidden">
+                {/* Camera icon badge */}
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#e11d48] text-white flex items-center justify-center flex-shrink-0 shadow-sm shadow-pink-500/20 mt-0.5">
+                  <Camera className="w-5 h-5" />
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0 pr-1">
+                  <h3 className="font-black text-[#831843] text-xs sm:text-sm mb-1 leading-snug">
+                    100% On-Device AR Face Tracking
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-[#754f5c] leading-relaxed">
+                    Camera feed is processed strictly in real-time on your device using Google MediaPipe.{' '}
+                    <strong className="text-[#9d174d] font-black">
+                      We NEVER record, store, transmit, or share your camera images or facial geometry.
+                    </strong>
+                  </p>
+                </div>
+
+                {/* Strawberry Popsicle Graphic */}
+                <div className="flex-shrink-0 self-center">
+                  <img
+                    src={`${basePath}/terms_sheet_popsicle.png`}
+                    alt="Popsicle"
+                    className="w-12 sm:w-14 h-auto object-contain pointer-events-none select-none drop-shadow-xs"
+                  />
                 </div>
               </div>
 
-              {/* INFORMATION WE COLLECT */}
-              <section className="space-y-2">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <Database className="w-3.5 h-3.5 text-pink-500" />
+              {/* Section 1: INFORMATION WE COLLECT */}
+              <section className="space-y-2.5 pt-1">
+                <div className="flex items-center space-x-1.5 text-[#8d7182] text-[11px] font-black uppercase tracking-wider">
+                  <Database className="w-3.5 h-3.5 text-[#ec4899]" />
                   <span>Information We Collect</span>
-                </h3>
-                <ul className="space-y-2 list-disc pl-4 text-[12px] text-slate-600 dark:text-slate-400">
-                  <li>
-                    <strong className="text-slate-900 dark:text-slate-200">Player Nickname:</strong> The name you enter may be displayed with your score on the public game leaderboard.
-                  </li>
-                  <li>
-                    <strong className="text-slate-900 dark:text-slate-200">Game Statistics:</strong> We may collect gameplay information such as scores, game duration, items caught, and session results.
-                  </li>
-                  <li>
-                    <strong className="text-slate-900 dark:text-slate-200">Technical Information:</strong> Limited technical information may be processed where necessary to operate, secure, and improve the game.
-                  </li>
-                  <li>
-                    <strong className="text-slate-900 dark:text-slate-200">No Contact Information Required:</strong> The game does not require you to provide a phone number, email address, or home address to play.
-                  </li>
-                </ul>
+                </div>
+
+                <div className="space-y-2.5 pl-0.5">
+                  {/* Row: Player Nickname */}
+                  <div className="flex items-start space-x-3">
+                    <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <User className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <strong className="block text-xs font-bold text-[#2e1017]">Player Nickname</strong>
+                      <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                        The name you enter to display on your high score and public leaderboard.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Row: Game Statistics */}
+                  <div className="flex items-start space-x-3">
+                    <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <BarChart2 className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <strong className="block text-xs font-bold text-[#2e1017]">Game Statistics</strong>
+                      <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                        Scores achieved, popsicles caught, and duration of gameplay sessions.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Row: No Contact Info Exposure */}
+                  <div className="flex items-start space-x-3">
+                    <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <EyeOff className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <strong className="block text-xs font-bold text-[#2e1017]">No Contact Info Exposure</strong>
+                      <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                        No personal contact numbers or private identifiers are displayed on the public leaderboard.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </section>
 
-              {/* CAMERA PERMISSIONS */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <Camera className="w-3.5 h-3.5 text-pink-500" />
-                  <span>Camera Permissions</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  Camera access is required only for AR gameplay features. You can deny or revoke camera permission through your browser or device settings. Some game features may not function without camera access.
-                </p>
+              {/* Divider */}
+              <hr className="border-t border-[#f3e3ec] my-1" />
+
+              {/* Section 2: CAMERA PERMISSIONS */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Lock className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      Camera Permissions
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      Camera permission is requested solely to detect mouth-opening gestures so you can catch falling virtual ice cream popsicles in augmented reality. You may revoke camera permissions at any time via your device settings.
+                    </p>
+                  </div>
+                </div>
               </section>
 
-              {/* DATA SECURITY */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-pink-500" />
-                  <span>Data Security</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  Reasonable technical and organizational measures are used to protect game data against unauthorized access, loss, alteration, or misuse. Internet communications are protected using secure HTTPS connections where supported.
-                </p>
+              {/* Divider */}
+              <hr className="border-t border-[#f3e3ec] my-1" />
+
+              {/* Section 3: DATA SECURITY & ENCRYPTION */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      Data Security &amp; Encryption
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      All communication between your device and our servers is secured using modern TLS 1.3/HTTPS encryption with HTTP Strict Transport Security (HSTS). We implement strict access controls and rate limiting to protect your information.
+                    </p>
+                  </div>
+                </div>
               </section>
 
-              {/* LEADERBOARD PRIVACY */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <EyeOff className="w-3.5 h-3.5 text-pink-500" />
-                  <span>Leaderboard Privacy</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  Your chosen nickname and game score may appear on the public leaderboard. Avoid using your full legal name, phone number, email address, or other sensitive information as your nickname.
-                </p>
-              </section>
-
-              {/* CHILDREN & SAFE USE */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Children &amp; Safe Use</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  Children should use the experience with appropriate parent or guardian supervision. Players should remain aware of their physical surroundings while using camera-based AR features.
-                </p>
+              {/* Section 4: CHILDREN & SAFE USE */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fef3c7] text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      Children &amp; Safe Surroundings
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      Children should use the experience with parent or guardian supervision. Always remain aware of your physical surroundings while playing in AR.
+                    </p>
+                  </div>
+                </div>
               </section>
 
               {/* Last Updated */}
-              <div className="pt-2 text-center">
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-                  Last updated: September 2026
+              <div className="pt-1 pb-1 text-center">
+                <span className="text-[10px] sm:text-[11px] text-[#9d808e] font-medium">
+                  Last updated: September 2026 • Elephant House Wonder AR
                 </span>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               {/* Highlight Card: Fair Play */}
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/80 dark:border-amber-900/50">
-                <div className="flex items-start space-x-3">
-                  <div className="p-2 rounded-xl bg-amber-500 text-slate-950 flex-shrink-0 mt-0.5">
-                    <Award className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-amber-950 dark:text-amber-200 text-sm mb-1">
-                      Fair Play &amp; Leaderboard Rules
-                    </h3>
-                    <p className="text-[12px] text-amber-900/80 dark:text-amber-300/80 leading-normal">
-                      The game is intended to be fun, fair, and competitive. Automated scripts, bots, modified clients, score manipulation, exploitation of vulnerabilities, or other methods of unfairly altering gameplay or leaderboard results are prohibited. Invalid or suspicious scores may be removed.
-                    </p>
-                  </div>
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-[#fff7ed] border border-amber-200/80 shadow-xs relative flex items-start gap-3 overflow-hidden">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm shadow-amber-500/20 mt-0.5">
+                  <Award className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0 pr-1">
+                  <h3 className="font-black text-amber-950 text-xs sm:text-sm mb-1 leading-snug">
+                    Fair Play &amp; Leaderboard Rules
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-amber-900/80 leading-relaxed">
+                    The game is intended to be fun, sweet, and competitive for everyone.{' '}
+                    <strong className="text-amber-950 font-black">
+                      Automated scripts, bots, score manipulation, or tampering are strictly prohibited.
+                    </strong>
+                  </p>
                 </div>
               </div>
 
-              {/* ACCEPTANCE OF TERMS */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-pink-500" />
-                  <span>Acceptance of Terms</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  By selecting &ldquo;I Understand &amp; Agree&rdquo; and accessing Elephant House Wonder AR, you agree to follow these Terms of Service and the Privacy Policy. If you do not agree, please do not continue to the game.
-                </p>
+              {/* Section: Acceptance of Terms */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      Acceptance of Terms
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      By selecting &ldquo;I Understand &amp; Agree&rdquo; and playing Elephant House Wonder AR, you agree to these Terms of Service and the Privacy Policy.
+                    </p>
+                  </div>
+                </div>
               </section>
 
-              {/* GAMEPLAY & ELIGIBILITY */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-pink-500" />
-                  <span>Gameplay &amp; Eligibility</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  Players must use the game only for its intended entertainment purpose. Where a player is a minor, participation should be subject to appropriate parent or guardian supervision or consent where required.
-                </p>
+              {/* Divider */}
+              <hr className="border-t border-[#f3e3ec] my-1" />
+
+              {/* Section: Intellectual Property */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Lock className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      Intellectual Property
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      All Elephant House trademarks, popsicle 3D models, branding, artwork, sound effects, and mascot designs are the intellectual property of Ceylon Cold Stores PLC.
+                    </p>
+                  </div>
+                </div>
               </section>
 
-              {/* INTELLECTUAL PROPERTY */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <Lock className="w-3.5 h-3.5 text-pink-500" />
-                  <span>Intellectual Property</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  All trademarks, logos, brand names, artwork, characters, designs, game content, and other assets remain the property of their respective owners. Unauthorized reproduction, modification, distribution, extraction, or commercial use is prohibited.
-                </p>
+              {/* Divider */}
+              <hr className="border-t border-[#f3e3ec] my-1" />
+
+              {/* Section: User Safety */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fef3c7] text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      User Safety &amp; Environment
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      Please play in a safe, well-lit area. Be mindful of obstacles, stairs, and people around you while interacting with AR face gestures.
+                    </p>
+                  </div>
+                </div>
               </section>
 
-              {/* USER SAFETY */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                  <span>User Safety</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  Play in a safe and well-lit environment. Remain aware of people, objects, traffic, steps, and other hazards around you while interacting with the augmented-reality experience.
-                </p>
-              </section>
+              {/* Divider */}
+              <hr className="border-t border-[#f3e3ec] my-1" />
 
-              {/* GAME AVAILABILITY */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-pink-500" />
-                  <span>Game Availability</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  The game may be temporarily unavailable due to maintenance, technical issues, updates, or other operational requirements. Features, gameplay mechanics, leaderboard rules, or availability may be updated when necessary.
-                </p>
-              </section>
-
-              {/* SCORE & ACCESS MANAGEMENT */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <Award className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Score &amp; Access Management</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  Scores obtained through suspected cheating, manipulation, technical exploitation, or violations of these terms may be removed. Access to the game may also be restricted where necessary to protect fair play, security, or other users.
-                </p>
-              </section>
-
-              {/* LIMITATION OF RESPONSIBILITY */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 text-pink-500" />
-                  <span>Limitation of Responsibility</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  Players are responsible for using the game safely and appropriately. To the extent permitted by applicable law, the operator is not responsible for losses resulting from misuse of the game or failure to follow the safety instructions provided.
-                </p>
-              </section>
-
-              {/* CHANGES TO THESE TERMS */}
-              <section className="space-y-1.5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                  <FileText className="w-3.5 h-3.5 text-pink-500" />
-                  <span>Changes to These Terms</span>
-                </h3>
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  These Terms and the Privacy Policy may be updated when the game, its technology, or applicable requirements change. The latest version should be made available through the game.
-                </p>
+              {/* Section: Game Availability */}
+              <section className="space-y-1.5 pt-0.5">
+                <div className="flex items-start space-x-3">
+                  <div className="w-7 h-7 rounded-full bg-[#fdebf3] text-[#ec4899] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <strong className="block text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8d7182] mb-0.5">
+                      Game Availability &amp; Modifications
+                    </strong>
+                    <p className="text-[11px] sm:text-xs text-[#6b5864] leading-relaxed">
+                      We strive to keep the game accessible at all times, though scheduled maintenance or feature upgrades may occur periodically.
+                    </p>
+                  </div>
+                </div>
               </section>
 
               {/* Last Updated */}
-              <div className="pt-2 text-center">
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-                  Last updated: September 2026
+              <div className="pt-1 pb-1 text-center">
+                <span className="text-[10px] sm:text-[11px] text-[#9d808e] font-medium">
+                  Last updated: September 2026 • Elephant House Wonder AR
                 </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer Action Button (Enhanced with safe-area-inset for mobile) */}
-        <div className="p-4 sm:p-5 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 flex flex-col items-center flex-shrink-0">
+        {/* Footer with Pastel Clouds Background & Berry Action Button */}
+        <div className="relative px-5 sm:px-7 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:pb-6 flex flex-col items-center justify-center flex-shrink-0 overflow-hidden select-none">
+          {/* Decorative Pink Clouds at Bottom Left and Right Corners */}
+          <div className="absolute -bottom-2 -left-4 w-36 h-24 pointer-events-none opacity-85">
+            <svg viewBox="0 0 160 110" fill="none" className="w-full h-full">
+              <circle cx="25" cy="95" r="45" fill="#fbcfe8" fillOpacity="0.55" />
+              <circle cx="75" cy="100" r="42" fill="#f472b6" fillOpacity="0.32" />
+              <circle cx="35" cy="65" r="38" fill="#fbcfe8" fillOpacity="0.48" />
+              <circle cx="-5" cy="45" r="35" fill="#fda4af" fillOpacity="0.4" />
+            </svg>
+          </div>
+          <div className="absolute -bottom-2 -right-4 w-36 h-24 pointer-events-none opacity-85">
+            <svg viewBox="0 0 160 110" fill="none" className="w-full h-full">
+              <circle cx="135" cy="95" r="45" fill="#fbcfe8" fillOpacity="0.55" />
+              <circle cx="85" cy="100" r="42" fill="#f472b6" fillOpacity="0.32" />
+              <circle cx="125" cy="65" r="38" fill="#fbcfe8" fillOpacity="0.48" />
+              <circle cx="165" cy="45" r="35" fill="#fda4af" fillOpacity="0.4" />
+            </svg>
+          </div>
+
+          {/* Action Button matching mockup berry plum pill */}
           <button
             type="button"
             onClick={handleClose}
-            className="w-full py-3 sm:py-3.5 px-6 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 hover:from-pink-500 hover:to-amber-400 text-white font-black rounded-2xl shadow-lg shadow-pink-500/25 active:scale-98 transition-all cursor-pointer text-sm flex items-center justify-center space-x-2"
+            className="relative z-10 w-full py-3.5 sm:py-4 px-6 bg-[#931b54] hover:bg-[#831843] active:bg-[#70133f] text-white font-black rounded-full shadow-[0_8px_25px_rgba(147,27,84,0.38)] active:scale-[0.98] transition-all cursor-pointer text-sm sm:text-base border border-white/25 flex items-center justify-center tracking-wide"
           >
-            <span>I Understand & Agree</span>
+            <span>I Understand &amp; Agree</span>
           </button>
-          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 font-medium select-none">
-            © Ceylon Cold Stores PLC • Elephant House Wonder AR
-          </span>
         </div>
 
       </div>

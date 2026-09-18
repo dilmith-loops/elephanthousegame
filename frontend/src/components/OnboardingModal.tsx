@@ -17,10 +17,10 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
   const [error, setError] = useState<string | null>(null);
   const [cachedPlayer, setCachedPlayer] = useState<Player | null>(null);
   const [showTermsSheet, setShowTermsSheet] = useState(false);
-  const [termsDefaultTab, setTermsDefaultTab] = useState<'privacy' | 'terms'>('terms');
+  const [termsDefaultTab, setTermsDefaultTab] = useState<'privacy' | 'terms'>('privacy');
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
-  const handleOpenTerms = (tab: 'privacy' | 'terms' = 'terms') => {
+  const handleOpenTerms = (tab: 'privacy' | 'terms' = 'privacy') => {
     setTermsDefaultTab(tab);
     setShowTermsSheet(true);
   };
@@ -239,7 +239,7 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
               >
                 <button
                   type="button"
-                  onClick={() => handleOpenTerms('terms')}
+                  onClick={() => handleOpenTerms('privacy')}
                   className="text-[11px] sm:text-xs font-bold text-white/90 hover:text-white underline underline-offset-2 decoration-white/70 hover:decoration-white transition-all active:scale-95 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] py-0.5 px-3"
                 >
                   Terms of use
