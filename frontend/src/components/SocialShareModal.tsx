@@ -148,9 +148,23 @@ export default function SocialShareModal({
     trackGAEvent('share', { method: 'whatsapp', content_type: format, score: score });
     try {
       copyCaptionToClipboard(cardResult.shareText);
+      const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
+
+      if (hasNativeShare) {
+        showToast('💬 Select WhatsApp to share your score card photo & message!', 'success', 5000);
+        const shared = await shareViaNative(cardResult.file, {
+          text: cardResult.shareText,
+          title: 'Elephant House AR Catch'
+        });
+        if (shared) return;
+      }
+
+      // Fallback for desktop or non-file-sharing browsers:
+      // Download the score card image so user has the photo, copy caption, then open WhatsApp
+      downloadScoreCard(cardResult.blob, score, format);
+      showToast('📸 Score card downloaded & caption copied! Select photo in WhatsApp.', 'success', 6000);
       const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(cardResult.shareText)}`;
       window.open(waUrl, '_blank', 'noopener,noreferrer');
-      showToast('💬 Opening WhatsApp with your high score challenge!');
     } catch (err) {
       console.error('WhatsApp share error:', err);
     } finally {
@@ -173,8 +187,18 @@ export default function SocialShareModal({
     setActiveAction('system');
     trackGAEvent('share', { method: 'native_options', content_type: format, score: score });
     try {
-      await copyCaptionToClipboard(cardResult.shareText);
-      await shareViaNative(cardResult.file, { filesOnly: true });
+      copyCaptionToClipboard(cardResult.shareText);
+      const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
+
+      if (hasNativeShare) {
+        await shareViaNative(cardResult.file, {
+          text: cardResult.shareText,
+          title: 'Elephant House AR Catch'
+        });
+      } else {
+        downloadScoreCard(cardResult.blob, score, format);
+        showToast('📸 Score card downloaded & caption copied!', 'success');
+      }
     } catch (err) {
       console.error('System share error:', err);
     } finally {
