@@ -201,36 +201,36 @@ export default function TermsPrivacySheet({
         </div>
 
         {/* Header Bar */}
-        <div
-          className="flex items-center justify-between px-5 sm:px-7 pt-1 pb-3.5 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 touch-none select-none"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-between px-5 sm:px-7 pb-3.5 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 select-none">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-500 p-0.5 shadow-md shadow-pink-500/25 flex items-center justify-center flex-shrink-0">
               <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[14px] flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5 text-pink-600 dark:text-pink-400" />
               </div>
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h2
                 id="terms-privacy-title"
-                className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight"
+                className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate"
               >
                 Terms & Privacy Policy
               </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
-                Elephant House Wonder AR Experience • Ceylon Cold Stores PLC
-              </p>
             </div>
           </div>
 
           <button
             type="button"
-            onClick={handleClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClose();
+            }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              handleClose();
+            }}
             aria-label="Close"
-            className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 flex-shrink-0"
+            className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 flex-shrink-0 ml-3"
           >
             <X className="w-4 h-4" />
           </button>
