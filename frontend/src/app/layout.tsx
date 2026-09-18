@@ -66,13 +66,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <head>
+      <body className={`${outfit.className} antialiased bg-slate-950 text-slate-100 min-h-screen`}>
         {/* Google tag (gtag.js) - Google Analytics 4 */}
         <script
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-E5F9K3PN4W"
         />
         <script
+          id="ga-inline"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
@@ -84,8 +85,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className={`${outfit.className} antialiased bg-slate-950 text-slate-100 min-h-screen`}>
         <SecurityShield />
         {children}
       </body>
