@@ -388,7 +388,7 @@ class AdminController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:100',
-            'mobile' => 'required|string|max:20|unique:users,mobile,' . $id,
+            'mobile' => 'nullable|string|max:20' . ($request->filled('mobile') ? '|unique:users,mobile,' . $id : ''),
             'email' => 'nullable|email|max:100',
         ]);
 
@@ -401,12 +401,17 @@ class AdminController extends Controller
         }
 
         $user->name = $request->name;
-        $user->mobile = $request->mobile;
-        $user->email = $request->email ? strtolower($request->email) : null;
+        if ($request->has('mobile')) {
+            $user->mobile = $request->filled('mobile') ? $request->mobile : null;
+        }
+        if ($request->has('email')) {
+            $user->email = $request->filled('email') ? strtolower($request->email) : null;
+        }
         $user->save();
 
         // Audit Log
-        AdminLog::record($admin, 'update_player', "Updated player details for {$user->name} ({$user->mobile})", $request);
+        $userMobileStr = $user->mobile ? " ({$user->mobile})" : "";
+        AdminLog::record($admin, 'update_player', "Updated player details for {$user->name}{$userMobileStr}", $request);
 
         return response()->json([
             'success' => true,
@@ -431,14 +436,14 @@ class AdminController extends Controller
         }
 
         $userName = $user->name;
-        $userMobile = $user->mobile;
+        $userMobileStr = $user->mobile ? " ({$user->mobile})" : "";
 
         // Delete associated scores
         Score::where('user_id', $id)->delete();
         $user->delete();
 
         // Audit Log
-        AdminLog::record($admin, 'delete_player', "Deleted player {$userName} ({$userMobile}) and all score records", $request);
+        AdminLog::record($admin, 'delete_player', "Deleted player {$userName}{$userMobileStr} and all score records", $request);
 
         return response()->json([
             'success' => true,

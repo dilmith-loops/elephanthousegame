@@ -266,7 +266,7 @@ export const api = {
   // Admin: Update Registered Player
   async updatePlayerUser(id: number, payload: {
     name: string;
-    mobile: string;
+    mobile?: string;
     email?: string | null;
   }): Promise<{ success: boolean; message: string; user: Player }> {
     const token = localStorage.getItem('eh_admin_token');

@@ -43,7 +43,6 @@ import {
   Shield,
   UserCog,
   Pencil,
-  Phone,
   Sparkles,
   Plus,
   Upload,
@@ -138,8 +137,6 @@ export default function AdminPage() {
   // Player Edit & Delete States
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [editPlayerName, setEditPlayerName] = useState('');
-  const [editPlayerMobile, setEditPlayerMobile] = useState('');
-  const [editPlayerEmail, setEditPlayerEmail] = useState('');
   const [isUpdatingPlayer, setIsUpdatingPlayer] = useState(false);
   const [playerEditMsg, setPlayerEditMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [deletingPlayerId, setDeletingPlayerId] = useState<number | null>(null);
@@ -694,8 +691,6 @@ export default function AdminPage() {
   const handleOpenEditPlayer = (player: Player) => {
     setEditingPlayer(player);
     setEditPlayerName(player.name);
-    setEditPlayerMobile(player.mobile || '');
-    setEditPlayerEmail(player.email || '');
     setPlayerEditMsg(null);
   };
 
@@ -708,8 +703,7 @@ export default function AdminPage() {
     try {
       setIsUpdatingPlayer(true);
       const res = await api.updatePlayerUser(editingPlayer.id, {
-        name: editPlayerName.trim(),
-        mobile: editPlayerMobile.trim()
+        name: editPlayerName.trim()
       });
       setPlayerEditMsg({ type: 'success', text: res.message || 'Player updated successfully!' });
       loadTabData();
@@ -2738,23 +2732,6 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Mobile Number
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="tel"
-                    value={editPlayerMobile}
-                    onChange={(e) => setEditPlayerMobile(e.target.value)}
-                    required
-                    placeholder="07XXXXXXXX"
-                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500 font-mono"
-                  />
-                </div>
-              </div>
-
               <div className="grid grid-cols-2 gap-3 pt-3">
                 <button
                   type="button"
@@ -3048,8 +3025,8 @@ export default function AdminPage() {
               </h2>
               <p className="text-xs text-slate-300 mt-2 leading-relaxed">
                 Are you sure you want to permanently delete player{' '}
-                <strong className="text-white">"{playerToDelete.name}"</strong>{' '}
-                <span className="font-mono text-slate-400">({playerToDelete.mobile})</span>?
+                <strong className="text-white">"{playerToDelete.name}"</strong>
+                {playerToDelete.mobile && <span className="font-mono text-slate-400"> ({playerToDelete.mobile})</span>}?
               </p>
             </div>
 
