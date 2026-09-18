@@ -11,7 +11,11 @@ export function getApiBaseUrl(): string {
     if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(hostname)) {
       return `http://${hostname}:8008/api`;
     }
-    // Production domain on cPanel/Hostinger (e.g., https://ehwonderonline.com/arwonder/api)
+    // Subdomain deployment (e.g., https://arcatch.ehwonderonline.com/api)
+    if (hostname.startsWith('arcatch.')) {
+      return `${window.location.origin}/api`;
+    }
+    // Production domain on cPanel/Hostinger subfolder (e.g., https://ehwonderonline.com/arwonder/api)
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/arwonder';
     return `${window.location.origin}${basePath}/api`;
   }
