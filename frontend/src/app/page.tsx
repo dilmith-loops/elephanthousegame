@@ -6,14 +6,22 @@ import { api } from '../lib/api';
 import OnboardingModal from '../components/OnboardingModal';
 import GameCanvas from '../components/GameCanvas';
 import LeaderboardModal from '../components/LeaderboardModal';
+import SocialShareModal from '../components/SocialShareModal';
 import { RefreshCw, Clock } from 'lucide-react';
 
 export default function HomePage() {
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showTestShare, setShowTestShare] = useState(false);
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState<string>('');
   const [checkingStatus, setCheckingStatus] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('testShare')) {
+      setShowTestShare(true);
+    }
+  }, []);
 
   // Check Game Status / Maintenance Mode on Mount
   const checkStatus = async () => {
@@ -223,6 +231,20 @@ export default function HomePage() {
       {/* Leaderboard Modal */}
       {showLeaderboard && (
         <LeaderboardModal onClose={() => setShowLeaderboard(false)} />
+      )}
+
+      {/* Social Share Modal */}
+      {showTestShare && (
+        <SocialShareModal
+          isOpen={true}
+          onClose={() => setShowTestShare(false)}
+          playerName="Dilmith Ranasinghe"
+          score={401}
+          catches={28}
+          maxCombo={8}
+          durationSeconds={45}
+          rank={1}
+        />
       )}
     </main>
   );

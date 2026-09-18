@@ -29,6 +29,7 @@ import {
   Clock
 } from 'lucide-react';
 import { generateAndShareScoreCard } from '../lib/shareCard';
+import SocialShareModal from './SocialShareModal';
 import StopwatchTimer from './StopwatchTimer';
 
 function SoftServeIcon({ className = 'w-6 h-6 sm:w-7 sm:h-7' }: { className?: string }) {
@@ -205,6 +206,7 @@ export default function GameCanvas({
   const [isTabHidden, setIsTabHidden] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const [showSocialShareModal, setShowSocialShareModal] = useState(false);
   const [timerConfig, setTimerConfig] = useState<{ duration: number; enabled: boolean }>({ duration: 60, enabled: true });
   const [timeLeft, setTimeLeft] = useState<number>(60);
   const timeLeftRef = useRef<number>(60);
@@ -1595,49 +1597,11 @@ export default function GameCanvas({
               {/* Share Score Card to Socials Button */}
               <button
                 type="button"
-                onClick={async () => {
-                  if (isSharing) return;
-                  setIsSharing(true);
-                  setShareFeedback(null);
-                  try {
-                    const res = await generateAndShareScoreCard({
-                      playerName: player.name,
-                      score,
-                      catches,
-                      maxCombo,
-                      durationSeconds: gameDuration,
-                      rank: submissionResult?.rank
-                    });
-                    if (res.success) {
-                      setShareFeedback(res.mode === 'shared' ? 'Shared to socials!' : 'Score Card saved to photos!');
-                      setTimeout(() => setShareFeedback(null), 3500);
-                    }
-                  } catch {
-                    setShareFeedback('Could not share score card');
-                    setTimeout(() => setShareFeedback(null), 3000);
-                  } finally {
-                    setIsSharing(false);
-                  }
-                }}
-                disabled={isSharing}
-                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#b21f85] via-[#c22d95] to-[#8d1468] hover:from-[#c22d95] hover:to-[#b21f85] text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-[#b21f85]/30 border border-white/25 flex items-center justify-center space-x-2 transition-all active:scale-98 cursor-pointer disabled:opacity-50"
+                onClick={() => setShowSocialShareModal(true)}
+                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#b21f85] via-[#c22d95] to-[#8d1468] hover:from-[#c22d95] hover:to-[#b21f85] text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-[#b21f85]/30 border border-white/25 flex items-center justify-center space-x-2 transition-all active:scale-98 cursor-pointer"
               >
-                {isSharing ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Generating Branded Score Post...</span>
-                  </>
-                ) : shareFeedback ? (
-                  <>
-                    <Check className="w-4 h-4 text-emerald-300" />
-                    <span className="text-emerald-300">{shareFeedback}</span>
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="w-4 h-4" />
-                    <span>Share Score Post to Socials</span>
-                  </>
-                )}
+                <Share2 className="w-4 h-4" />
+                <span>Share Score Post & Stories</span>
               </button>
 
               {/* Switch Player Button */}
@@ -1730,6 +1694,18 @@ export default function GameCanvas({
           </div>
         </div>
       )}
+
+      {/* Social Share Modal (Story & Post formats, Auto-Copied Caption, IG/FB Direct Sharing) */}
+      <SocialShareModal
+        isOpen={showSocialShareModal}
+        onClose={() => setShowSocialShareModal(false)}
+        playerName={player.name}
+        score={score}
+        catches={catches}
+        maxCombo={maxCombo}
+        durationSeconds={gameDuration}
+        rank={submissionResult?.rank}
+      />
     </div>
   );
 }
