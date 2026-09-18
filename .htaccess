@@ -1,39 +1,43 @@
 # Directory Index configuration for LiteSpeed & Apache
 DirectoryIndex index.html index.php
-Options -Indexes
+Options -Indexes +FollowSymLinks
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /arwonder/
 
     # Custom 404 Error Document
-    ErrorDocument 404 /arwonder/404.html
+    ErrorDocument 404 /404.html
 
     # Block access to hidden and sensitive files
     RewriteRule (^|/)(\.git|\.env|\.htaccess|\.env\..*|\.cpanel\.ya?ml) - [F,L]
     RewriteRule ^\.well-known/ - [L]
 
-    # 1. Forward all API requests directly to Laravel Backend
+    # Subdomain support: strip /arwonder/ prefix if requested on subdomain (arcatch.ehwonderonline.com)
+    RewriteCond %{HTTP_HOST} ^arcatch\. [NC]
+    RewriteRule ^arwonder/(.*)$ $1 [L]
+
+    # 1. Forward all API requests directly to Laravel Backend Router
     RewriteCond %{REQUEST_URI} api/ [NC]
-    RewriteRule ^(.*)$ /arwonder/index.php [L,QSA]
+    RewriteRule ^(.*)$ index.php [L,QSA]
 
     # 2. Forward uploaded media files to backend public storage
-    RewriteRule ^uploads/(.*)$ /arwonder/backend/public/uploads/$1 [L]
+    RewriteRule ^uploads/(.*)$ backend/public/uploads/$1 [L]
 
     # 3. Route static Next.js assets if they are requested with legacy prefix
-    RewriteRule ^frontend/out/(.*)$ /arwonder/$1 [L,R=301]
+    RewriteRule ^frontend/out/(.*)$ $1 [L,R=301]
 
     # 4. If physical file or directory exists, serve it directly
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^.*$ - [L]
 
-    # 5. LiteSpeed subfolder resolution fallback for physical files
-    RewriteCond %{DOCUMENT_ROOT}/arwonder/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/arwonder/$1 -d
-    RewriteRule ^(.*)$ - [L]
+    # 5. Client-side route fallback for subdomain (arcatch.ehwonderonline.com)
+    RewriteCond %{HTTP_HOST} ^arcatch\. [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^.*$ /index.html [L]
 
-    # 6. Client-side route fallback to root index.html
+    # 6. Client-side route fallback for subfolder (ehwonderonline.com/arwonder/)
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^.*$ /arwonder/index.html [L]
