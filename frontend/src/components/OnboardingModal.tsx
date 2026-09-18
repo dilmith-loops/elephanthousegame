@@ -170,18 +170,25 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
                 {/* Player Name Input: Seamless transparent overlay over the artwork's 3D pill */}
                 <div
                   className="absolute pointer-events-auto flex items-center justify-center"
-                  style={{ left: '16.67%', top: '63.67%', width: '66.32%', height: '7.81%' }}
+                  style={{ left: '15.63%', top: '65.04%', width: '68.32%', height: '5.76%' }}
                 >
                   <input
                     type="text"
-                    name="name"
+                    id="player-name-input"
+                    name="playerName"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your name..."
                     maxLength={30}
                     required
-                    autoComplete="name"
-                    className="w-full h-full bg-transparent text-[#701047] font-black text-sm sm:text-base md:text-lg rounded-full px-5 shadow-none border-0 outline-none focus:outline-none transition-all placeholder:text-pink-300 placeholder:font-bold text-center selection:bg-pink-300 selection:text-pink-950"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="words"
+                    spellCheck={false}
+                    className="onboarding-name-input w-full h-full bg-transparent text-[#701047] font-black text-[16px] sm:text-base md:text-lg rounded-full px-5 shadow-none border-0 outline-none focus:outline-none focus:ring-0 transition-all placeholder:text-pink-300 placeholder:font-bold text-center selection:bg-pink-300 selection:text-pink-950"
+                    style={{
+                      WebkitTextFillColor: '#701047',
+                    }}
                   />
                 </div>
 

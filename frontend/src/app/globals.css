@@ -36,6 +36,18 @@
     -ms-user-select: text;
     user-select: text;
   }
+
+  /* Prevent browser autofill from turning inputs blue/yellow and altering text color on mobile */
+  .onboarding-name-input:-webkit-autofill,
+  .onboarding-name-input:-webkit-autofill:hover, 
+  .onboarding-name-input:-webkit-autofill:focus, 
+  .onboarding-name-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #feeffa inset !important;
+    box-shadow: 0 0 0 1000px #feeffa inset !important;
+    -webkit-text-fill-color: #701047 !important;
+    caret-color: #701047 !important;
+    transition: background-color 50000s ease-in-out 0s !important;
+  }
 }
 
 /* Custom Animations */
