@@ -6,7 +6,7 @@
     Options -Indexes
 
     # Custom 404 Error Document (relative fallback)
-    ErrorDocument 404 /frontend/out/404.html
+    ErrorDocument 404 /arwonder/frontend/out/404.html
 
     # Block access to hidden files and sensitive directories (.git, .env, etc.)
     RewriteRule (^|/)(\.git|\.env|\.htaccess|\.env\..*) - [F,L]
@@ -38,6 +38,8 @@
     RewriteRule ^$ frontend/out/index.html [L]
 
     # 5. General fallback: if file exists inside frontend/out/, serve it
+    RewriteCond %{DOCUMENT_ROOT}/arwonder/frontend/out/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/public_html/arwonder/frontend/out/$1 -f [OR]
     RewriteCond %{DOCUMENT_ROOT}/frontend/out/$1 -f [OR]
     RewriteCond %{DOCUMENT_ROOT}/public_html/frontend/out/$1 -f [OR]
     RewriteCond %{DOCUMENT_ROOT}/elephanthousegame/frontend/out/$1 -f [OR]

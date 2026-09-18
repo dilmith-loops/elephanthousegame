@@ -344,7 +344,7 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
   const bottomY = isStory ? height - 120 : height - 55;
   ctx.font = '800 22px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
   ctx.fillStyle = '#334155';
-  ctx.fillText('Play & Challenge Friends at: ai.loopsintegrated.co', width / 2, bottomY);
+  ctx.fillText('Play & Challenge Friends at: ehwonderonline.com/arwonder', width / 2, bottomY);
 
   if (isStory) {
     ctx.font = '700 20px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
@@ -362,8 +362,8 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
   });
 
   const shareUrl = typeof window !== 'undefined' && window.location.origin
-    ? window.location.origin + (process.env.NEXT_PUBLIC_BASE_PATH || '')
-    : 'https://ai.loopsintegrated.co';
+    ? `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH || '/arwonder'}`
+    : 'https://ehwonderonline.com/arwonder';
 
   const shareText = `🍦 I just scored ${data.score} marks catching popsicles on the Elephant House Wonder AR Catch Game! Can you beat my high score? 🏆\n\nPlay now: ${shareUrl}\n#ElephantHouse #WonderIceCream #ARTongueCatch`;
 

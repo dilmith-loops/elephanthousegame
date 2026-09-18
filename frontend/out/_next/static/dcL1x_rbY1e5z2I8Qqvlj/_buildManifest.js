@@ -3,8 +3,8 @@ self.__BUILD_MANIFEST = {
     "afterFiles": [],
     "beforeFiles": [
       {
-        "source": "/ElephantHouseGame//_next/:path+",
-        "destination": "/ElephantHouseGame/_next/:path+"
+        "source": "/arwonder//_next/:path+",
+        "destination": "/arwonder/_next/:path+"
       }
     ],
     "fallback": []

@@ -8,10 +8,10 @@ const outfit = Outfit({
   weight: ['400', '500', '600', '700', '800', '900']
 });
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH !== undefined ? process.env.NEXT_PUBLIC_BASE_PATH : '/arwonder';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://ai.loopsintegrated.co'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://ehwonderonline.com'),
   title: 'Elephant House Ice Cream | AR Tongue Catch Game',
   description: 'Catch delicious Elephant House ice cream popsicles with your mouth and tongue! Score marks and climb the leaderboard in this interactive AR camera game.',
   keywords: ['Elephant House', 'Ice Cream', 'Popsicle Game', 'AR Game', 'Tongue Catch', 'Sri Lanka'],
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     title: 'Elephant House AR Tongue Catch Game',
     description: 'Catch delicious falling popsicles with your tongue and win marks!',
     type: 'website',
-    url: 'https://ai.loopsintegrated.co/ElephantHouseGame/',
+    url: 'https://ehwonderonline.com/arwonder/',
     siteName: 'Elephant House Wonder Game',
     images: [
       {

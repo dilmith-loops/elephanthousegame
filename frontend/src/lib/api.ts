@@ -11,8 +11,8 @@ export function getApiBaseUrl(): string {
     if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(hostname)) {
       return `http://${hostname}:8008/api`;
     }
-    // Production domain on Hostinger (e.g., https://ai.loopsintegrated.co/ElephantHouseGame/api)
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/ElephantHouseGame';
+    // Production domain on cPanel/Hostinger (e.g., https://ehwonderonline.com/arwonder/api)
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/arwonder';
     return `${window.location.origin}${basePath}/api`;
   }
   return 'http://127.0.0.1:8008/api';

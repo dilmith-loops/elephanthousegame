@@ -39,36 +39,31 @@ Before deploying, ensure the following in your cPanel dashboard:
 
 ---
 
-## 🚀 Step-by-Step Git Deployment
+## 🚀 Step-by-Step Git Deployment for `https://ehwonderonline.com/arwonder/`
 
 ### Option A: Using cPanel Git™ Version Control (Recommended UI Method)
 
-1. Log in to your **cPanel** account.
+1. Log in to your **cPanel** account for `ehwonderonline.com`.
 2. In the **Files** section, click **Git™ Version Control**.
 3. Click the blue **Create** button in the top right.
 4. Fill in the repository details:
    * **Clone URL**: `https://github.com/dilmith-loops/elephanthousegame.git`
-   * **Repository Path**:
-     - For primary domain root: `public_html` (Note: `public_html` must be empty or you can clone into a subfolder).
-     - For subdomain or subfolder: `public_html/elephanthousegame` or `subdomains/game`.
-   * **Repository Name**: `elephanthousegame`
-5. Click **Create**. cPanel will clone the repository from GitHub.
+   * **Repository Path**: `public_html/arwonder`
+   * **Repository Name**: `arwonder`
+5. Click **Create**. cPanel will clone the repository directly into `public_html/arwonder`.
 
 ---
 
 ### Option B: Using cPanel Terminal / SSH (Fastest Method)
 
-If your cPanel has the **Terminal** tool enabled:
+If your cPanel has the **Terminal** tool:
 
 ```bash
-# 1. Navigate to your web root
-cd ~
-# If deploying directly to public_html:
-git clone https://github.com/dilmith-loops/elephanthousegame.git public_html
+# 1. Navigate to public_html
+cd ~/public_html
 
-# OR if public_html already exists and is empty:
-cd public_html
-git clone https://github.com/dilmith-loops/elephanthousegame.git .
+# 2. Clone repository into the 'arwonder' subfolder:
+git clone https://github.com/dilmith-loops/elephanthousegame.git arwonder
 ```
 
 ---
