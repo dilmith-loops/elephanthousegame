@@ -6,10 +6,12 @@ import {
   Check,
   Download,
   Share2,
-  Sparkles,
   ExternalLink,
   MessageCircle,
-  AlertCircle
+  AlertCircle,
+  Smartphone,
+  Image as ImageIcon,
+  ChevronRight
 } from 'lucide-react';
 import {
   ScoreCardData,
@@ -46,6 +48,8 @@ export default function SocialShareModal({
   const [cardResult, setCardResult] = useState<GeneratedCardResult | null>(null);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
   const [activeAction, setActiveAction] = useState<string | null>(null);
+
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
   const showToast = useCallback((text: string, type: 'success' | 'info' = 'success', duration = 4000) => {
     setToastMessage({ text, type });
@@ -90,18 +94,13 @@ export default function SocialShareModal({
     if (!cardResult) return;
     setActiveAction('instagram');
     try {
-      // Step 1: Copy caption synchronously on immediate user gesture
       copyCaptionToClipboard(cardResult.shareText);
-
-      // Step 2: On mobile, Web Share with ONLY the image file forces Instagram
-      // to open the Photo/Story Composer with the card image attached.
       const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
 
       if (hasNativeShare) {
         showToast('📋 Caption copied! Select Instagram > Post/Story, then tap PASTE!', 'success', 6000);
         await shareViaNative(cardResult.file, { filesOnly: true });
       } else {
-        // Desktop or unsupported browser fallback: download image and prompt
         downloadScoreCard(cardResult.blob, score, format);
         showToast('📸 Card downloaded & caption copied! Upload to Instagram and paste caption.', 'success', 6000);
         setTimeout(() => {
@@ -120,18 +119,13 @@ export default function SocialShareModal({
     if (!cardResult) return;
     setActiveAction('facebook');
     try {
-      // Step 1: Copy caption synchronously on immediate user gesture
       copyCaptionToClipboard(cardResult.shareText);
-
-      // Step 2: On mobile, passing ONLY the image file ensures the Facebook iOS/Android app
-      // opens its Photo Composer or Story Composer with the image attached.
       const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
 
       if (hasNativeShare) {
         showToast('📋 Caption copied! In Facebook, tap "Say something about this photo..." and tap PASTE!', 'success', 6000);
         await shareViaNative(cardResult.file, { filesOnly: true });
       } else {
-        // Fallback for desktop: download card image and open Facebook Web Sharer
         downloadScoreCard(cardResult.blob, score, format);
         showToast('📸 Score card downloaded & caption copied! Open Facebook to post.', 'success', 6000);
         const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(cardResult.shareUrl)}`;
@@ -142,15 +136,6 @@ export default function SocialShareModal({
     } finally {
       setActiveAction(null);
     }
-  };
-
-  // 2b. Facebook Web Link Share (Banner & Web Link)
-  const handleFacebookLinkShare = () => {
-    if (!cardResult) return;
-    copyCaptionToClipboard(cardResult.shareText);
-    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(cardResult.shareUrl)}`;
-    window.open(fbUrl, '_blank', 'width=626,height=500,noopener,noreferrer');
-    showToast('👥 Facebook opened! Caption copied to paste.', 'success');
   };
 
   // 3. WhatsApp Sharing
@@ -174,7 +159,7 @@ export default function SocialShareModal({
     if (!cardResult) return;
     downloadScoreCard(cardResult.blob, score, format);
     copyCaptionToClipboard(cardResult.shareText);
-    showToast('⬇️ High-resolution score card saved to your downloads!');
+    showToast('⬇️ High-resolution score card saved to your photos!');
   };
 
   // 5. System More Options
@@ -192,7 +177,7 @@ export default function SocialShareModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
       {/* Background click dismiss */}
       <div className="absolute inset-0" onClick={onClose} />
 
@@ -201,22 +186,22 @@ export default function SocialShareModal({
         role="dialog"
         aria-modal="true"
         aria-label="Share Score to Socials"
-        className="relative z-10 w-full max-w-lg bg-slate-900/95 rounded-[32px] sm:rounded-[36px] border border-pink-500/30 text-white shadow-2xl flex flex-col max-h-[92vh] overflow-hidden select-none animate-in zoom-in-95 duration-200"
+        className="relative z-10 w-full max-w-[460px] bg-gradient-to-b from-[#FFF5F8] via-[#FFFFFF] to-[#FFF5F8] rounded-[36px] border-2 border-pink-100 shadow-2xl flex flex-col max-h-[94vh] overflow-hidden select-none animate-in zoom-in-95 duration-200"
       >
         {/* Floating Toast Notification */}
         {toastMessage && (
-          <div className="absolute top-4 inset-x-4 z-40 flex items-center justify-center pointer-events-none animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="absolute top-4 inset-x-4 z-50 flex items-center justify-center pointer-events-none animate-in fade-in slide-in-from-top-2 duration-200">
             <div
               className={`px-4 py-2.5 rounded-2xl shadow-xl text-xs sm:text-sm font-bold flex items-center space-x-2 border pointer-events-auto backdrop-blur-md ${
                 toastMessage.type === 'success'
-                  ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500/50 shadow-emerald-900/40'
-                  : 'bg-amber-950/90 text-amber-200 border-amber-500/50 shadow-amber-900/40'
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-emerald-900/10'
+                  : 'bg-amber-50 text-amber-800 border-amber-300 shadow-amber-900/10'
               }`}
             >
               {toastMessage.type === 'success' ? (
-                <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               ) : (
-                <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
               )}
               <span>{toastMessage.text}</span>
             </div>
@@ -224,78 +209,97 @@ export default function SocialShareModal({
         )}
 
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 pb-3 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-pink-950/40 via-purple-950/20 to-transparent">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#b21f85] to-[#f43f5e] p-0.5 shadow-md flex items-center justify-center">
-              <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
-              </div>
-            </div>
-            <div>
-              <h2 className="text-lg sm:text-xl font-black bg-gradient-to-r from-white via-pink-100 to-amber-200 bg-clip-text text-transparent leading-tight">
-                Share High Score
-              </h2>
-              <p className="text-[11px] sm:text-xs text-pink-300/80 font-bold">
-                {playerName} • {score.toLocaleString()} Marks
-              </p>
-            </div>
-          </div>
-
+        <div className="relative pt-6 px-5 sm:px-6 pb-2">
+          {/* Close Button */}
           <button
             onClick={onClose}
             aria-label="Close"
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+            className="absolute top-4 right-4 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white shadow-md border border-pink-100 text-[#E91E63] hover:text-[#C2185B] hover:scale-105 active:scale-95 flex items-center justify-center transition-all cursor-pointer"
           >
-            <X className="w-4 h-4 stroke-[2.5]" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3]" />
+          </button>
+
+          {/* Top Mascot Chibi Artwork */}
+          <div className="absolute right-3 bottom-0 w-36 sm:w-44 pointer-events-none select-none">
+            <img
+              src={`${basePath}/share_mascot_chibi.png`}
+              alt="Chibi Mascot"
+              className="w-full h-auto object-contain block drop-shadow-sm"
+            />
+          </div>
+
+          {/* Header Title & Subtitle */}
+          <div className="relative z-10 max-w-[240px] sm:max-w-[270px]">
+            <div className="flex items-center space-x-1.5 mb-1">
+              <span className="text-amber-400 text-sm">✨</span>
+              <span className="text-amber-300 text-xs">⭐</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-[#481628] leading-[1.08] tracking-tight">
+              Share Your
+            </h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-[#E91E63] leading-[1.08] tracking-tight">
+              High Score!
+            </h2>
+            <p className="text-xs sm:text-sm font-bold text-[#8C6D7D] mt-1.5 leading-snug">
+              Show off your sweet skills!
+            </p>
+          </div>
+        </div>
+
+        {/* Format Selector (Story vs Post) */}
+        <div className="mx-4 sm:mx-6 mt-2 mb-1 p-1 bg-[#FDF0F5] rounded-full border border-pink-200/60 flex items-center shadow-inner">
+          <button
+            type="button"
+            onClick={() => setFormat('story')}
+            className={`flex-1 py-1.5 sm:py-2 px-3 rounded-full text-xs font-black transition-all flex items-center justify-center space-x-1.5 sm:space-x-2 cursor-pointer ${
+              format === 'story'
+                ? 'bg-white text-[#E91E63] shadow-sm border border-pink-200/80'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Smartphone className={`w-4 h-4 flex-shrink-0 ${format === 'story' ? 'text-[#E91E63]' : 'text-slate-400'}`} />
+            <div className="flex flex-col text-left leading-tight">
+              <span className="font-extrabold text-[11px] sm:text-xs">Story (9:16)</span>
+              <span className={`text-[9px] sm:text-[10px] font-semibold ${format === 'story' ? 'text-pink-400' : 'text-slate-400'}`}>
+                IG & FB Stories
+              </span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFormat('post')}
+            className={`flex-1 py-1.5 sm:py-2 px-3 rounded-full text-xs font-black transition-all flex items-center justify-center space-x-1.5 sm:space-x-2 cursor-pointer ${
+              format === 'post'
+                ? 'bg-white text-[#E91E63] shadow-sm border border-pink-200/80'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <ImageIcon className={`w-4 h-4 flex-shrink-0 ${format === 'post' ? 'text-[#E91E63]' : 'text-slate-400'}`} />
+            <div className="flex flex-col text-left leading-tight">
+              <span className="font-extrabold text-[11px] sm:text-xs">Feed Post (4:5)</span>
+              <span className={`text-[9px] sm:text-[10px] font-semibold ${format === 'post' ? 'text-pink-400' : 'text-slate-400'}`}>
+                Instagram & Facebook
+              </span>
+            </div>
           </button>
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 pr-3.5 scrollbar-thin scrollbar-thumb-pink-500/30 scrollbar-track-transparent">
-          {/* Format Selector (Story vs Post) */}
-          <div className="flex items-center justify-center space-x-2 bg-slate-800/80 p-1.5 rounded-2xl border border-white/10">
-            <button
-              type="button"
-              onClick={() => setFormat('story')}
-              className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
-                format === 'story'
-                  ? 'bg-gradient-to-r from-[#b21f85] to-[#e11d48] text-white shadow-md shadow-pink-600/30 scale-[1.02]'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <span>📱</span>
-              <span>Story (9:16)</span>
-              <span className="text-[10px] opacity-75 hidden sm:inline">• IG & FB Stories</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFormat('post')}
-              className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
-                format === 'post'
-                  ? 'bg-gradient-to-r from-[#b21f85] to-[#e11d48] text-white shadow-md shadow-pink-600/30 scale-[1.02]'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <span>🖼️</span>
-              <span>Feed Post (4:5)</span>
-              <span className="text-[10px] opacity-75 hidden sm:inline">• Grid Post</span>
-            </button>
-          </div>
-
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-2 space-y-3.5 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent">
           {/* Interactive Card Preview */}
-          <div className="relative rounded-2xl bg-black/40 border border-white/10 p-2 sm:p-3 flex flex-col items-center justify-center overflow-hidden">
+          <div className="rounded-[28px] bg-gradient-to-b from-[#FCE4EC]/70 via-[#F8BBD0]/35 to-[#FCE4EC]/70 p-3 sm:p-4 flex items-center justify-center relative overflow-hidden shadow-inner border border-pink-100/90">
             {generating ? (
-              <div className="py-12 flex flex-col items-center justify-center space-y-2">
-                <div className="w-8 h-8 border-3 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-xs text-slate-400 font-bold">Rendering branded score card...</p>
+              <div className="py-14 flex flex-col items-center justify-center space-y-2">
+                <div className="w-8 h-8 border-3 border-[#E91E63] border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-xs text-pink-700 font-bold">Rendering branded score card...</p>
               </div>
             ) : cardResult ? (
-              <div className="relative group max-h-[210px] sm:max-h-[260px] rounded-2xl overflow-hidden shadow-2xl border-2 border-pink-400/40 flex items-center justify-center bg-slate-950">
+              <div className="relative group max-h-[220px] sm:max-h-[270px] rounded-2xl overflow-hidden shadow-xl border-2 border-white/90 flex items-center justify-center bg-white">
                 <img
                   src={cardResult.dataUrl}
                   alt="Score Card Preview"
-                  className="max-h-[210px] sm:max-h-[260px] w-auto max-w-full object-contain block select-none pointer-events-none"
+                  className="max-h-[220px] sm:max-h-[270px] w-auto max-w-full object-contain block select-none pointer-events-none"
                 />
                 <button
                   type="button"
@@ -305,58 +309,59 @@ export default function SocialShareModal({
                       win.document.write(`<img src="${cardResult.dataUrl}" style="max-width:100%;height:auto;display:block;margin:auto;" />`);
                     }
                   }}
-                  className="absolute bottom-2 right-2 bg-black/70 hover:bg-black/90 text-white text-[10px] font-bold px-2 py-1 rounded-lg backdrop-blur-sm border border-white/20 flex items-center space-x-1 transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer"
+                  className="absolute bottom-2 right-2 bg-white/90 hover:bg-white text-[#4A1525] text-[10px] font-bold px-2 py-1 rounded-lg backdrop-blur-sm border border-pink-200 shadow-sm flex items-center space-x-1 transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer"
                 >
-                  <ExternalLink className="w-3 h-3" />
+                  <ExternalLink className="w-3 h-3 text-[#E91E63]" />
                   <span>Full Size</span>
                 </button>
               </div>
             ) : null}
           </div>
 
-
-
           {/* Platform Share Action Buttons Grid */}
           <div className="space-y-2">
-            <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">
-              Share To Platform
+            <span className="text-xs font-black text-[#8E838B] uppercase tracking-wider block">
+              Share to Platform
             </span>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {/* 1. Instagram Button (Stories & Feed) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
+              {/* 1. Instagram Button */}
               <button
                 type="button"
                 onClick={handleInstagramShare}
                 disabled={!cardResult || activeAction !== null}
-                className="py-2.5 px-3.5 rounded-2xl bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-rose-900/30 flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
+                className="py-2.5 px-3.5 rounded-2xl bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-pink-500/15 flex items-center justify-between transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
               >
-                {activeAction === 'instagram' ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                ) : (
-                  <span className="text-lg flex-shrink-0">📸</span>
-                )}
-                <div className="flex flex-col text-left">
-                  <span className="leading-tight">Instagram Photo & Story</span>
-                  <span className="text-[10px] font-normal opacity-90 text-pink-100">Tap Paste in App</span>
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-7 h-7 rounded-lg border-2 border-white flex items-center justify-center relative flex-shrink-0">
+                    <div className="w-2.5 h-2.5 rounded-full border-2 border-white"></div>
+                    <div className="absolute top-0.5 right-0.5 w-0.5 h-0.5 bg-white rounded-full"></div>
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="leading-tight font-extrabold">Instagram</span>
+                    <span className="text-[10px] font-medium opacity-90 text-pink-100">Photo & Story</span>
+                  </div>
                 </div>
+                <ChevronRight className="w-5 h-5 text-white/90 stroke-[2.5]" />
               </button>
 
-              {/* 2. Facebook Photo & Story */}
+              {/* 2. Facebook Button */}
               <button
                 type="button"
                 onClick={handleFacebookShare}
                 disabled={!cardResult || activeAction !== null}
-                className="py-2.5 px-3.5 rounded-2xl bg-[#1877f2] hover:bg-[#166fe5] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-blue-900/30 flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
+                className="py-2.5 px-3.5 rounded-2xl bg-gradient-to-r from-[#1877f2] to-[#0d6efd] hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-blue-500/15 flex items-center justify-between transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
               >
-                {activeAction === 'facebook' ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                ) : (
-                  <span className="text-lg flex-shrink-0">👥</span>
-                )}
-                <div className="flex flex-col text-left">
-                  <span className="leading-tight">Facebook Photo & Story</span>
-                  <span className="text-[10px] font-normal opacity-90 text-blue-100">Tap Paste in App</span>
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                    <span className="text-[#1877f2] font-black text-base leading-none">f</span>
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="leading-tight font-extrabold">Facebook</span>
+                    <span className="text-[10px] font-medium opacity-90 text-blue-100">Photo & Story</span>
+                  </div>
                 </div>
+                <ChevronRight className="w-5 h-5 text-white/90 stroke-[2.5]" />
               </button>
 
               {/* 3. WhatsApp Button */}
@@ -364,13 +369,16 @@ export default function SocialShareModal({
                 type="button"
                 onClick={handleWhatsAppShare}
                 disabled={!cardResult || activeAction !== null}
-                className="py-2.5 px-3.5 rounded-2xl bg-[#25d366] hover:bg-[#20bd5a] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-900/30 flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
+                className="py-2.5 px-3.5 rounded-2xl bg-gradient-to-r from-[#25d366] to-[#1ebe5d] hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-500/15 flex items-center justify-between transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
               >
-                <MessageCircle className="w-5 h-5 flex-shrink-0" />
-                <div className="flex flex-col text-left">
-                  <span className="leading-tight">WhatsApp Challenge</span>
-                  <span className="text-[10px] font-normal opacity-90 text-emerald-100">Auto-filled message</span>
+                <div className="flex items-center space-x-2.5">
+                  <MessageCircle className="w-6 h-6 text-white flex-shrink-0" />
+                  <div className="flex flex-col text-left">
+                    <span className="leading-tight font-extrabold">WhatsApp</span>
+                    <span className="text-[10px] font-medium opacity-90 text-emerald-100">Challenge</span>
+                  </div>
                 </div>
+                <ChevronRight className="w-5 h-5 text-white/90 stroke-[2.5]" />
               </button>
 
               {/* 4. Save Score Card to Photos */}
@@ -378,13 +386,18 @@ export default function SocialShareModal({
                 type="button"
                 onClick={handleDownload}
                 disabled={!cardResult}
-                className="py-2.5 px-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs sm:text-sm border border-white/10 shadow-sm flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
+                className="py-2.5 px-3.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200/90 shadow-sm flex items-center justify-between transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
               >
-                <Download className="w-5 h-5 text-pink-400 flex-shrink-0" />
-                <div className="flex flex-col text-left">
-                  <span className="leading-tight">Save Image to Photos</span>
-                  <span className="text-[10px] font-normal text-slate-300">High-Res PNG</span>
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 flex-shrink-0">
+                    <Download className="w-4 h-4 stroke-[2.5]" />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="leading-tight font-extrabold text-slate-800">Save Image</span>
+                    <span className="text-[10px] font-medium text-slate-500">to Photos</span>
+                  </div>
                 </div>
+                <ChevronRight className="w-5 h-5 text-slate-400 stroke-[2.5]" />
               </button>
             </div>
 
@@ -393,7 +406,7 @@ export default function SocialShareModal({
               type="button"
               onClick={handleSystemShare}
               disabled={!cardResult || activeAction !== null}
-              className="w-full py-2.5 px-4 rounded-2xl bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white font-bold text-xs border border-white/10 flex items-center justify-center space-x-2 transition-colors cursor-pointer"
+              className="w-full py-2 px-4 rounded-xl bg-pink-50/80 hover:bg-pink-100/70 text-pink-700 font-bold text-xs border border-pink-200/60 flex items-center justify-center space-x-2 transition-colors cursor-pointer"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>More Options (Telegram, AirDrop, Messages)</span>
@@ -402,13 +415,26 @@ export default function SocialShareModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-3 sm:p-4 border-t border-white/10 bg-slate-950/60 flex items-center justify-between">
-          <span className="text-[11px] text-slate-400 font-medium">
-            Elephant House AR Tongue Catch
-          </span>
+        <div className="p-3.5 sm:p-4 border-t border-[#F0DFE6] bg-gradient-to-b from-[#FFFDFE] to-[#FFF5F8] flex items-center justify-between mt-auto">
+          <div className="flex items-center space-x-2.5 sm:space-x-3">
+            <img
+              src={`${basePath}/share_bottom_icon.png`}
+              alt="App Icon"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl shadow-sm border border-pink-100 object-cover"
+            />
+            <div className="flex flex-col text-left">
+              <span className="font-extrabold text-xs sm:text-sm text-[#481628] leading-tight">
+                Elephant House AR Catch
+              </span>
+              <span className="text-[11px] sm:text-xs text-[#8C6D7D] font-medium leading-tight">
+                Play & challenge your friends!
+              </span>
+            </div>
+          </div>
           <button
+            type="button"
             onClick={onClose}
-            className="py-2 px-5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer"
+            className="px-6 sm:px-7 py-2.5 rounded-full bg-[#E91E63] hover:bg-[#D81B60] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-pink-500/25 active:scale-95 transition-transform cursor-pointer"
           >
             Done
           </button>

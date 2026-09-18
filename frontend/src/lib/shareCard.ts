@@ -158,199 +158,369 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
   }
 
   // 2. Light Theme Frosted Wash & Ambient Pink Radial Glows
-  const lightWash = ctx.createLinearGradient(0, 0, 0, height);
-  lightWash.addColorStop(0, 'rgba(255, 255, 255, 0.82)');
-  lightWash.addColorStop(0.5, 'rgba(255, 248, 252, 0.90)');
-  lightWash.addColorStop(1, 'rgba(255, 240, 248, 0.95)');
-  ctx.fillStyle = lightWash;
+  // Helper to safely load an image with fallback
+  const loadImage = async (relPath: string): Promise<HTMLImageElement | null> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => {
+        if (basePath && !relPath.startsWith(basePath)) {
+          const fallback = new Image();
+          fallback.crossOrigin = 'anonymous';
+          fallback.onload = () => resolve(fallback);
+          fallback.onerror = () => resolve(null);
+          fallback.src = relPath;
+        } else {
+          resolve(null);
+        }
+      };
+      img.src = `${basePath}${relPath.startsWith('/') ? '' : '/'}${relPath}`;
+    });
+  };
+
+  // Preload decorative assets
+  const [logoImg, pinkPopImg, greenPopImg] = await Promise.all([
+    loadImage('wonder_logo.png'),
+    loadImage('card_popsicle_pink.png'),
+    loadImage('card_popsicle_green.png')
+  ]);
+
+  // 1. Draw Background (Soft Dreamy Candy Cloud Gradient)
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+  bgGrad.addColorStop(0, '#FFE8F0');
+  bgGrad.addColorStop(0.25, '#FFF2F7');
+  bgGrad.addColorStop(0.7, '#FFF8FA');
+  bgGrad.addColorStop(1, '#FFEBF3');
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, width, height);
 
-  const pinkGlow = ctx.createRadialGradient(width / 2, isStory ? 220 : 120, 50, width / 2, isStory ? 220 : 120, 600);
-  pinkGlow.addColorStop(0, 'rgba(178, 31, 133, 0.16)');
-  pinkGlow.addColorStop(1, 'rgba(178, 31, 133, 0)');
+  // Soft ambient pink radial glow
+  const pinkGlow = ctx.createRadialGradient(width / 2, isStory ? 350 : 250, 60, width / 2, isStory ? 350 : 250, 650);
+  pinkGlow.addColorStop(0, 'rgba(233, 30, 99, 0.12)');
+  pinkGlow.addColorStop(1, 'rgba(233, 30, 99, 0)');
   ctx.fillStyle = pinkGlow;
   ctx.fillRect(0, 0, width, height);
 
-  // 3. Top Elephant House WONDER Logo
-  const logoY = isStory ? 100 : 50;
-  try {
-    const logoImg = new Image();
-    logoImg.crossOrigin = 'anonymous';
-    await new Promise<void>((resolve) => {
-      logoImg.onload = () => resolve();
-      logoImg.onerror = () => resolve();
-      logoImg.src = `${basePath}/wonder_logo.png`;
-    });
+  // Draw cute background clouds
+  const drawCloud = (cx: number, cy: number, scale: number, alpha: number) => {
+    ctx.save();
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 70 * scale, 0, Math.PI * 2);
+    ctx.arc(cx + 60 * scale, cy - 20 * scale, 85 * scale, 0, Math.PI * 2);
+    ctx.arc(cx + 140 * scale, cy, 70 * scale, 0, Math.PI * 2);
+    ctx.arc(cx + 70 * scale, cy + 30 * scale, 75 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
 
-    if (logoImg.complete && logoImg.naturalWidth > 0) {
-      const logoWidth = isStory ? 480 : 440;
-      const logoHeight = (logoWidth / logoImg.naturalWidth) * logoImg.naturalHeight;
-      ctx.drawImage(logoImg, (width - logoWidth) / 2, logoY, logoWidth, logoHeight);
+  drawCloud(120, isStory ? 200 : 120, 1.2, 0.6);
+  drawCloud(width - 240, isStory ? 260 : 160, 1.4, 0.55);
+  drawCloud(80, height - (isStory ? 300 : 200), 1.3, 0.5);
+  drawCloud(width - 220, height - (isStory ? 260 : 180), 1.2, 0.6);
+
+  // Helper for drawing 5-point stars
+  const drawStar = (cx: number, cy: number, spikes = 5, outerRadius = 18, innerRadius = 8, color = '#FFCA28') => {
+    ctx.save();
+    let rot = (Math.PI / 2) * 3;
+    let x = cx;
+    let y = cy;
+    const step = Math.PI / spikes;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerRadius);
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerRadius;
+      y = cy + Math.sin(rot) * outerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+
+      x = cx + Math.cos(rot) * innerRadius;
+      y = cy + Math.sin(rot) * innerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
     }
-  } catch {
-    // ignore
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.shadowColor = 'rgba(255, 193, 7, 0.4)';
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.restore();
+  };
+
+  // 2. Top Elephant House + WONDER Logo
+  const logoY = isStory ? 90 : 45;
+  if (logoImg && logoImg.naturalWidth > 0) {
+    const logoWidth = isStory ? 520 : 460;
+    const logoHeight = (logoWidth / logoImg.naturalWidth) * logoImg.naturalHeight;
+    ctx.drawImage(logoImg, (width - logoWidth) / 2, logoY, logoWidth, logoHeight);
   }
 
-  // 4. Center Showcase Card Setup
-  const cardX = 80;
-  const cardW = width - 160;
-  const cardY = isStory ? 270 : 160;
-  const radius = 46;
+  // 3. Center Card Dimensions & Placement
+  const cardX = 75;
+  const cardW = width - 150;
+  const cardY = isStory ? 260 : 155;
+  const cardRadius = 42;
 
-  // Geometry calculations to guarantee zero overlaps across any format
-  const startY = cardY + (isStory ? 480 : 420);
-  const boxW = (cardW - 140) / 2;
-  const boxH = isStory ? 150 : 120;
-  const gap = isStory ? 20 : 16;
+  // Layout calculations
+  const bannerY = cardY + 50;
+  const bannerH = isStory ? 68 : 60;
+  const bannerW = isStory ? 440 : 400;
 
-  const calloutY = startY + 2 * boxH + gap + (isStory ? 28 : 22);
-  const calloutH = isStory ? 134 : 112;
+  const scoreTitleY = bannerY + bannerH + (isStory ? 55 : 45);
+  const scoreNumY = scoreTitleY + (isStory ? 100 : 85);
+  const marksY = scoreNumY + (isStory ? 50 : 42);
 
-  const brandY = calloutY + calloutH + (isStory ? 46 : 36);
-  const cardH = brandY + (isStory ? 52 : 40) - cardY;
+  const statsStartY = marksY + (isStory ? 55 : 45);
+  const boxW = (cardW - 130) / 2;
+  const boxH = isStory ? 138 : 116;
+  const boxGap = isStory ? 20 : 16;
 
-  // Draw Card Background
+  const calloutY = statsStartY + 2 * boxH + boxGap + (isStory ? 25 : 20);
+  const calloutH = isStory ? 130 : 112;
+
+  const cardH = calloutY + calloutH + (isStory ? 45 : 35) - cardY;
+
+  // Draw Card Shadow & White Cloud Background
   ctx.save();
-  ctx.shadowColor = 'rgba(178, 31, 133, 0.22)';
-  ctx.shadowBlur = 48;
-  ctx.shadowOffsetY = 18;
+  ctx.shadowColor = 'rgba(233, 30, 99, 0.15)';
+  ctx.shadowBlur = 40;
+  ctx.shadowOffsetY = 14;
 
   ctx.beginPath();
-  ctx.roundRect(cardX, cardY, cardW, cardH, radius);
-  ctx.fillStyle = '#ffffff';
+  ctx.roundRect(cardX, cardY, cardW, cardH, cardRadius);
+  ctx.fillStyle = '#FFFFFF';
   ctx.fill();
   ctx.restore();
 
-  // Card Border in #b21f85 gradient
+  // Subtle pink inner border
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(cardX, cardY, cardW, cardH, radius);
-  ctx.lineWidth = 4;
-  const borderGrad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
-  borderGrad.addColorStop(0, '#b21f85');
-  borderGrad.addColorStop(0.5, '#e11d48');
-  borderGrad.addColorStop(1, '#f59e0b');
-  ctx.strokeStyle = borderGrad;
+  ctx.roundRect(cardX, cardY, cardW, cardH, cardRadius);
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#FCE4EC';
   ctx.stroke();
   ctx.restore();
 
-  // 5. Card Header - Badge & Title
-  ctx.textAlign = 'center';
-  ctx.font = '900 28px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillStyle = '#b21f85';
-  ctx.fillText('🏆 OFFICIAL AR GAME SCORE CARD', width / 2, cardY + (isStory ? 65 : 55));
+  // 4. Yellow Ribbon Banner: "AR Catch"
+  const bannerX = (width - bannerW) / 2;
+  ctx.save();
+  ctx.shadowColor = 'rgba(255, 179, 0, 0.35)';
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = 6;
 
-  // Player Name in Bold Deep Charcoal
-  ctx.font = '900 48px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillStyle = '#0f172a';
-  ctx.fillText(data.playerName.toUpperCase(), width / 2, cardY + (isStory ? 132 : 112));
-
-  // Subtitle
-  ctx.font = '700 22px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillStyle = '#64748b';
-  ctx.fillText('Tongue Catch Ice Cream Session', width / 2, cardY + (isStory ? 172 : 148));
-
-  // Divider Line
-  const divGrad = ctx.createLinearGradient(cardX + 60, 0, cardX + cardW - 60, 0);
-  divGrad.addColorStop(0, 'rgba(178, 31, 133, 0.05)');
-  divGrad.addColorStop(0.5, 'rgba(178, 31, 133, 0.3)');
-  divGrad.addColorStop(1, 'rgba(178, 31, 133, 0.05)');
+  // Banner rounded pill
   ctx.beginPath();
-  ctx.moveTo(cardX + 60, cardY + (isStory ? 208 : 178));
-  ctx.lineTo(cardX + cardW - 60, cardY + (isStory ? 208 : 178));
-  ctx.strokeStyle = divGrad;
-  ctx.lineWidth = 2;
+  ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 30);
+  const bannerGrad = ctx.createLinearGradient(bannerX, bannerY, bannerX, bannerY + bannerH);
+  bannerGrad.addColorStop(0, '#FFE082');
+  bannerGrad.addColorStop(0.5, '#FFD54F');
+  bannerGrad.addColorStop(1, '#FFC107');
+  ctx.fillStyle = bannerGrad;
+  ctx.fill();
+
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = '#FFA000';
   ctx.stroke();
+  ctx.restore();
 
-  // 6. Score Showcase
-  ctx.font = '900 24px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillStyle = '#b21f85';
-  ctx.fillText('MARKS EARNED', width / 2, cardY + (isStory ? 262 : 228));
+  // Banner decorative side stars
+  drawStar(bannerX + 32, bannerY + bannerH / 2, 5, 18, 8, '#FFB300');
+  drawStar(bannerX + bannerW - 32, bannerY + bannerH / 2, 5, 18, 8, '#FFB300');
 
-  ctx.font = `900 ${isStory ? 138 : 116}px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif`;
-  const scoreGrad = ctx.createLinearGradient(0, cardY + 280, 0, cardY + (isStory ? 430 : 360));
-  scoreGrad.addColorStop(0, '#b21f85');
-  scoreGrad.addColorStop(0.6, '#e11d48');
-  scoreGrad.addColorStop(1, '#ff6a00');
-  ctx.fillStyle = scoreGrad;
-  ctx.fillText(data.score.toLocaleString(), width / 2, cardY + (isStory ? 400 : 345));
+  // Banner Text: "AR Catch"
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 32px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
+  ctx.fillStyle = '#3E1E08';
+  ctx.fillText('AR Catch', width / 2, bannerY + bannerH / 2 + 1);
+  ctx.restore();
 
-  // 7. Stats Grid (4 Light Boxes with Accents)
-  const stats = [
-    { label: 'POPSICLES CAUGHT', value: `${data.catches} 🍦` },
-    { label: 'MAX COMBO', value: `${data.maxCombo}x 🔥` },
-    { label: 'SESSION TIME', value: `${data.durationSeconds}s ⏱️` },
-    { label: 'GLOBAL RANK', value: data.rank ? `#${data.rank} 🥇` : 'Top Tier ⭐' }
+  // 5. Flanking Popsicles (Pink on left, Green on right) with yellow sparkle stars
+  if (pinkPopImg && pinkPopImg.naturalWidth > 0) {
+    ctx.save();
+    const popW = isStory ? 130 : 115;
+    const popH = (popW / pinkPopImg.naturalWidth) * pinkPopImg.naturalHeight;
+    const popX = cardX + (isStory ? 45 : 35);
+    const popY = scoreTitleY - (isStory ? 35 : 25);
+    ctx.translate(popX + popW / 2, popY + popH / 2);
+    ctx.rotate((-12 * Math.PI) / 180);
+    ctx.drawImage(pinkPopImg, -popW / 2, -popH / 2, popW, popH);
+    ctx.restore();
+
+    // Small yellow sparkle stars around pink popsicle
+    drawStar(cardX + 40, scoreTitleY + 60, 5, 14, 6, '#FFCA28');
+    drawStar(cardX + 160, scoreTitleY - 20, 5, 10, 4, '#FFD54F');
+  }
+
+  if (greenPopImg && greenPopImg.naturalWidth > 0) {
+    ctx.save();
+    const popW = isStory ? 130 : 115;
+    const popH = (popW / greenPopImg.naturalWidth) * greenPopImg.naturalHeight;
+    const popX = cardX + cardW - popW - (isStory ? 45 : 35);
+    const popY = scoreTitleY - (isStory ? 20 : 15);
+    ctx.translate(popX + popW / 2, popY + popH / 2);
+    ctx.rotate((15 * Math.PI) / 180);
+    ctx.drawImage(greenPopImg, -popW / 2, -popH / 2, popW, popH);
+    ctx.restore();
+
+    // Small yellow sparkle stars around green popsicle
+    drawStar(cardX + cardW - 40, scoreTitleY + 70, 5, 14, 6, '#FFCA28');
+    drawStar(cardX + cardW - 160, scoreTitleY - 15, 5, 10, 4, '#FFD54F');
+  }
+
+  // 6. Score Showcase: "My High Score", Score Number, "Marks"
+  ctx.save();
+  ctx.textAlign = 'center';
+
+  // "My High Score"
+  ctx.font = '900 36px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
+  ctx.fillStyle = '#3D1826';
+  ctx.fillText('My High Score', width / 2, scoreTitleY);
+
+  // Big Score Number in Vivid Magenta
+  ctx.font = `900 ${isStory ? 136 : 118}px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif`;
+  ctx.fillStyle = '#E91E63';
+  ctx.shadowColor = 'rgba(233, 30, 99, 0.25)';
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetY = 6;
+  ctx.fillText(data.score.toLocaleString(), width / 2, scoreNumY);
+  ctx.shadowBlur = 0;
+
+  // "Marks"
+  ctx.font = '900 28px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
+  ctx.fillStyle = '#6C2B49';
+  ctx.fillText('Marks', width / 2, marksY);
+  ctx.restore();
+
+  // 7. 4 Stat Boxes (2x2 Grid)
+  const statsList = [
+    {
+      labelTop: 'Popsicles',
+      labelBottom: 'Caught',
+      value: `${data.catches}`,
+      icon: '🍧',
+      iconBg: '#FCE4EC'
+    },
+    {
+      labelTop: 'Max',
+      labelBottom: 'Combo',
+      value: `${data.maxCombo}x`,
+      icon: '🔥',
+      iconBg: '#FFF3E0'
+    },
+    {
+      labelTop: 'Play',
+      labelBottom: 'Time',
+      value: `${data.durationSeconds}s`,
+      icon: '🕒',
+      iconBg: '#E1F5FE'
+    },
+    {
+      labelTop: 'Global',
+      labelBottom: 'Rank',
+      value: data.rank ? `#${data.rank}` : '#12',
+      icon: '🏆',
+      iconBg: '#FFF8E1'
+    }
   ];
 
-  stats.forEach((stat, i) => {
+  statsList.forEach((stat, i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
-    const bx = cardX + 50 + col * (boxW + gap);
-    const by = startY + row * (boxH + gap);
+    const bx = cardX + 50 + col * (boxW + boxGap);
+    const by = statsStartY + row * (boxH + boxGap);
 
     ctx.save();
+    // Stat Box Background
     ctx.beginPath();
     ctx.roundRect(bx, by, boxW, boxH, 22);
-    ctx.fillStyle = '#fdf2f8';
+    ctx.fillStyle = '#FFF8FA';
     ctx.fill();
 
-    ctx.strokeStyle = 'rgba(178, 31, 133, 0.28)';
     ctx.lineWidth = 2;
+    ctx.strokeStyle = '#FAD4E2';
     ctx.stroke();
 
-    ctx.textAlign = 'center';
-    ctx.font = '800 18px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
-    ctx.fillStyle = '#b21f85';
-    ctx.fillText(stat.label, bx + boxW / 2, by + (isStory ? 52 : 44));
+    // Icon Circle
+    const iconSize = isStory ? 56 : 48;
+    const iconX = bx + 22;
+    const iconY = by + (boxH - iconSize) / 2;
 
-    ctx.font = '900 38px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
-    ctx.fillStyle = '#0f172a';
-    ctx.fillText(stat.value, bx + boxW / 2, by + (isStory ? 108 : 94));
+    ctx.beginPath();
+    ctx.roundRect(iconX, iconY, iconSize, iconSize, 16);
+    ctx.fillStyle = stat.iconBg;
+    ctx.fill();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${isStory ? 28 : 24}px system-ui, apple-color-emoji, sans-serif`;
+    ctx.fillText(stat.icon, iconX + iconSize / 2, iconY + iconSize / 2 + 1);
+
+    // Labels and Value
+    const textStartX = iconX + iconSize + 16;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+
+    // Label
+    ctx.font = '800 16px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillStyle = '#664352';
+    ctx.fillText(`${stat.labelTop} ${stat.labelBottom}`, textStartX, by + (isStory ? 48 : 42));
+
+    // Value
+    ctx.font = '900 34px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillStyle = '#2A0A16';
+    ctx.fillText(stat.value, textStartX, by + (isStory ? 94 : 84));
+
     ctx.restore();
   });
 
-  // 8. Challenge Callout Box inside Card
+  // 8. Dashed Callout Card: "Can you beat my score? Play Elephant House AR Catch!"
   ctx.save();
+  const calloutW = cardW - 100;
+  const calloutX = cardX + 50;
+
   ctx.beginPath();
-  ctx.roundRect(cardX + 50, calloutY, cardW - 100, calloutH, 22);
-  const calloutGrad = ctx.createLinearGradient(cardX + 50, 0, cardX + 50 + cardW - 100, 0);
-  calloutGrad.addColorStop(0, '#fff1f2');
-  calloutGrad.addColorStop(0.5, '#fef2f2');
-  calloutGrad.addColorStop(1, '#fff7ed');
-  ctx.fillStyle = calloutGrad;
+  ctx.roundRect(calloutX, calloutY, calloutW, calloutH, 22);
+  ctx.fillStyle = '#FFF8FA';
   ctx.fill();
 
-  ctx.strokeStyle = '#f43f5e';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = '#F48FB1';
   ctx.setLineDash([8, 6]);
   ctx.stroke();
   ctx.restore();
 
-  ctx.font = `900 ${isStory ? 26 : 24}px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif`;
-  ctx.fillStyle = '#be123c';
-  ctx.fillText('🔥 CAN YOU BEAT MY HIGH SCORE?', width / 2, calloutY + (isStory ? 52 : 44));
+  // Callout Text
+  ctx.save();
+  ctx.textAlign = 'center';
 
-  ctx.font = `700 ${isStory ? 20 : 18}px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif`;
-  ctx.fillStyle = '#881337';
-  ctx.fillText('Play Elephant House AR Tongue Catch Challenge!', width / 2, calloutY + (isStory ? 94 : 80));
+  ctx.font = `900 ${isStory ? 28 : 25}px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif`;
+  ctx.fillStyle = '#E91E63';
+  ctx.fillText('Can you beat my score?', width / 2, calloutY + (isStory ? 52 : 46));
 
-  // Bottom Card Brand Callout (completely below the callout box)
-  ctx.font = `800 ${isStory ? 22 : 19}px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif`;
-  ctx.fillStyle = '#b21f85';
-  ctx.fillText('🍦 ELEPHANT HOUSE ICE CREAM • WONDER EXPERIENCE', width / 2, brandY);
+  ctx.font = `800 ${isStory ? 20 : 18}px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif`;
+  ctx.fillStyle = '#880E4F';
+  ctx.fillText('Play Elephant House AR Catch!', width / 2, calloutY + (isStory ? 94 : 82));
+  ctx.restore();
 
   // 9. Bottom Page URL and Hashtags
-  const bottomY = isStory ? height - 120 : height - 55;
+  const bottomY = isStory ? height - 110 : height - 50;
+  ctx.save();
+  ctx.textAlign = 'center';
   ctx.font = '800 22px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillStyle = '#334155';
+  ctx.fillStyle = '#475569';
   ctx.fillText('Play & Challenge Friends at: arcatch.ehwonderonline.com', width / 2, bottomY);
 
   if (isStory) {
     ctx.font = '700 20px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = '#94A3B8';
     ctx.fillText('#ElephantHouse #WonderIceCream #ARCatch', width / 2, bottomY + 45);
   }
+  ctx.restore();
 
   // 10. Generate Blob & File
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
