@@ -148,7 +148,7 @@ export default function SocialShareModal({
       const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
 
       if (hasNativeShare) {
-        showToast('📸 Caption copied! Select Facebook > Story or Photo Post, then tap Paste!', 'success', 5000);
+        showToast('📋 Caption copied! In Facebook, tap "Say something about this photo..." and tap PASTE!', 'success', 6000);
         await shareViaNative(cardResult.file, { filesOnly: true });
       } else {
         // Fallback for desktop: download card image and open Facebook Web Sharer
@@ -162,6 +162,15 @@ export default function SocialShareModal({
     } finally {
       setActiveAction(null);
     }
+  };
+
+  // 2b. Facebook Web Link Share (Auto-Fills Caption & 1200x630 Banner)
+  const handleFacebookLinkShare = () => {
+    if (!cardResult) return;
+    copyCaptionToClipboard(cardResult.shareText);
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(cardResult.shareUrl)}&quote=${encodeURIComponent(cardResult.shareText)}`;
+    window.open(fbUrl, '_blank', 'width=626,height=500,noopener,noreferrer');
+    showToast('👥 Facebook opened with pre-filled caption & banner!', 'success');
   };
 
   // 3. WhatsApp Sharing
@@ -350,11 +359,17 @@ export default function SocialShareModal({
               {cardResult?.shareText || `🍦 I just scored ${score} marks on Elephant House AR Game! Can you beat my high score? 🏆`}
             </p>
 
-            <div className="text-[10.5px] sm:text-[11px] text-amber-200/90 bg-amber-950/30 border border-amber-500/30 p-2 rounded-xl flex items-start space-x-1.5">
-              <span className="text-amber-400 mt-0.5">💡</span>
-              <span>
-                <strong>Instagram & Facebook Policy:</strong> Mobile apps block web browsers from auto-typing captions. We copy your caption automatically when you tap below — just <strong>Paste</strong> it when your Story or Post composer opens!
-              </span>
+            {/* 2-Step Instruction Notice */}
+            <div className="text-[11px] sm:text-xs text-amber-200/95 bg-gradient-to-r from-amber-950/60 via-pink-950/40 to-purple-950/60 border border-amber-400/40 p-3 rounded-2xl flex items-start space-x-2.5 shadow-md">
+              <span className="text-lg mt-0.5">📋</span>
+              <div className="space-y-1">
+                <span className="font-extrabold text-amber-300 block">
+                  How to add your caption on Instagram & Facebook:
+                </span>
+                <p className="text-slate-200 leading-relaxed font-medium">
+                  Meta blocks apps from auto-filling captions. When you tap below, your caption is <strong>auto-copied to your clipboard</strong>. When the composer opens, tap into the text area and choose <strong>&ldquo;Paste&rdquo;</strong>!
+                </p>
+              </div>
             </div>
           </div>
 
@@ -380,7 +395,7 @@ export default function SocialShareModal({
                 <span>Instagram (Story & Post)</span>
               </button>
 
-              {/* 2. Facebook Button (Stories & Feed) */}
+              {/* 2. Facebook Photo & Story */}
               <button
                 type="button"
                 onClick={handleFacebookShare}
@@ -390,12 +405,23 @@ export default function SocialShareModal({
                 {activeAction === 'facebook' ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <span className="text-base">👥</span>
+                  <span className="text-base">📸</span>
                 )}
-                <span>Facebook (Story & Post)</span>
+                <span>Facebook Photo & Story</span>
               </button>
 
-              {/* 3. WhatsApp Button */}
+              {/* 3. Facebook Web Link Post (Pre-filled text & banner) */}
+              <button
+                type="button"
+                onClick={handleFacebookLinkShare}
+                disabled={!cardResult}
+                className="py-3 px-4 rounded-2xl bg-blue-950/80 hover:bg-blue-900/80 text-blue-200 border border-blue-500/40 font-extrabold text-xs sm:text-sm shadow-sm flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50"
+              >
+                <span className="text-base">👥</span>
+                <span>Facebook Post (Auto-Text)</span>
+              </button>
+
+              {/* 4. WhatsApp Button */}
               <button
                 type="button"
                 onClick={handleWhatsAppShare}
@@ -406,15 +432,15 @@ export default function SocialShareModal({
                 <span>WhatsApp Challenge</span>
               </button>
 
-              {/* 4. Save Score Card to Photos */}
+              {/* 5. Save Score Card to Photos */}
               <button
                 type="button"
                 onClick={handleDownload}
                 disabled={!cardResult}
-                className="py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs sm:text-sm border border-white/10 shadow-sm flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50"
+                className="py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs sm:text-sm border border-white/10 shadow-sm flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50 sm:col-span-2"
               >
                 <Download className="w-4 h-4 text-pink-400" />
-                <span>Save Image to Photos</span>
+                <span>Save Score Card Image to Photos</span>
               </button>
             </div>
 

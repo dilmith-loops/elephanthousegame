@@ -24,25 +24,47 @@ export interface GeneratedCardResult {
 }
 
 export async function copyCaptionToClipboard(text: string): Promise<boolean> {
-  try {
-    if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+  // 1. Try modern navigator.clipboard
+  if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+    try {
       await navigator.clipboard.writeText(text);
       return true;
+    } catch {
+      // Fall through to fallback
     }
-  } catch {
-    // Fallback below
   }
 
+  // 2. Robust fallback for iOS Safari and mobile webviews
   try {
     const textArea = document.createElement('textarea');
     textArea.value = text;
+    textArea.style.fontSize = '16px';
     textArea.style.position = 'fixed';
-    textArea.style.left = '-999999px';
-    textArea.style.top = '-999999px';
+    textArea.style.top = '0';
+    textArea.style.left = '0';
+    textArea.style.width = '2em';
+    textArea.style.height = '2em';
+    textArea.style.padding = '0';
+    textArea.style.border = 'none';
+    textArea.style.outline = 'none';
+    textArea.style.boxShadow = 'none';
+    textArea.style.background = 'transparent';
+    textArea.setAttribute('readonly', '');
     document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
+
+    const range = document.createRange();
+    range.selectNodeContents(textArea);
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    textArea.setSelectionRange(0, 999999);
+
     const successful = document.execCommand('copy');
+    if (selection) {
+      selection.removeAllRanges();
+    }
     document.body.removeChild(textArea);
     return successful;
   } catch (err) {
@@ -179,13 +201,25 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
     // ignore
   }
 
-  // 4. Center Showcase Card
+  // 4. Center Showcase Card Setup
   const cardX = 80;
-  const cardY = isStory ? 320 : 230;
   const cardW = width - 160;
-  const cardH = isStory ? 1240 : 910;
+  const cardY = isStory ? 270 : 160;
   const radius = 46;
 
+  // Geometry calculations to guarantee zero overlaps across any format
+  const startY = cardY + (isStory ? 480 : 420);
+  const boxW = (cardW - 140) / 2;
+  const boxH = isStory ? 150 : 120;
+  const gap = isStory ? 20 : 16;
+
+  const calloutY = startY + 2 * boxH + gap + (isStory ? 28 : 22);
+  const calloutH = isStory ? 134 : 112;
+
+  const brandY = calloutY + calloutH + (isStory ? 46 : 36);
+  const cardH = brandY + (isStory ? 52 : 40) - cardY;
+
+  // Draw Card Background
   ctx.save();
   ctx.shadowColor = 'rgba(178, 31, 133, 0.22)';
   ctx.shadowBlur = 48;
@@ -214,17 +248,17 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
   ctx.textAlign = 'center';
   ctx.font = '900 28px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
   ctx.fillStyle = '#b21f85';
-  ctx.fillText('🏆 OFFICIAL AR GAME SCORE CARD', width / 2, cardY + 70);
+  ctx.fillText('🏆 OFFICIAL AR GAME SCORE CARD', width / 2, cardY + (isStory ? 65 : 55));
 
   // Player Name in Bold Deep Charcoal
   ctx.font = '900 48px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
   ctx.fillStyle = '#0f172a';
-  ctx.fillText(data.playerName.toUpperCase(), width / 2, cardY + 140);
+  ctx.fillText(data.playerName.toUpperCase(), width / 2, cardY + (isStory ? 132 : 112));
 
   // Subtitle
   ctx.font = '700 22px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
   ctx.fillStyle = '#64748b';
-  ctx.fillText('Tongue Catch Ice Cream Session', width / 2, cardY + 182);
+  ctx.fillText('Tongue Catch Ice Cream Session', width / 2, cardY + (isStory ? 172 : 148));
 
   // Divider Line
   const divGrad = ctx.createLinearGradient(cardX + 60, 0, cardX + cardW - 60, 0);
@@ -232,8 +266,8 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
   divGrad.addColorStop(0.5, 'rgba(178, 31, 133, 0.3)');
   divGrad.addColorStop(1, 'rgba(178, 31, 133, 0.05)');
   ctx.beginPath();
-  ctx.moveTo(cardX + 60, cardY + 218);
-  ctx.lineTo(cardX + cardW - 60, cardY + 218);
+  ctx.moveTo(cardX + 60, cardY + (isStory ? 208 : 178));
+  ctx.lineTo(cardX + cardW - 60, cardY + (isStory ? 208 : 178));
   ctx.strokeStyle = divGrad;
   ctx.lineWidth = 2;
   ctx.stroke();
@@ -241,15 +275,15 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
   // 6. Score Showcase
   ctx.font = '900 24px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
   ctx.fillStyle = '#b21f85';
-  ctx.fillText('MARKS EARNED', width / 2, cardY + 276);
+  ctx.fillText('MARKS EARNED', width / 2, cardY + (isStory ? 262 : 228));
 
-  ctx.font = '900 142px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
-  const scoreGrad = ctx.createLinearGradient(0, cardY + 290, 0, cardY + 440);
+  ctx.font = `900 ${isStory ? 138 : 116}px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif`;
+  const scoreGrad = ctx.createLinearGradient(0, cardY + 280, 0, cardY + (isStory ? 430 : 360));
   scoreGrad.addColorStop(0, '#b21f85');
   scoreGrad.addColorStop(0.6, '#e11d48');
   scoreGrad.addColorStop(1, '#ff6a00');
   ctx.fillStyle = scoreGrad;
-  ctx.fillText(data.score.toLocaleString(), width / 2, cardY + 416);
+  ctx.fillText(data.score.toLocaleString(), width / 2, cardY + (isStory ? 400 : 345));
 
   // 7. Stats Grid (4 Light Boxes with Accents)
   const stats = [
@@ -259,16 +293,10 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
     { label: 'GLOBAL RANK', value: data.rank ? `#${data.rank} 🥇` : 'Top Tier ⭐' }
   ];
 
-  const boxW = (cardW - 140) / 2;
-  const boxH = isStory ? 148 : 130;
-  const startX = cardX + 50;
-  const startY = cardY + 475;
-  const gap = 20;
-
   stats.forEach((stat, i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
-    const bx = startX + col * (boxW + gap);
+    const bx = cardX + 50 + col * (boxW + gap);
     const by = startY + row * (boxH + gap);
 
     ctx.save();
@@ -284,21 +312,19 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
     ctx.textAlign = 'center';
     ctx.font = '800 18px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
     ctx.fillStyle = '#b21f85';
-    ctx.fillText(stat.label, bx + boxW / 2, by + (isStory ? 52 : 46));
+    ctx.fillText(stat.label, bx + boxW / 2, by + (isStory ? 52 : 44));
 
     ctx.font = '900 38px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
     ctx.fillStyle = '#0f172a';
-    ctx.fillText(stat.value, bx + boxW / 2, by + (isStory ? 108 : 98));
+    ctx.fillText(stat.value, bx + boxW / 2, by + (isStory ? 108 : 94));
     ctx.restore();
   });
 
   // 8. Challenge Callout Box inside Card
-  const calloutY = startY + 2 * (boxH + gap) + 15;
-  const calloutH = isStory ? 135 : 105;
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(startX, calloutY, cardW - 100, calloutH, 22);
-  const calloutGrad = ctx.createLinearGradient(startX, 0, startX + cardW - 100, 0);
+  ctx.roundRect(cardX + 50, calloutY, cardW - 100, calloutH, 22);
+  const calloutGrad = ctx.createLinearGradient(cardX + 50, 0, cardX + 50 + cardW - 100, 0);
   calloutGrad.addColorStop(0, '#fff1f2');
   calloutGrad.addColorStop(0.5, '#fef2f2');
   calloutGrad.addColorStop(1, '#fff7ed');
@@ -311,21 +337,21 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
   ctx.stroke();
   ctx.restore();
 
-  ctx.font = '900 26px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
+  ctx.font = `900 ${isStory ? 26 : 24}px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif`;
   ctx.fillStyle = '#be123c';
-  ctx.fillText('🔥 CAN YOU BEAT MY HIGH SCORE?', width / 2, calloutY + (isStory ? 54 : 45));
+  ctx.fillText('🔥 CAN YOU BEAT MY HIGH SCORE?', width / 2, calloutY + (isStory ? 52 : 44));
 
-  ctx.font = '700 20px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
+  ctx.font = `700 ${isStory ? 20 : 18}px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif`;
   ctx.fillStyle = '#881337';
-  ctx.fillText('Play Elephant House AR Tongue Catch Challenge!', width / 2, calloutY + (isStory ? 96 : 82));
+  ctx.fillText('Play Elephant House AR Tongue Catch Challenge!', width / 2, calloutY + (isStory ? 94 : 80));
 
-  // Bottom Card Brand Callout
-  ctx.font = '800 22px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
+  // Bottom Card Brand Callout (completely below the callout box)
+  ctx.font = `800 ${isStory ? 22 : 19}px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif`;
   ctx.fillStyle = '#b21f85';
-  ctx.fillText('🍦 ELEPHANT HOUSE ICE CREAM • WONDER EXPERIENCE', width / 2, cardY + cardH - 35);
+  ctx.fillText('🍦 ELEPHANT HOUSE ICE CREAM • WONDER EXPERIENCE', width / 2, brandY);
 
   // 9. Bottom Page URL and Hashtags
-  const bottomY = isStory ? height - 120 : height - 45;
+  const bottomY = isStory ? height - 120 : height - 55;
   ctx.font = '800 22px "Outfit", "Plus Jakarta Sans", system-ui, sans-serif';
   ctx.fillStyle = '#334155';
   ctx.fillText('Play & Challenge Friends at: ai.loopsintegrated.co', width / 2, bottomY);
