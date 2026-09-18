@@ -255,6 +255,54 @@ function PopsicleBuddyAvatar({ className }: { className?: string }) {
   );
 }
 
+// 5. Pink Panda Avatar (Matching row 3 of reference mockup)
+function PinkPandaAvatar({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <defs>
+        <linearGradient id="pandaBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FF70A6" />
+          <stop offset="100%" stopColor="#E91E63" />
+        </linearGradient>
+      </defs>
+      {/* Pink Background Circle */}
+      <circle cx="50" cy="50" r="50" fill="url(#pandaBg)" />
+
+      {/* Ears */}
+      <circle cx="26" cy="28" r="13" fill="#2D1512" />
+      <circle cx="26" cy="28" r="7" fill="#FF8DA1" />
+      <circle cx="74" cy="28" r="13" fill="#2D1512" />
+      <circle cx="74" cy="28" r="7" fill="#FF8DA1" />
+
+      {/* Face */}
+      <ellipse cx="50" cy="56" rx="31" ry="27" fill="#FFF5F7" />
+
+      {/* Panda Black Eye Patches */}
+      <ellipse cx="35" cy="52" rx="9" ry="11" transform="rotate(-15 35 52)" fill="#331A15" />
+      <ellipse cx="65" cy="52" rx="9" ry="11" transform="rotate(15 65 52)" fill="#331A15" />
+
+      {/* Sparkling White & Black Eyes */}
+      <circle cx="36" cy="51" r="5" fill="#FFFFFF" />
+      <circle cx="36.5" cy="51.5" r="3" fill="#1C0E0B" />
+      <circle cx="38" cy="50" r="1.3" fill="#FFFFFF" />
+
+      <circle cx="64" cy="51" r="5" fill="#FFFFFF" />
+      <circle cx="63.5" cy="51.5" r="3" fill="#1C0E0B" />
+      <circle cx="65" cy="50" r="1.3" fill="#FFFFFF" />
+
+      {/* Blush */}
+      <circle cx="25" cy="62" r="5" fill="#FF4081" opacity="0.5" />
+      <circle cx="75" cy="62" r="5" fill="#FF4081" opacity="0.5" />
+
+      {/* Nose */}
+      <ellipse cx="50" cy="59" rx="3.5" ry="2.5" fill="#2D1512" />
+
+      {/* Happy Smile */}
+      <path d="M46 63 Q50 67 54 63" stroke="#2D1512" strokeWidth="2" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
 export default function CartoonAvatar({
   name = '',
   size = 'md',
@@ -267,7 +315,7 @@ export default function CartoonAvatar({
       ? avatarIndex
       : Math.abs(
           name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-        ) % 4;
+        ) % 5;
 
   const sizeClass = {
     sm: 'w-8 h-8 sm:w-9 sm:h-9',
@@ -280,6 +328,7 @@ export default function CartoonAvatar({
   if (index === 1) AvatarSvg = JoyGirlAvatar;
   else if (index === 2) AvatarSvg = CoolLionAvatar;
   else if (index === 3) AvatarSvg = PopsicleBuddyAvatar;
+  else if (index === 4) AvatarSvg = PinkPandaAvatar;
 
   return (
     <div className={`rounded-full overflow-hidden flex items-center justify-center select-none ${sizeClass} ${className}`}>
