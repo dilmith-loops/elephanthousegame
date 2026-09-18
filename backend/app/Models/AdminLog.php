@@ -25,7 +25,7 @@ class AdminLog extends Model
 
     public function admin()
     {
-        return $this->belongsTo(AdminUser::class, 'admin_id');
+        return $this->belongsTo(Admin::class, 'admin_id');
     }
 
     /**

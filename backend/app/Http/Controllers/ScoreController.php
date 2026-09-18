@@ -71,12 +71,17 @@ class ScoreController extends Controller
      */
     public function leaderboard(Request $request)
     {
-        $limit = $request->query('limit', 10);
+        $limit = min((int) $request->query('limit', 10), 50);
 
-        // Fetch top players by their highest score
-        $leaderboard = User::select('users.id', 'users.name', 'users.mobile', DB::raw('MAX(scores.score) as highest_score'), DB::raw('COUNT(scores.id) as total_games'))
+        // Fetch top players by their highest score - strictly omitting any personal information (mobile, email, ip)
+        $leaderboard = User::select(
+            'users.id',
+            'users.name',
+            DB::raw('MAX(scores.score) as highest_score'),
+            DB::raw('COUNT(scores.id) as total_games')
+        )
             ->join('scores', 'users.id', '=', 'scores.user_id')
-            ->groupBy('users.id', 'users.name', 'users.mobile')
+            ->groupBy('users.id', 'users.name')
             ->orderByDesc('highest_score')
             ->limit($limit)
             ->get();

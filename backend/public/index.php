@@ -1,5 +1,8 @@
 <?php
 
+@ini_set('expose_php', '0');
+header_remove('X-Powered-By');
+
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 

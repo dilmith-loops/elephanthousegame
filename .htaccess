@@ -8,6 +8,12 @@
     # Custom 404 Error Document
     ErrorDocument 404 /ElephantHouseGame/frontend/out/404.html
 
+    # Block access to hidden files and sensitive directories (.git, .env, etc.)
+    RewriteRule (^|/)(\.git|\.env|\.htaccess|\.env\..*) - [F,L]
+
+    # Allow .well-known (e.g. security.txt, ACME challenges)
+    RewriteRule ^\.well-known/ - [L]
+
     # 1. Forward all API requests directly to Laravel Backend
     RewriteCond %{REQUEST_URI} api/ [NC]
     RewriteRule ^(.*)$ index.php [L]
@@ -52,10 +58,39 @@
 
 # Security & CORS Headers for Live Mobile/Web APIs
 <IfModule mod_headers.c>
-    Header set X-Content-Type-Options "nosniff"
-    Header set Access-Control-Allow-Origin "*"
+    # 1. Dynamic Origin-scoped CORS
+    SetEnvIfNoCase Origin "^https?://(ai\.loopsintegrated\.co|loopsintegrated\.co|.*\.loopsintegrated\.co|localhost(:[0-9]+)?|127\.0\.0\.1(:[0-9]+)?)$" CORS_ALLOW_ORIGIN=$0
+    Header set Access-Control-Allow-Origin "%{CORS_ALLOW_ORIGIN}e" env=CORS_ALLOW_ORIGIN
     Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, X-Admin-Token"
+    Header set Access-Control-Max-Age "86400"
+    Header set Vary "Origin"
+
+    # 2. Strict Transport Security (HSTS)
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+    # 3. Defense-in-Depth Content Security Policy (CSP)
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data:; connect-src 'self' https://ai.loopsintegrated.co https://storage.googleapis.com https://cdn.jsdelivr.net blob: data:; worker-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
+
+    # 4. Anti-Clickjacking & Anti-MIME Sniffing
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+
+    # 5. Referrer Policy & Permissions Policy (explicitly guarding AR camera access)
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=()"
+
+    # 6. Strip backend and hosting stack disclosure headers
+    Header unset X-Powered-By
+    Header unset Server
+    Header unset X-Turbo-Charged-By
+    Header unset platform
+    Header unset panel
+    Header always unset X-Powered-By
+    Header always unset Server
+    Header always unset platform
+    Header always unset panel
+    Header always unset X-Turbo-Charged-By
 </IfModule>
 
 # Enable Gzip / Deflate Compression

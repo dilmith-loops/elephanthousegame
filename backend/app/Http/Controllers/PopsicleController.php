@@ -4,13 +4,31 @@ namespace App\Http\Controllers;
 
 use App\Models\Popsicle;
 use App\Models\AdminLog;
-use App\Models\AdminUser;
+use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 
 class PopsicleController extends Controller
 {
+    /**
+     * Helper to authenticate admin token or retrieve from request middleware attributes
+     */
+    private function getAuthenticatedAdmin(Request $request): ?Admin
+    {
+        $admin = $request->attributes->get('authenticated_admin');
+        if ($admin instanceof Admin) {
+            return $admin;
+        }
+
+        $token = $request->bearerToken() ?? $request->header('X-Admin-Token') ?? $request->query('token');
+        if (!$token) {
+            return null;
+        }
+
+        $hashed = hash('sha256', $token);
+        return Admin::where('api_token', $hashed)->first();
+    }
     /**
      * Public API: Get all active popsicles for game canvas
      */
@@ -58,7 +76,6 @@ class PopsicleController extends Controller
                 return response()->file($candidate, [
                     'Content-Type' => $contentType,
                     'Cache-Control' => 'public, max-age=86400',
-                    'Access-Control-Allow-Origin' => '*',
                 ]);
             }
         }
@@ -74,6 +91,11 @@ class PopsicleController extends Controller
      */
     public function adminIndex(Request $request)
     {
+        $admin = $this->getAuthenticatedAdmin($request);
+        if (!$admin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
         $popsicles = Popsicle::orderBy('is_active', 'desc')
             ->orderBy('id', 'asc')
             ->get();
@@ -98,6 +120,11 @@ class PopsicleController extends Controller
      */
     public function store(Request $request)
     {
+        $admin = $this->getAuthenticatedAdmin($request);
+        if (!$admin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:100',
@@ -147,8 +174,6 @@ class PopsicleController extends Controller
 
             // Audit Log
             try {
-                $token = $request->bearerToken() ?: $request->header('X-Admin-Token');
-                $admin = $token ? AdminUser::where('api_token', $token)->first() : null;
                 AdminLog::record($admin, 'create_popsicle', "Created new popsicle asset: {$popsicle->name} ({$popsicle->points} pts)", $request);
             } catch (\Throwable $e) {
                 // Ignore audit log error
@@ -172,6 +197,11 @@ class PopsicleController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $admin = $this->getAuthenticatedAdmin($request);
+        if (!$admin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
         try {
             $popsicle = Popsicle::find($id);
             if (!$popsicle) {
@@ -251,8 +281,6 @@ class PopsicleController extends Controller
 
             // Audit Log
             try {
-                $token = $request->bearerToken() ?: $request->header('X-Admin-Token');
-                $admin = $token ? AdminUser::where('api_token', $token)->first() : null;
                 AdminLog::record($admin, 'update_popsicle', "Updated popsicle asset: {$popsicle->name}", $request);
             } catch (\Throwable $e) {
                 // Ignore audit log error
@@ -276,6 +304,11 @@ class PopsicleController extends Controller
      */
     public function toggle(Request $request, $id)
     {
+        $admin = $this->getAuthenticatedAdmin($request);
+        if (!$admin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
         try {
             $popsicle = Popsicle::find($id);
             if (!$popsicle) {
@@ -290,8 +323,6 @@ class PopsicleController extends Controller
 
             $statusStr = $popsicle->is_active ? 'Activated' : 'Deactivated';
             try {
-                $token = $request->bearerToken() ?: $request->header('X-Admin-Token');
-                $admin = $token ? AdminUser::where('api_token', $token)->first() : null;
                 AdminLog::record($admin, 'toggle_popsicle', "{$statusStr} popsicle: {$popsicle->name}", $request);
             } catch (\Throwable $e) {
                 // Ignore audit log error
@@ -315,6 +346,11 @@ class PopsicleController extends Controller
      */
     public function destroy(Request $request, $id)
     {
+        $admin = $this->getAuthenticatedAdmin($request);
+        if (!$admin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
         try {
             $popsicle = Popsicle::find($id);
             if (!$popsicle) {
@@ -345,8 +381,6 @@ class PopsicleController extends Controller
 
             // Audit Log
             try {
-                $token = $request->bearerToken() ?: $request->header('X-Admin-Token');
-                $admin = $token ? AdminUser::where('api_token', $token)->first() : null;
                 AdminLog::record($admin, 'delete_popsicle', "Deleted popsicle asset: {$name}", $request);
             } catch (\Throwable $e) {
                 // Ignore audit log error
