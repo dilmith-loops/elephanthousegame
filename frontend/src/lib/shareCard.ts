@@ -23,44 +23,64 @@ export interface GeneratedCardResult {
   shareUrl: string;
 }
 
-export function copyCaptionToClipboard(text: string): boolean {
+function copyCaptionFallback(text: string): boolean {
   if (typeof window === 'undefined') return false;
-
-  let copied = false;
-
-  // 1. Synchronous execution within immediate user gesture (vital for iOS WebKit)
   try {
     const textArea = document.createElement('textarea');
     textArea.value = text;
-    textArea.style.fontSize = '16px'; // Prevent auto-zoom on iOS
+    textArea.setAttribute('readonly', '');
     textArea.style.position = 'fixed';
     textArea.style.top = '0';
-    textArea.style.left = '-9999px';
+    textArea.style.left = '0';
     textArea.style.width = '2em';
     textArea.style.height = '2em';
-    textArea.style.opacity = '0';
-    textArea.style.pointerEvents = 'none';
+    textArea.style.padding = '0';
+    textArea.style.border = 'none';
+    textArea.style.outline = 'none';
+    textArea.style.boxShadow = 'none';
+    textArea.style.background = 'transparent';
+    textArea.style.fontSize = '16px';
     document.body.appendChild(textArea);
 
-    // Focus & select range for iOS Safari
     textArea.focus();
     textArea.select();
-    textArea.setSelectionRange(0, text.length);
+    textArea.setSelectionRange(0, 99999);
 
-    copied = document.execCommand('copy');
+    const successful = document.execCommand('copy');
     document.body.removeChild(textArea);
+    return successful;
   } catch (err) {
     console.warn('execCommand copy fallback error:', err);
+    return false;
   }
+}
 
-  // 2. Also invoke navigator.clipboard asynchronously if supported
+export async function copyCaptionToClipboardAsync(text: string): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+
+  // 1. Try modern async clipboard API
   if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => {
-      copied = true;
-    }).catch(() => {});
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      console.warn('navigator.clipboard.writeText failed, attempting fallback:', err);
+    }
   }
 
-  return copied;
+  // 2. Synchronous execCommand fallback with iOS-compatible styling
+  return copyCaptionFallback(text);
+}
+
+export function copyCaptionToClipboard(text: string): boolean {
+  if (typeof window === 'undefined') return false;
+
+  // Fire async clipboard API if available
+  if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+
+  return copyCaptionFallback(text);
 }
 
 export function downloadScoreCard(blob: Blob, score: number, format: 'story' | 'post' = 'story'): void {
