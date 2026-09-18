@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Player } from '../types/game';
 import { api } from '../lib/api';
-import { Trophy, AlertCircle, Sparkles, ShieldCheck } from 'lucide-react';
+import { Trophy, AlertCircle, Sparkles } from 'lucide-react';
 import TermsPrivacySheet from './TermsPrivacySheet';
 
 interface Props {
@@ -17,10 +17,10 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
   const [error, setError] = useState<string | null>(null);
   const [cachedPlayer, setCachedPlayer] = useState<Player | null>(null);
   const [showTermsSheet, setShowTermsSheet] = useState(false);
-  const [termsDefaultTab, setTermsDefaultTab] = useState<'privacy' | 'terms'>('privacy');
+  const [termsDefaultTab, setTermsDefaultTab] = useState<'privacy' | 'terms'>('terms');
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
-  const handleOpenTerms = (tab: 'privacy' | 'terms' = 'privacy') => {
+  const handleOpenTerms = (tab: 'privacy' | 'terms' = 'terms') => {
     setTermsDefaultTab(tab);
     setShowTermsSheet(true);
   };
@@ -120,29 +120,10 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
             </span>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => handleOpenTerms('privacy')}
-            className="pointer-events-auto bg-white/95 backdrop-blur-md text-pink-950 px-3 py-1.5 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)] text-xs font-black flex items-center space-x-1.5 border border-pink-200/80 active:scale-95 transition-all cursor-pointer"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-pink-600" />
-            <span>Privacy</span>
-          </button>
+          <div />
         )}
 
         <div className="pointer-events-auto flex items-center space-x-1.5">
-          {cachedPlayer && (
-            <button
-              type="button"
-              onClick={() => handleOpenTerms('privacy')}
-              className="bg-white/95 backdrop-blur-md text-pink-950 p-1.5 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.15)] border border-pink-200/80 active:scale-95 transition-all cursor-pointer"
-              title="Terms & Privacy"
-              aria-label="Terms & Privacy"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-pink-600" />
-            </button>
-          )}
-
           <button
             type="button"
             onClick={onOpenLeaderboard}
@@ -155,33 +136,21 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
       </div>
 
       {/* 1. Global Desktop Header Bar */}
-      <header className="hidden sm:flex items-center justify-between w-full max-w-6xl mx-auto px-6 py-3.5 z-30 flex-shrink-0 min-h-[52px]">
-        {/* Left Action: Terms & Privacy Pill */}
-        <button
-          type="button"
-          onClick={() => handleOpenTerms('privacy')}
-          className="flex items-center space-x-1.5 bg-white/85 hover:bg-white backdrop-blur-md border border-pink-200/80 px-3.5 py-1.5 rounded-full text-xs font-black text-slate-700 hover:text-pink-900 shadow-sm transition-all active:scale-95 cursor-pointer"
-        >
-          <ShieldCheck className="w-3.5 h-3.5 text-pink-600" />
-          <span>Terms & Privacy Policy</span>
-        </button>
-
+      <header className="hidden sm:flex items-center justify-end w-full max-w-6xl mx-auto px-6 py-3.5 z-30 flex-shrink-0 min-h-[52px]">
         {/* Right Action: Welcome Pill */}
-        <div className="flex items-center space-x-3">
-          {cachedPlayer && (
-            <div className="flex items-center space-x-2 bg-white/85 backdrop-blur-md border border-pink-200/80 px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-700 shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-pink-500 fill-pink-500" />
-              <span>
-                Welcome back, <strong className="text-pink-950 font-black">{cachedPlayer.name}</strong>
+        {cachedPlayer && (
+          <div className="flex items-center space-x-2 bg-white/85 backdrop-blur-md border border-pink-200/80 px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-700 shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-pink-500 fill-pink-500" />
+            <span>
+              Welcome back, <strong className="text-pink-950 font-black">{cachedPlayer.name}</strong>
+            </span>
+            {Boolean(cachedPlayer.highest_score) && (
+              <span className="text-amber-700 font-black ml-1 bg-amber-100 px-2 py-0.5 rounded-full text-[11px] border border-amber-300/50">
+                ★ {cachedPlayer.highest_score}
               </span>
-              {Boolean(cachedPlayer.highest_score) && (
-                <span className="text-amber-700 font-black ml-1 bg-amber-100 px-2 py-0.5 rounded-full text-[11px] border border-amber-300/50">
-                  ★ {cachedPlayer.highest_score}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </header>
 
       {/* 2. Main Center Hero Stage */}
@@ -263,32 +232,24 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
                   </button>
                 </div>
               </form>
+
+              {/* Terms of use Button Text (centered at bottom edge of card poster) */}
+              <div
+                className="absolute inset-x-0 bottom-[1.4%] sm:bottom-[1.6%] z-20 flex justify-center pointer-events-auto select-none"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleOpenTerms('terms')}
+                  className="text-[11px] sm:text-xs font-bold text-white/85 hover:text-white underline underline-offset-2 decoration-white/60 hover:decoration-white transition-all active:scale-95 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] py-1 px-3"
+                >
+                  Terms of use
+                </button>
+              </div>
             </div>
           </div>
 
         </div>
       </main>
-
-      {/* Footer spacer / subtle brand copyright & interactive Terms links */}
-      <footer className="w-full text-center py-2 px-4 text-[11px] sm:text-xs text-white/90 font-medium z-30 flex-shrink-0 flex items-center justify-center space-x-2 drop-shadow-sm select-none">
-        <span>© Elephant House Ceylon Cold Stores PLC</span>
-        <span className="opacity-60">•</span>
-        <button
-          type="button"
-          onClick={() => handleOpenTerms('terms')}
-          className="underline hover:text-white font-bold transition-all cursor-pointer"
-        >
-          Terms of Service
-        </button>
-        <span className="opacity-60">•</span>
-        <button
-          type="button"
-          onClick={() => handleOpenTerms('privacy')}
-          className="underline hover:text-white font-bold transition-all cursor-pointer"
-        >
-          Privacy Policy
-        </button>
-      </footer>
 
       {/* Terms & Privacy Bottom Sheet Modal */}
       <TermsPrivacySheet
