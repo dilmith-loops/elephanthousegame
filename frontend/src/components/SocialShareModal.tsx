@@ -110,12 +110,13 @@ export default function SocialShareModal({
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
 
-      // Step 2: On mobile, Web Share with the image file passes it directly into iOS/Android share sheet
+      // Step 2: On mobile, Web Share with ONLY the image file forces Facebook & Instagram
+      // to open the Photo/Story Composer with the card image attached (instead of a text/link share).
       const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
 
       if (hasNativeShare) {
-        showToast('📸 Caption copied! Select Instagram > Your Story or Feed, then tap Paste!', 'success', 5000);
-        await shareViaNative(cardResult.file, cardResult.shareText, 'My Elephant House AR Score');
+        showToast('📸 Caption copied! Select Instagram > Your Story or Post, then tap Paste!', 'success', 5000);
+        await shareViaNative(cardResult.file, { filesOnly: true });
       } else {
         // Desktop or unsupported browser fallback: download image and prompt
         downloadScoreCard(cardResult.blob, score, format);
@@ -141,14 +142,18 @@ export default function SocialShareModal({
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
 
+      // Step 2: On mobile, passing ONLY the image file ensures the Facebook iOS/Android app
+      // opens its Photo Composer or Story Composer with the image attached,
+      // rather than creating an empty link-preview card.
       const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
 
       if (hasNativeShare) {
-        showToast('📸 Caption copied! Select Facebook > Add to Story or Post, then tap Paste!', 'success', 5000);
-        await shareViaNative(cardResult.file, cardResult.shareText, 'My Elephant House AR Score');
+        showToast('📸 Caption copied! Select Facebook > Story or Photo Post, then tap Paste!', 'success', 5000);
+        await shareViaNative(cardResult.file, { filesOnly: true });
       } else {
-        // Open Facebook Web Sharer dialog
-        showToast('📸 Caption copied! Paste into your Facebook post or story.', 'success', 5000);
+        // Fallback for desktop: download card image and open Facebook Web Sharer
+        downloadScoreCard(cardResult.blob, score, format);
+        showToast('📸 Score card downloaded & caption copied! Open Facebook to post.', 'success', 6000);
         const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(cardResult.shareUrl)}&quote=${encodeURIComponent(cardResult.shareText)}`;
         window.open(fbUrl, '_blank', 'width=626,height=436,noopener,noreferrer');
       }
@@ -189,7 +194,7 @@ export default function SocialShareModal({
     setActiveAction('system');
     try {
       await copyCaptionToClipboard(cardResult.shareText);
-      await shareViaNative(cardResult.file, cardResult.shareText, 'My Elephant House AR Game Score');
+      await shareViaNative(cardResult.file, { filesOnly: true });
     } catch (err) {
       console.error('System share error:', err);
     } finally {

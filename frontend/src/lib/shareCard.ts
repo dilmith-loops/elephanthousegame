@@ -62,20 +62,38 @@ export function downloadScoreCard(blob: Blob, score: number, format: 'story' | '
   setTimeout(() => URL.revokeObjectURL(downloadUrl), 2500);
 }
 
-export async function shareViaNative(file: File, text: string, title = 'My Elephant House AR Game Score'): Promise<boolean> {
+export async function shareViaNative(
+  file: File,
+  textOrOptions?: string | { text?: string; title?: string; filesOnly?: boolean },
+  title = 'My Elephant House AR Game Score'
+): Promise<boolean> {
+  const options = typeof textOrOptions === 'object' && textOrOptions !== null
+    ? textOrOptions
+    : { text: typeof textOrOptions === 'string' ? textOrOptions : undefined, title, filesOnly: false };
+
   if (typeof navigator !== 'undefined' && navigator.share) {
     try {
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (options.filesOnly) {
+          // CRITICAL: Passing strictly ONLY `files: [file]` ensures iOS & Android treat this as a Photo/Story media share.
+          // If `text` or a URL is passed alongside the file, the Facebook and Instagram app extensions
+          // discard the image file and switch to a URL-preview link share mode.
+          await navigator.share({
+            files: [file]
+          });
+          return true;
+        } else {
+          await navigator.share({
+            title: options.title || 'My Elephant House AR Game Score',
+            text: options.text,
+            files: [file]
+          });
+          return true;
+        }
+      } else if (options.text) {
         await navigator.share({
-          title,
-          text,
-          files: [file]
-        });
-        return true;
-      } else {
-        await navigator.share({
-          title,
-          text
+          title: options.title || 'My Elephant House AR Game Score',
+          text: options.text
         });
         return true;
       }
@@ -321,9 +339,11 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
   // 10. Generate Blob & File
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
   if (!blob) throw new Error('Could not create image blob');
-
   const dataUrl = canvas.toDataURL('image/png', 0.95);
-  const file = new File([blob], `elephant-house-wonder-score-${data.score}.png`, { type: 'image/png' });
+  const file = new File([blob], `elephant-house-wonder-score-${data.score}.png`, {
+    type: 'image/png',
+    lastModified: Date.now()
+  });
 
   const shareUrl = typeof window !== 'undefined' && window.location.origin
     ? window.location.origin + (process.env.NEXT_PUBLIC_BASE_PATH || '')
