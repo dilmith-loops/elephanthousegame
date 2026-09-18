@@ -1,9 +1,32 @@
 <?php
 /**
- * Elephant House AR Game — Unified Root Router for Hostinger
- * Directs API traffic to Laravel backend
+ * Elephant House AR Game — Unified Root Router
+ * Serves Next.js frontend or delegates API traffic to Laravel backend
  */
 @ini_set('expose_php', '0');
 header_remove('X-Powered-By');
-require_once __DIR__ . '/backend/public/index.php';
 
+$uri = $_SERVER['REQUEST_URI'] ?? '';
+
+// 1. If requesting API or uploads, forward to Laravel Backend
+if (preg_match('#/api(/|\?|$)#', $uri) || preg_match('#/uploads/#', $uri)) {
+    require_once __DIR__ . '/backend/public/index.php';
+    exit;
+}
+
+// 2. If DirectoryIndex falls back to index.php or index.php is loaded directly, serve frontend
+$frontendIndex = __DIR__ . '/frontend/out/index.html';
+if (file_exists($frontendIndex)) {
+    header('Content-Type: text/html; charset=utf-8');
+    readfile($frontendIndex);
+    exit;
+}
+
+// 3. Fallback to Laravel backend
+if (file_exists(__DIR__ . '/backend/public/index.php')) {
+    require_once __DIR__ . '/backend/public/index.php';
+    exit;
+}
+
+http_response_code(404);
+echo "Elephant House AR Game: Frontend build not found.";

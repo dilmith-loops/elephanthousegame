@@ -1,9 +1,9 @@
-# Unified Hostinger Configuration for Elephant House AR Game (Frontend + Backend)
+# Directory Index configuration for LiteSpeed & Apache
+DirectoryIndex frontend/out/index.html index.php index.html
+Options -Indexes
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
-
-    # Prevent directory browsing
-    Options -Indexes
 
     # Custom 404 Error Document (relative fallback)
     ErrorDocument 404 /arwonder/frontend/out/404.html
