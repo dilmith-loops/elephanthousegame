@@ -98,18 +98,14 @@ export default function SocialShareModal({
     trackGAEvent('share', { method: 'instagram', content_type: format, score: score });
     try {
       await copyCaptionToClipboardAsync(cardResult.shareText);
-      const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare;
+      const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
 
       if (hasNativeShare) {
-        showToast('📸 Share link & score card ready! Select Instagram to share.', 'success', 4000);
-        await shareViaNative(cardResult.file, {
-          title: 'Elephant House AR Catch',
-          text: cardResult.shareText,
-          url: cardResult.shareUrl
-        });
+        showToast('📸 Score card ready! Select Instagram to share.', 'success', 3500);
+        await shareViaNative(cardResult.file, { filesOnly: true });
       } else {
         downloadScoreCard(cardResult.blob, score, format);
-        showToast('📸 Score card downloaded! Open Instagram to post.', 'success', 4000);
+        showToast('📸 Score card downloaded! Open Instagram to post.', 'success', 3500);
         setTimeout(() => {
           window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
         }, 1200);
@@ -128,18 +124,14 @@ export default function SocialShareModal({
     trackGAEvent('share', { method: 'facebook', content_type: format, score: score });
     try {
       await copyCaptionToClipboardAsync(cardResult.shareText);
-      const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare;
+      const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
 
       if (hasNativeShare) {
-        showToast('📸 Share link & score card ready! Select Facebook to share.', 'success', 4000);
-        await shareViaNative(cardResult.file, {
-          title: 'Elephant House AR Catch',
-          text: cardResult.shareText,
-          url: cardResult.shareUrl
-        });
+        showToast('📸 Score card photo ready! Select Facebook to share.', 'success', 3500);
+        await shareViaNative(cardResult.file, { filesOnly: true });
       } else {
         downloadScoreCard(cardResult.blob, score, format);
-        showToast('📸 Opening Facebook to share your score link!', 'success', 4000);
+        showToast('📸 Opening Facebook to share!', 'success', 3500);
         const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(cardResult.shareUrl)}`;
         window.open(fbUrl, '_blank', 'width=626,height=436,noopener,noreferrer');
       }
