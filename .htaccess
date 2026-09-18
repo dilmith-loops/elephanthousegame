@@ -1,7 +1,6 @@
 # Hostinger Apache / LiteSpeed Configuration for Elephant House AR Game
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /
 
     # Prevent directory listing
     Options -Indexes
@@ -15,19 +14,31 @@
     # Allow .well-known (e.g. security.txt, ACME challenges)
     RewriteRule ^\.well-known/ - [L]
 
-    # Ensure trailing slash for directory requests like /eh-portal/
-    RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^(.*[^/])$ /$1/ [L,R=301]
+    # 1. API and Uploads routing -> Pass directly to root router index.php (delegates to Laravel backend)
+    RewriteCond %{REQUEST_URI} (/|^)(api|uploads)(/|\?|$) [NC]
+    RewriteRule ^ index.php [L,QSA]
 
-    # Serve index.html if request is a directory
+    # 2. Existing files and directories serve as-is
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 3. Ensure trailing slash for directory requests like /eh-portal
+    RewriteCond %{REQUEST_FILENAME}/index.html -f
+    RewriteRule ^(.*[^/])$ $1/ [L,R=301]
+
+    # 4. Clean URLs fallback for HTML routes (e.g. /eh-portal/ -> /eh-portal/index.html)
     RewriteCond %{REQUEST_FILENAME}/index.html -f
     RewriteRule ^(.*)$ $1/index.html [L]
 
-    # Static file fallback for HTML routes (e.g. /eh-portal -> /eh-portal/index.html)
+    # 5. Clean URLs fallback for .html files
+    RewriteCond %{REQUEST_FILENAME}.html -f
+    RewriteRule ^(.*)$ $1.html [L]
+
+    # 6. Fallback to index.php for any remaining unhandled requests
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}/index.html -f
-    RewriteRule ^(.*)$ /$1/index.html [L]
+    RewriteRule ^(.*)$ index.php [L,QSA]
 </IfModule>
 
 # MIME types for AR MediaPipe WASM and TensorFlow/TFLite models
@@ -52,8 +63,8 @@
     # 2. Strict Transport Security (HSTS)
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 
-    # 3. Defense-in-Depth Content Security Policy (CSP)
-    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data:; connect-src 'self' https://ai.loopsintegrated.co https://storage.googleapis.com https://cdn.jsdelivr.net blob: data:; worker-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
+    # 3. Defense-in-Depth Content Security Policy (CSP) - Configured for GA4 & Google Tag Manager
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://storage.googleapis.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https: https://www.google-analytics.com https://www.googletagmanager.com; media-src 'self' blob: data:; connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com https://*.googletagmanager.com https://ai.loopsintegrated.co https://storage.googleapis.com https://cdn.jsdelivr.net blob: data:; worker-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
 
     # 4. Anti-Clickjacking & Anti-MIME Sniffing
     Header set X-Content-Type-Options "nosniff"
