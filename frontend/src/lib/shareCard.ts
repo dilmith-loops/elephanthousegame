@@ -23,54 +23,44 @@ export interface GeneratedCardResult {
   shareUrl: string;
 }
 
-export async function copyCaptionToClipboard(text: string): Promise<boolean> {
-  // 1. Try modern navigator.clipboard
-  if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      // Fall through to fallback
-    }
-  }
+export function copyCaptionToClipboard(text: string): boolean {
+  if (typeof window === 'undefined') return false;
 
-  // 2. Robust fallback for iOS Safari and mobile webviews
+  let copied = false;
+
+  // 1. Synchronous execution within immediate user gesture (vital for iOS WebKit)
   try {
     const textArea = document.createElement('textarea');
     textArea.value = text;
-    textArea.style.fontSize = '16px';
+    textArea.style.fontSize = '16px'; // Prevent auto-zoom on iOS
     textArea.style.position = 'fixed';
     textArea.style.top = '0';
-    textArea.style.left = '0';
+    textArea.style.left = '-9999px';
     textArea.style.width = '2em';
     textArea.style.height = '2em';
-    textArea.style.padding = '0';
-    textArea.style.border = 'none';
-    textArea.style.outline = 'none';
-    textArea.style.boxShadow = 'none';
-    textArea.style.background = 'transparent';
-    textArea.setAttribute('readonly', '');
+    textArea.style.opacity = '0';
+    textArea.style.pointerEvents = 'none';
     document.body.appendChild(textArea);
 
-    const range = document.createRange();
-    range.selectNodeContents(textArea);
-    const selection = window.getSelection();
-    if (selection) {
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
-    textArea.setSelectionRange(0, 999999);
+    // Focus & select range for iOS Safari
+    textArea.focus();
+    textArea.select();
+    textArea.setSelectionRange(0, text.length);
 
-    const successful = document.execCommand('copy');
-    if (selection) {
-      selection.removeAllRanges();
-    }
+    copied = document.execCommand('copy');
     document.body.removeChild(textArea);
-    return successful;
   } catch (err) {
-    console.error('Clipboard copy failed:', err);
-    return false;
+    console.warn('execCommand copy fallback error:', err);
   }
+
+  // 2. Also invoke navigator.clipboard asynchronously if supported
+  if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      copied = true;
+    }).catch(() => {});
+  }
+
+  return copied;
 }
 
 export function downloadScoreCard(blob: Blob, score: number, format: 'story' | 'post' = 'story'): void {
@@ -390,7 +380,7 @@ export async function generateScoreCard(data: ScoreCardData): Promise<GeneratedC
 export async function generateAndShareScoreCard(data: ScoreCardData): Promise<{ success: boolean; mode: 'shared' | 'downloaded'; error?: string }> {
   try {
     const card = await generateScoreCard(data);
-    await copyCaptionToClipboard(card.shareText);
+    copyCaptionToClipboard(card.shareText);
 
     const shared = await shareViaNative(card.file, card.shareText);
     if (shared) {

@@ -88,16 +88,13 @@ export default function SocialShareModal({
   if (!isOpen) return null;
 
   // Handle 1-tap Copy Caption
-  const handleCopyCaption = async () => {
+  // Handle 1-tap Copy Caption
+  const handleCopyCaption = () => {
     if (!cardResult) return;
-    const ok = await copyCaptionToClipboard(cardResult.shareText);
-    if (ok) {
-      setCopied(true);
-      showToast('📋 Caption copied to clipboard! Paste it into your post or story.');
-      setTimeout(() => setCopied(false), 3000);
-    } else {
-      showToast('Could not copy to clipboard automatically', 'info');
-    }
+    copyCaptionToClipboard(cardResult.shareText);
+    setCopied(true);
+    showToast('📋 Caption copied! In Instagram or Facebook, tap the caption area and select PASTE.', 'success', 5000);
+    setTimeout(() => setCopied(false), 3500);
   };
 
   // 1. Instagram & Instagram Story Sharing
@@ -105,17 +102,17 @@ export default function SocialShareModal({
     if (!cardResult) return;
     setActiveAction('instagram');
     try {
-      // Step 1: Always copy caption so user has it ready
-      await copyCaptionToClipboard(cardResult.shareText);
+      // Step 1: Copy caption synchronously on immediate user gesture
+      copyCaptionToClipboard(cardResult.shareText);
       setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
+      setTimeout(() => setCopied(false), 3500);
 
-      // Step 2: On mobile, Web Share with ONLY the image file forces Facebook & Instagram
-      // to open the Photo/Story Composer with the card image attached (instead of a text/link share).
+      // Step 2: On mobile, Web Share with ONLY the image file forces Instagram
+      // to open the Photo/Story Composer with the card image attached.
       const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
 
       if (hasNativeShare) {
-        showToast('📸 Caption copied! Select Instagram > Your Story or Post, then tap Paste!', 'success', 5000);
+        showToast('📋 Caption copied! Select Instagram > Post/Story, then tap PASTE!', 'success', 6000);
         await shareViaNative(cardResult.file, { filesOnly: true });
       } else {
         // Desktop or unsupported browser fallback: download image and prompt
@@ -137,14 +134,13 @@ export default function SocialShareModal({
     if (!cardResult) return;
     setActiveAction('facebook');
     try {
-      // Step 1: Copy caption
-      await copyCaptionToClipboard(cardResult.shareText);
+      // Step 1: Copy caption synchronously on immediate user gesture
+      copyCaptionToClipboard(cardResult.shareText);
       setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
+      setTimeout(() => setCopied(false), 3500);
 
       // Step 2: On mobile, passing ONLY the image file ensures the Facebook iOS/Android app
-      // opens its Photo Composer or Story Composer with the image attached,
-      // rather than creating an empty link-preview card.
+      // opens its Photo Composer or Story Composer with the image attached.
       const hasNativeShare = typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [cardResult.file] });
 
       if (hasNativeShare) {
@@ -154,7 +150,7 @@ export default function SocialShareModal({
         // Fallback for desktop: download card image and open Facebook Web Sharer
         downloadScoreCard(cardResult.blob, score, format);
         showToast('📸 Score card downloaded & caption copied! Open Facebook to post.', 'success', 6000);
-        const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(cardResult.shareUrl)}&quote=${encodeURIComponent(cardResult.shareText)}`;
+        const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(cardResult.shareUrl)}`;
         window.open(fbUrl, '_blank', 'width=626,height=436,noopener,noreferrer');
       }
     } catch (err) {
@@ -164,13 +160,13 @@ export default function SocialShareModal({
     }
   };
 
-  // 2b. Facebook Web Link Share (Auto-Fills Caption & 1200x630 Banner)
+  // 2b. Facebook Web Link Share (Banner & Web Link)
   const handleFacebookLinkShare = () => {
     if (!cardResult) return;
     copyCaptionToClipboard(cardResult.shareText);
-    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(cardResult.shareUrl)}&quote=${encodeURIComponent(cardResult.shareText)}`;
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(cardResult.shareUrl)}`;
     window.open(fbUrl, '_blank', 'width=626,height=500,noopener,noreferrer');
-    showToast('👥 Facebook opened with pre-filled caption & banner!', 'success');
+    showToast('👥 Facebook opened! Caption copied to paste.', 'success');
   };
 
   // 3. WhatsApp Sharing
@@ -178,7 +174,7 @@ export default function SocialShareModal({
     if (!cardResult) return;
     setActiveAction('whatsapp');
     try {
-      await copyCaptionToClipboard(cardResult.shareText);
+      copyCaptionToClipboard(cardResult.shareText);
       const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(cardResult.shareText)}`;
       window.open(waUrl, '_blank', 'noopener,noreferrer');
       showToast('💬 Opening WhatsApp with your high score challenge!');
@@ -379,20 +375,23 @@ export default function SocialShareModal({
               Share To Platform
             </span>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {/* 1. Instagram Button (Stories & Feed) */}
               <button
                 type="button"
                 onClick={handleInstagramShare}
                 disabled={!cardResult || activeAction !== null}
-                className="py-3 px-4 rounded-2xl bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-rose-900/30 flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50"
+                className="py-2.5 px-3.5 rounded-2xl bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-rose-900/30 flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
               >
                 {activeAction === 'instagram' ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
                 ) : (
-                  <span className="text-base">📸</span>
+                  <span className="text-lg flex-shrink-0">📸</span>
                 )}
-                <span>Instagram (Story & Post)</span>
+                <div className="flex flex-col text-left">
+                  <span className="leading-tight">Instagram Photo & Story</span>
+                  <span className="text-[10px] font-normal opacity-90 text-pink-100">Tap Paste in App</span>
+                </div>
               </button>
 
               {/* 2. Facebook Photo & Story */}
@@ -400,47 +399,45 @@ export default function SocialShareModal({
                 type="button"
                 onClick={handleFacebookShare}
                 disabled={!cardResult || activeAction !== null}
-                className="py-3 px-4 rounded-2xl bg-[#1877f2] hover:bg-[#166fe5] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-blue-900/30 flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50"
+                className="py-2.5 px-3.5 rounded-2xl bg-[#1877f2] hover:bg-[#166fe5] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-blue-900/30 flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
               >
                 {activeAction === 'facebook' ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
                 ) : (
-                  <span className="text-base">📸</span>
+                  <span className="text-lg flex-shrink-0">👥</span>
                 )}
-                <span>Facebook Photo & Story</span>
+                <div className="flex flex-col text-left">
+                  <span className="leading-tight">Facebook Photo & Story</span>
+                  <span className="text-[10px] font-normal opacity-90 text-blue-100">Tap Paste in App</span>
+                </div>
               </button>
 
-              {/* 3. Facebook Web Link Post (Pre-filled text & banner) */}
-              <button
-                type="button"
-                onClick={handleFacebookLinkShare}
-                disabled={!cardResult}
-                className="py-3 px-4 rounded-2xl bg-blue-950/80 hover:bg-blue-900/80 text-blue-200 border border-blue-500/40 font-extrabold text-xs sm:text-sm shadow-sm flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50"
-              >
-                <span className="text-base">👥</span>
-                <span>Facebook Post (Auto-Text)</span>
-              </button>
-
-              {/* 4. WhatsApp Button */}
+              {/* 3. WhatsApp Button */}
               <button
                 type="button"
                 onClick={handleWhatsAppShare}
                 disabled={!cardResult || activeAction !== null}
-                className="py-3 px-4 rounded-2xl bg-[#25d366] hover:bg-[#20bd5a] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-900/30 flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50"
+                className="py-2.5 px-3.5 rounded-2xl bg-[#25d366] hover:bg-[#20bd5a] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-emerald-900/30 flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>WhatsApp Challenge</span>
+                <MessageCircle className="w-5 h-5 flex-shrink-0" />
+                <div className="flex flex-col text-left">
+                  <span className="leading-tight">WhatsApp Challenge</span>
+                  <span className="text-[10px] font-normal opacity-90 text-emerald-100">Auto-filled message</span>
+                </div>
               </button>
 
-              {/* 5. Save Score Card to Photos */}
+              {/* 4. Save Score Card to Photos */}
               <button
                 type="button"
                 onClick={handleDownload}
                 disabled={!cardResult}
-                className="py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs sm:text-sm border border-white/10 shadow-sm flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50 sm:col-span-2"
+                className="py-2.5 px-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs sm:text-sm border border-white/10 shadow-sm flex items-center justify-center space-x-2 transition-transform active:scale-98 cursor-pointer disabled:opacity-50 text-left"
               >
-                <Download className="w-4 h-4 text-pink-400" />
-                <span>Save Score Card Image to Photos</span>
+                <Download className="w-5 h-5 text-pink-400 flex-shrink-0" />
+                <div className="flex flex-col text-left">
+                  <span className="leading-tight">Save Image to Photos</span>
+                  <span className="text-[10px] font-normal text-slate-300">High-Res PNG</span>
+                </div>
               </button>
             </div>
 
