@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   X,
-  Copy,
   Check,
   Download,
   Share2,
@@ -45,7 +44,6 @@ export default function SocialShareModal({
   const [format, setFormat] = useState<'story' | 'post'>('story');
   const [generating, setGenerating] = useState<boolean>(true);
   const [cardResult, setCardResult] = useState<GeneratedCardResult | null>(null);
-  const [copied, setCopied] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
   const [activeAction, setActiveAction] = useState<string | null>(null);
 
@@ -87,16 +85,6 @@ export default function SocialShareModal({
 
   if (!isOpen) return null;
 
-  // Handle 1-tap Copy Caption
-  // Handle 1-tap Copy Caption
-  const handleCopyCaption = () => {
-    if (!cardResult) return;
-    copyCaptionToClipboard(cardResult.shareText);
-    setCopied(true);
-    showToast('📋 Caption copied! In Instagram or Facebook, tap the caption area and select PASTE.', 'success', 5000);
-    setTimeout(() => setCopied(false), 3500);
-  };
-
   // 1. Instagram & Instagram Story Sharing
   const handleInstagramShare = async () => {
     if (!cardResult) return;
@@ -104,8 +92,6 @@ export default function SocialShareModal({
     try {
       // Step 1: Copy caption synchronously on immediate user gesture
       copyCaptionToClipboard(cardResult.shareText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3500);
 
       // Step 2: On mobile, Web Share with ONLY the image file forces Instagram
       // to open the Photo/Story Composer with the card image attached.
@@ -136,8 +122,6 @@ export default function SocialShareModal({
     try {
       // Step 1: Copy caption synchronously on immediate user gesture
       copyCaptionToClipboard(cardResult.shareText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3500);
 
       // Step 2: On mobile, passing ONLY the image file ensures the Facebook iOS/Android app
       // opens its Photo Composer or Story Composer with the image attached.
@@ -330,44 +314,7 @@ export default function SocialShareModal({
             ) : null}
           </div>
 
-          {/* Auto-Copied Caption Section */}
-          <div className="bg-slate-800/80 rounded-2xl p-3 sm:p-3.5 border border-pink-500/20 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-pink-300 uppercase tracking-wider flex items-center space-x-1">
-                <span>📝</span>
-                <span>Post & Story Caption</span>
-              </span>
-              <button
-                type="button"
-                onClick={handleCopyCaption}
-                className={`py-1 px-3 rounded-lg text-xs font-black transition-all flex items-center space-x-1 cursor-pointer ${
-                  copied
-                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
-                    : 'bg-pink-600 hover:bg-pink-500 text-white shadow-sm'
-                }`}
-              >
-                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Copied!' : 'Copy Caption'}</span>
-              </button>
-            </div>
 
-            <p className="text-xs sm:text-[13px] text-slate-200 bg-slate-900/80 p-2.5 rounded-xl border border-white/5 font-medium leading-relaxed select-text">
-              {cardResult?.shareText || `🍦 I just scored ${score} marks on Elephant House AR Game! Can you beat my high score? 🏆`}
-            </p>
-
-            {/* 2-Step Instruction Notice */}
-            <div className="text-[11px] sm:text-xs text-amber-200/95 bg-gradient-to-r from-amber-950/60 via-pink-950/40 to-purple-950/60 border border-amber-400/40 p-3 rounded-2xl flex items-start space-x-2.5 shadow-md">
-              <span className="text-lg mt-0.5">📋</span>
-              <div className="space-y-1">
-                <span className="font-extrabold text-amber-300 block">
-                  How to add your caption on Instagram & Facebook:
-                </span>
-                <p className="text-slate-200 leading-relaxed font-medium">
-                  Meta blocks apps from auto-filling captions. When you tap below, your caption is <strong>auto-copied to your clipboard</strong>. When the composer opens, tap into the text area and choose <strong>&ldquo;Paste&rdquo;</strong>!
-                </p>
-              </div>
-            </div>
-          </div>
 
           {/* Platform Share Action Buttons Grid */}
           <div className="space-y-2">
