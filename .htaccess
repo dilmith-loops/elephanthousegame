@@ -1,57 +1,36 @@
 # Directory Index configuration for LiteSpeed & Apache
-DirectoryIndex frontend/out/index.html index.php index.html
+DirectoryIndex index.html index.php
 Options -Indexes
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Custom 404 Error Document (relative fallback)
-    ErrorDocument 404 /arwonder/frontend/out/404.html
+    # Custom 404 Error Document
+    ErrorDocument 404 /arwonder/404.html
 
-    # Block access to hidden files and sensitive directories (.git, .env, etc.)
+    # Block access to hidden and sensitive files
     RewriteRule (^|/)(\.git|\.env|\.htaccess|\.env\..*) - [F,L]
-
-    # Allow .well-known (e.g. security.txt, ACME challenges)
     RewriteRule ^\.well-known/ - [L]
 
     # 1. Forward all API requests directly to Laravel Backend
     RewriteCond %{REQUEST_URI} api/ [NC]
     RewriteRule ^(.*)$ index.php [L]
 
-    # Forward uploaded media files to backend public storage
+    # 2. Forward uploaded media files to backend public storage
     RewriteRule ^uploads/(.*)$ backend/public/uploads/$1 [L]
 
-    # 2. If requesting frontend/out/ directory directly, pass through
-    RewriteRule ^frontend/out/ - [L]
+    # 3. Route static Next.js assets if they are requested with or without prefix
+    RewriteRule ^frontend/out/(.*)$ $1 [L,R=301]
 
-    # 3. Route static Next.js assets to frontend/out/
-    RewriteRule ^_next/(.*)$ frontend/out/_next/$1 [L]
-    RewriteRule ^models/(.*)$ frontend/out/models/$1 [L]
-    RewriteRule ^wasm/(.*)$ frontend/out/wasm/$1 [L]
-    RewriteRule ^eh-portal/?$ frontend/out/eh-portal/index.html [L]
-    RewriteRule ^eh-portal/(.*)$ frontend/out/eh-portal/$1 [L]
-    RewriteRule ^terms/?$ frontend/out/terms/index.html [L]
-    RewriteRule ^privacy/?$ frontend/out/privacy/index.html [L]
-    RewriteRule ^(logo\.png|icon\.png|favicon\.ico|favicon\.png|og_image\.png|file\.svg|globe\.svg|window\.svg)$ frontend/out/$1 [L]
+    # 4. If physical file exists, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
 
-    # 4. Serve root to frontend/out/index.html
-    RewriteRule ^$ frontend/out/index.html [L]
-
-    # 5. General fallback: if file exists inside frontend/out/, serve it
-    RewriteCond %{DOCUMENT_ROOT}/arwonder/frontend/out/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/public_html/arwonder/frontend/out/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/frontend/out/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/public_html/frontend/out/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/elephanthousegame/frontend/out/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/public_html/elephanthousegame/frontend/out/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/ElephantHouseGame/frontend/out/$1 -f [OR]
-    RewriteCond %{DOCUMENT_ROOT}/public_html/ElephantHouseGame/frontend/out/$1 -f
-    RewriteRule ^(.*)$ frontend/out/$1 [L]
-
-    # 6. Fallback to frontend/out/index.html for any unhandled routes
+    # 5. Client-side route fallback to root index.html
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ frontend/out/index.html [L]
+    RewriteRule ^(.*)$ index.html [L]
 </IfModule>
 
 # MIME types for AR MediaPipe WASM and AI models
@@ -86,18 +65,6 @@ Options -Indexes
     # 5. Referrer Policy & Permissions Policy (explicitly guarding AR camera access)
     Header set Referrer-Policy "strict-origin-when-cross-origin"
     Header set Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=()"
-
-    # 6. Strip backend and hosting stack disclosure headers
-    Header unset X-Powered-By
-    Header unset Server
-    Header unset X-Turbo-Charged-By
-    Header unset platform
-    Header unset panel
-    Header always unset X-Powered-By
-    Header always unset Server
-    Header always unset platform
-    Header always unset panel
-    Header always unset X-Turbo-Charged-By
 </IfModule>
 
 # Enable Gzip / Deflate Compression

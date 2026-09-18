@@ -15,10 +15,16 @@ if (preg_match('#/api(/|\?|$)#', $uri) || preg_match('#/uploads/#', $uri)) {
 }
 
 // 2. If DirectoryIndex falls back to index.php or index.php is loaded directly, serve frontend
-$frontendIndex = __DIR__ . '/frontend/out/index.html';
-if (file_exists($frontendIndex)) {
+if (file_exists(__DIR__ . '/index.html')) {
     header('Content-Type: text/html; charset=utf-8');
-    readfile($frontendIndex);
+    readfile(__DIR__ . '/index.html');
+    exit;
+}
+
+$frontendOut = __DIR__ . '/frontend/out/index.html';
+if (file_exists($frontendOut)) {
+    header('Content-Type: text/html; charset=utf-8');
+    readfile($frontendOut);
     exit;
 }
 
@@ -29,4 +35,4 @@ if (file_exists(__DIR__ . '/backend/public/index.php')) {
 }
 
 http_response_code(404);
-echo "Elephant House AR Game: Frontend build not found.";
+echo "Elephant House AR Game: Application file not found.";
