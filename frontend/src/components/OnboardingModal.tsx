@@ -69,8 +69,12 @@ export default function OnboardingModal({ onStartGame, onOpenLeaderboard }: Prop
       });
 
       if (res.player) {
-        localStorage.setItem('eh_player', JSON.stringify(res.player));
-        onStartGame(res.player);
+        const mergedPlayer: Player = {
+          ...res.player,
+          highest_score: Math.max(res.player.highest_score || 0, cachedPlayer?.highest_score || 0)
+        };
+        localStorage.setItem('eh_player', JSON.stringify(mergedPlayer));
+        onStartGame(mergedPlayer);
       } else {
         setError(res.message || 'Could not start game');
       }

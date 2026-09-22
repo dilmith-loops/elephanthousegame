@@ -44,14 +44,14 @@ class ScoreController extends Controller
             'duration_seconds' => $request->duration_seconds,
         ]);
 
-        // Calculate personal best
-        $personalBest = Score::where('user_id', $request->user_id)->max('score');
+        // Calculate personal best (highest score achieved across all rounds)
+        $personalBest = (int) (Score::where('user_id', $request->user_id)->max('score') ?? $request->score);
 
         // Calculate current rank based on highest score per user
         $higherUsersCount = DB::table('scores')
             ->select('user_id', DB::raw('MAX(score) as high_score'))
             ->groupBy('user_id')
-            ->havingRaw('MAX(score) > ?', [$request->score])
+            ->havingRaw('MAX(score) > ?', [$personalBest])
             ->get()
             ->count();
 

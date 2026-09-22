@@ -56,6 +56,19 @@ export default function HomePage() {
     setCurrentPlayer(null);
   };
 
+  const handleEndGame = (finalScore: number, newHighScore?: number) => {
+    setCurrentPlayer((prev) => {
+      if (!prev) return null;
+      const targetHigh = typeof newHighScore === 'number'
+        ? Math.max(prev.highest_score || 0, newHighScore)
+        : Math.max(prev.highest_score || 0, finalScore);
+      return {
+        ...prev,
+        highest_score: targetHigh
+      };
+    });
+  };
+
   // Auto-poll game status every 15s when maintenance is active
   useEffect(() => {
     if (!isMaintenance) return;
@@ -228,7 +241,7 @@ export default function HomePage() {
       ) : (
         <GameCanvas
           player={currentPlayer}
-          onEndGame={() => {}}
+          onEndGame={handleEndGame}
           onChangePlayer={handleChangePlayer}
         />
       )}

@@ -84,7 +84,7 @@ function SoftServeIcon({ className = 'w-6 h-6 sm:w-7 sm:h-7' }: { className?: st
 interface Props {
   player: Player;
   isPaused?: boolean;
-  onEndGame: (finalScore: number) => void;
+  onEndGame: (finalScore: number, newHighScore?: number) => void;
   onOpenLeaderboard?: () => void;
   onChangePlayer: () => void;
 }
@@ -192,8 +192,23 @@ export default function GameCanvas({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(3);
   const [isGameOver, setIsGameOver] = useState(false);
-  const initialScore = player.highest_score || 0;
-  const [score, setScore] = useState(initialScore);
+  // Round score starts at 0 for each new game session
+  const [score, setScore] = useState(0);
+  // Highest score (Personal Best) is safely retained and never amended with lower round scores
+  const [highScore, setHighScore] = useState<number>(() => {
+    let best = player.highest_score || 0;
+    try {
+      const stored = localStorage.getItem('eh_player');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed.highest_score === 'number') {
+          best = Math.max(best, parsed.highest_score);
+        }
+      }
+    } catch {}
+    return best;
+  });
+  const [isNewHighScore, setIsNewHighScore] = useState(false);
   const [catches, setCatches] = useState(0);
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
@@ -238,7 +253,9 @@ export default function GameCanvas({
     mar: 0,
     isTongueOut: false
   });
-  const scoreRef = useRef(initialScore);
+  const scoreRef = useRef(0);
+  const highScoreRef = useRef<number>(highScore);
+  highScoreRef.current = highScore;
   const catchesRef = useRef(0);
   const comboRef = useRef(0);
   const isGameOverRef = useRef(false);
@@ -548,8 +565,13 @@ export default function GameCanvas({
     setGameDuration(elapsed);
     setIsSubmitting(true);
 
+    const roundScore = scoreRef.current;
+    const previousHigh = highScoreRef.current;
+    const isNew = roundScore > previousHigh;
+    setIsNewHighScore(isNew);
+
     trackGAEvent('game_complete', {
-      score: scoreRef.current,
+      score: roundScore,
       catches: catchesRef.current,
       duration_seconds: elapsed
     });
@@ -557,7 +579,7 @@ export default function GameCanvas({
     try {
       const res = await api.submitScore({
         user_id: player.id,
-        score: scoreRef.current,
+        score: roundScore,
         popsicles_caught: catchesRef.current,
         duration_seconds: elapsed
       });
@@ -565,19 +587,29 @@ export default function GameCanvas({
         rank: res.rank,
         personal_best: res.personal_best
       });
-      const newHigh = Math.max(player.highest_score || 0, scoreRef.current);
+      const apiBest = typeof res.personal_best === 'number' ? res.personal_best : 0;
+      // High score ONLY changes if roundScore or apiBest is strictly greater than previous high score!
+      const newHigh = Math.max(previousHigh, roundScore, apiBest);
+      setHighScore(newHigh);
+      highScoreRef.current = newHigh;
+      if (roundScore > previousHigh) {
+        setIsNewHighScore(true);
+      }
       localStorage.setItem(
         'eh_player',
         JSON.stringify({ ...player, highest_score: newHigh })
       );
-      onEndGame(scoreRef.current);
+      onEndGame(roundScore, newHigh);
     } catch (err) {
       console.error('Failed to submit score:', err);
-      const newHigh = Math.max(player.highest_score || 0, scoreRef.current);
+      const newHigh = Math.max(previousHigh, roundScore);
+      setHighScore(newHigh);
+      highScoreRef.current = newHigh;
       localStorage.setItem(
         'eh_player',
         JSON.stringify({ ...player, highest_score: newHigh })
       );
+      onEndGame(roundScore, newHigh);
     } finally {
       setIsSubmitting(false);
       // Fetch latest Top 3 Players for Game Finished dialog
@@ -1198,13 +1230,18 @@ export default function GameCanvas({
           {/* Name & Live Score */}
           <div className="flex flex-col justify-center min-w-0 pr-1 sm:pr-2.5 md:pr-3">
             {/* Top row: SCORE on mobile, Player Name on desktop */}
-            <div className="leading-tight">
+            <div className="leading-tight flex items-center justify-between gap-1.5">
               <span className="text-slate-300 font-black text-[9px] tracking-[0.14em] uppercase block md:hidden">
                 SCORE
               </span>
-              <span className="text-white font-black text-sm tracking-[0.08em] uppercase truncate max-w-[260px] md:max-w-[380px] lg:max-w-[480px] drop-shadow-sm hidden md:block">
+              <span className="text-white font-black text-sm tracking-[0.08em] uppercase truncate max-w-[200px] md:max-w-[320px] lg:max-w-[420px] drop-shadow-sm hidden md:block">
                 {player.name}
               </span>
+              {highScore > 0 && (
+                <span className="text-[9px] sm:text-[10px] font-black text-amber-300 bg-amber-400/20 border border-amber-400/35 px-1.5 py-0.2 rounded-full whitespace-nowrap ml-1 shadow-xs">
+                  ★ {highScore}
+                </span>
+              )}
             </div>
 
             {/* Bottom row: Score + Soft Serve Ice Cream Cone */}
@@ -1490,16 +1527,30 @@ export default function GameCanvas({
             </p>
 
             {/* Score Showcase */}
-            <div className="my-4 p-4 bg-gradient-to-br from-pink-50 to-amber-50 dark:from-pink-950/40 dark:to-amber-950/30 rounded-2xl border border-pink-200 dark:border-pink-800/40 shadow-xs">
-              <div className="text-xs uppercase tracking-wider font-extrabold text-pink-600 dark:text-pink-400">
-                Your Total Score
-              </div>
+            <div className="my-4 p-4 bg-gradient-to-br from-pink-50 to-amber-50 dark:from-pink-950/40 dark:to-amber-950/30 rounded-2xl border border-pink-200 dark:border-pink-800/40 shadow-xs relative overflow-hidden">
+              {isNewHighScore ? (
+                <div className="inline-flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 via-rose-500 to-pink-500 text-white font-black text-xs px-3.5 py-1 rounded-full shadow-md animate-bounce mb-2">
+                  <Sparkles className="w-3.5 h-3.5 fill-white text-white" />
+                  <span>NEW HIGH SCORE!</span>
+                </div>
+              ) : (
+                <div className="text-xs uppercase tracking-wider font-extrabold text-pink-600 dark:text-pink-400">
+                  Round Score
+                </div>
+              )}
               <div className="text-5xl font-black bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 bg-clip-text text-transparent my-1">
                 {score}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold">
-                Marks Earned
+                Marks Earned This Round
               </p>
+
+              {/* Persistent High Score / Personal Best Record Pill */}
+              <div className="mt-2.5 inline-flex items-center space-x-1.5 bg-amber-500/15 border border-amber-500/35 px-3 py-1 rounded-full text-xs font-black text-amber-900 dark:text-amber-200">
+                <Trophy className="w-3.5 h-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
+                <span>Personal Best:</span>
+                <span className="text-amber-950 dark:text-amber-100 font-black">{highScore} pts</span>
+              </div>
 
               <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-pink-200/60 dark:border-pink-800/40 text-xs">
                 <div>
@@ -1583,14 +1634,14 @@ export default function GameCanvas({
                   particlesRef.current = [];
                   scorePopupsRef.current = [];
                   lastSpawnTimeRef.current = 0;
-                  const prevHighScore = player.highest_score || 0;
-                  scoreRef.current = prevHighScore;
+                  scoreRef.current = 0;
                   catchesRef.current = 0;
                   comboRef.current = 0;
+                  setIsNewHighScore(false);
                   const dur = timerConfig.duration || 60;
                   setTimeLeft(dur);
                   timeLeftRef.current = dur;
-                  setScore(prevHighScore);
+                  setScore(0);
                   setCatches(0);
                   setCombo(0);
                   setCountdown(3);
@@ -1707,7 +1758,7 @@ export default function GameCanvas({
         isOpen={showSocialShareModal}
         onClose={() => setShowSocialShareModal(false)}
         playerName={player.name}
-        score={score}
+        score={Math.max(score, highScore)}
         catches={catches}
         maxCombo={maxCombo}
         durationSeconds={gameDuration}
