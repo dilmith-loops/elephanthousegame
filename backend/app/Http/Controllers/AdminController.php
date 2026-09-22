@@ -390,6 +390,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:100',
             'mobile' => 'nullable|string|max:20' . ($request->filled('mobile') ? '|unique:users,mobile,' . $id : ''),
             'email' => 'nullable|email|max:100',
+            'high_score' => 'nullable|integer|min:0|max:10000',
         ]);
 
         if ($validator->fails()) {
@@ -409,9 +410,32 @@ class AdminController extends Controller
         }
         $user->save();
 
+        // Optional High Score update for player
+        $highScoreMsg = '';
+        if ($request->has('high_score') && $request->high_score !== null && $request->high_score !== '') {
+            $newHighScore = (int) $request->high_score;
+            $highestScoreRecord = Score::where('user_id', $id)->orderByDesc('score')->first();
+
+            if ($highestScoreRecord) {
+                // If lowering high score, cap all higher records down to newHighScore so true high score matches
+                Score::where('user_id', $id)->where('score', '>', $newHighScore)->update(['score' => $newHighScore]);
+                $highestScoreRecord->score = $newHighScore;
+                $highestScoreRecord->save();
+            } else {
+                // Create an initial score record if user has none
+                Score::create([
+                    'user_id' => $id,
+                    'score' => $newHighScore,
+                    'popsicles_caught' => (int) round($newHighScore / 1.2),
+                    'duration_seconds' => 60,
+                ]);
+            }
+            $highScoreMsg = " (High Score set to {$newHighScore} pts)";
+        }
+
         // Audit Log
         $userMobileStr = $user->mobile ? " ({$user->mobile})" : "";
-        AdminLog::record($admin, 'update_player', "Updated player details for {$user->name}{$userMobileStr}", $request);
+        AdminLog::record($admin, 'update_player', "Updated player details for {$user->name}{$userMobileStr}{$highScoreMsg}", $request);
 
         return response()->json([
             'success' => true,
@@ -448,6 +472,55 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Player '{$userName}' and score history deleted successfully.",
+        ]);
+    }
+
+    /**
+     * Update a Score Record
+     */
+    public function updateScore(Request $request, $id)
+    {
+        $admin = $this->authenticateAdmin($request);
+        if (!$admin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $score = Score::with('user')->find($id);
+        if (!$score) {
+            return response()->json(['success' => false, 'message' => 'Score record not found.'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'score' => 'required|integer|min:0|max:10000',
+            'popsicles_caught' => 'nullable|integer|min:0',
+            'duration_seconds' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $oldScore = $score->score;
+        $score->score = (int) $request->score;
+        if ($request->has('popsicles_caught')) {
+            $score->popsicles_caught = (int) $request->popsicles_caught;
+        }
+        if ($request->has('duration_seconds')) {
+            $score->duration_seconds = (int) $request->duration_seconds;
+        }
+        $score->save();
+
+        $playerName = $score->user->name ?? 'User #' . $score->user_id;
+        AdminLog::record($admin, 'update_score', "Updated score log #{$id} for {$playerName} from {$oldScore} to {$score->score} marks", $request);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Score record #{$id} updated successfully.",
+            'score' => $score,
         ]);
     }
 

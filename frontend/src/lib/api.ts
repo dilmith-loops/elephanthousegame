@@ -268,6 +268,7 @@ export const api = {
     name: string;
     mobile?: string;
     email?: string | null;
+    high_score?: number;
   }): Promise<{ success: boolean; message: string; user: Player }> {
     const token = localStorage.getItem('eh_admin_token');
     const res = await fetch(`${getApiBaseUrl()}/admin/users/${id}`, {
@@ -296,6 +297,27 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to delete player');
+    return data;
+  },
+
+  // Admin: Update Score Record
+  async updateScoreRecord(id: number, payload: {
+    score: number;
+    popsicles_caught?: number;
+    duration_seconds?: number;
+  }): Promise<{ success: boolean; message: string; score: any }> {
+    const token = localStorage.getItem('eh_admin_token');
+    const res = await fetch(`${getApiBaseUrl()}/admin/scores/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update score record');
     return data;
   },
 

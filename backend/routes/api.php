@@ -59,5 +59,7 @@ Route::middleware([AdminAuthMiddleware::class])->prefix('admin')->group(function
     // Players & Score Records Management
     Route::put('/users/{id}', [AdminController::class, 'updateUser']);
     Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
+    Route::put('/scores/{id}', [AdminController::class, 'updateScore']);
     Route::delete('/scores/{id}', [AdminController::class, 'deleteScore']);
 });
+

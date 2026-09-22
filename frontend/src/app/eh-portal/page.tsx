@@ -137,11 +137,19 @@ export default function AdminPage() {
   // Player Edit & Delete States
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [editPlayerName, setEditPlayerName] = useState('');
+  const [editPlayerMobile, setEditPlayerMobile] = useState('');
+  const [editPlayerHighScore, setEditPlayerHighScore] = useState<number | string>(0);
   const [isUpdatingPlayer, setIsUpdatingPlayer] = useState(false);
   const [playerEditMsg, setPlayerEditMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [deletingPlayerId, setDeletingPlayerId] = useState<number | null>(null);
 
-  // Score Delete State
+  // Score Edit & Delete States
+  const [editingScore, setEditingScore] = useState<ScoreRecord | null>(null);
+  const [editScoreMarks, setEditScoreMarks] = useState<number | string>(0);
+  const [editScoreCaught, setEditScoreCaught] = useState<number | string>(0);
+  const [editScoreDuration, setEditScoreDuration] = useState<number | string>(60);
+  const [isUpdatingScore, setIsUpdatingScore] = useState(false);
+  const [scoreEditMsg, setScoreEditMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [deletingScoreId, setDeletingScoreId] = useState<number | null>(null);
 
   // Custom Delete Confirmation Modal States
@@ -690,7 +698,9 @@ export default function AdminPage() {
   // Open Edit Player Modal
   const handleOpenEditPlayer = (player: Player) => {
     setEditingPlayer(player);
-    setEditPlayerName(player.name);
+    setEditPlayerName(player.name || '');
+    setEditPlayerMobile(player.mobile || '');
+    setEditPlayerHighScore(player.highest_score !== undefined ? player.highest_score : 0);
     setPlayerEditMsg(null);
   };
 
@@ -703,7 +713,9 @@ export default function AdminPage() {
     try {
       setIsUpdatingPlayer(true);
       const res = await api.updatePlayerUser(editingPlayer.id, {
-        name: editPlayerName.trim()
+        name: editPlayerName.trim(),
+        mobile: editPlayerMobile.trim() || undefined,
+        high_score: editPlayerHighScore !== '' ? Number(editPlayerHighScore) : undefined
       });
       setPlayerEditMsg({ type: 'success', text: res.message || 'Player updated successfully!' });
       loadTabData();
@@ -716,6 +728,42 @@ export default function AdminPage() {
       setPlayerEditMsg({ type: 'error', text: err.message || 'Failed to update player.' });
     } finally {
       setIsUpdatingPlayer(false);
+    }
+  };
+
+  // Open Edit Score Modal
+  const handleOpenEditScore = (score: ScoreRecord) => {
+    setEditingScore(score);
+    setEditScoreMarks(score.score !== undefined ? score.score : 0);
+    setEditScoreCaught(score.popsicles_caught !== undefined ? score.popsicles_caught : 0);
+    setEditScoreDuration(score.duration_seconds !== undefined ? score.duration_seconds : 60);
+    setScoreEditMsg(null);
+  };
+
+  // Handle Save Score Edit
+  const handleUpdateScore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingScore) return;
+    setScoreEditMsg(null);
+
+    try {
+      setIsUpdatingScore(true);
+      const res = await api.updateScoreRecord(editingScore.id, {
+        score: Number(editScoreMarks),
+        popsicles_caught: Number(editScoreCaught),
+        duration_seconds: Number(editScoreDuration)
+      });
+      setScoreEditMsg({ type: 'success', text: res.message || 'Score record updated successfully!' });
+      loadTabData();
+      loadStats();
+      setTimeout(() => {
+        setEditingScore(null);
+        setScoreEditMsg(null);
+      }, 1200);
+    } catch (err: any) {
+      setScoreEditMsg({ type: 'error', text: err.message || 'Failed to update score record.' });
+    } finally {
+      setIsUpdatingScore(false);
     }
   };
 
@@ -1747,14 +1795,23 @@ export default function AdminPage() {
                           {s.created_at ? new Date(s.created_at).toLocaleString() : '—'}
                         </td>
                         <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                          <button
-                            onClick={() => handleDeleteScore(s)}
-                            disabled={deletingScoreId === s.id}
-                            className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 hover:border-red-600 transition-colors disabled:opacity-40 cursor-pointer inline-flex items-center justify-center"
-                            title="Delete Score Record"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center justify-end space-x-1.5">
+                            <button
+                              onClick={() => handleOpenEditScore(s)}
+                              className="p-1.5 rounded-lg bg-blue-950/40 hover:bg-blue-900/60 text-blue-300 border border-blue-800/40 hover:border-blue-600 transition-colors cursor-pointer inline-flex items-center justify-center"
+                              title="Edit Score Record"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteScore(s)}
+                              disabled={deletingScoreId === s.id}
+                              className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 hover:border-red-600 transition-colors disabled:opacity-40 cursor-pointer inline-flex items-center justify-center"
+                              title="Delete Score Record"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -2732,6 +2789,48 @@ export default function AdminPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Mobile Number
+                </label>
+                <input
+                  type="text"
+                  value={editPlayerMobile}
+                  onChange={(e) => setEditPlayerMobile(e.target.value)}
+                  placeholder="e.g. 0771234567"
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-300">
+                    High Score (Points / Marks)
+                  </label>
+                  <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                    <Trophy className="w-3 h-3" /> Personal Best
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    max="10000"
+                    value={editPlayerHighScore}
+                    onChange={(e) => setEditPlayerHighScore(e.target.value)}
+                    required
+                    placeholder="0"
+                    className="w-full pl-3.5 pr-14 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm font-bold text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder:text-slate-500 font-mono"
+                  />
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-amber-400/80 pointer-events-none">
+                    pts
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Sets the player&apos;s high score. Any score records higher than this will be capped to match.
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-3 pt-3">
                 <button
                   type="button"
@@ -2746,6 +2845,129 @@ export default function AdminPage() {
                   className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-extrabold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-1.5"
                 >
                   {isUpdatingPlayer ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Score Record */}
+      {editingScore && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-3xl p-6 md:p-8 text-white shadow-2xl">
+            <button
+              onClick={() => { setEditingScore(null); setScoreEditMsg(null); }}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center space-x-3 mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <Trophy className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white">Edit Score Record</h3>
+                <p className="text-xs text-slate-400">
+                  Log #{editingScore.id} • {editingScore.user?.name || `User #${editingScore.user_id}`}
+                </p>
+              </div>
+            </div>
+
+            {scoreEditMsg && (
+              <div className={`mb-4 p-3 rounded-xl border text-xs font-semibold flex items-center space-x-2 ${
+                scoreEditMsg.type === 'success'
+                  ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
+                  : 'bg-rose-950/60 border-rose-800 text-rose-300'
+              }`}>
+                {scoreEditMsg.type === 'success' ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                <span>{scoreEditMsg.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateScore} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Marks (Score Points)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    max="10000"
+                    value={editScoreMarks}
+                    onChange={(e) => setEditScoreMarks(e.target.value)}
+                    required
+                    placeholder="e.g. 50"
+                    className="w-full pl-3.5 pr-16 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm font-bold text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder:text-slate-500 font-mono"
+                  />
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-amber-400/80 pointer-events-none">
+                    marks
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Popsicles Caught
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      max="1000"
+                      value={editScoreCaught}
+                      onChange={(e) => setEditScoreCaught(e.target.value)}
+                      placeholder="e.g. 35"
+                      className="w-full pl-3.5 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500 font-mono"
+                    />
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none">
+                      🍦
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Duration (s)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      max="600"
+                      value={editScoreDuration}
+                      onChange={(e) => setEditScoreDuration(e.target.value)}
+                      placeholder="60"
+                      className="w-full pl-3.5 pr-10 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-500 font-mono"
+                    />
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">
+                      sec
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => { setEditingScore(null); setScoreEditMsg(null); }}
+                  className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingScore}
+                  className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-white font-extrabold text-xs shadow-lg shadow-amber-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center space-x-1.5"
+                >
+                  {isUpdatingScore ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   ) : (
                     <span>Save Changes</span>
