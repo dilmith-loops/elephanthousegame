@@ -561,7 +561,11 @@ export default function GameCanvas({
       origin: { y: 0.6 }
     });
 
-    const elapsed = Math.max(1, Math.round((Date.now() - gameStartTime) / 1000));
+    const maxDuration = timerConfig.duration || 60;
+    const elapsed = Math.min(
+      maxDuration,
+      Math.max(1, Math.round((Date.now() - gameStartTime) / 1000))
+    );
     setGameDuration(elapsed);
     setIsSubmitting(true);
 
@@ -627,33 +631,47 @@ export default function GameCanvas({
           setLoadingTopThree(false);
         });
     }
-  }, [gameStartTime, onEndGame, player]);
+  }, [gameStartTime, onEndGame, player, timerConfig.duration]);
 
   // Session Countdown Timer (runs when countdown is over, not paused, and not game over)
   useEffect(() => {
-    if (countdown !== null || isGameOver || isPaused || showEndGameConfirm || isTabHidden || !timerConfig.enabled) {
+    if (countdown !== null || isGameOver || isPaused || showEndGameConfirm || isTabHidden || !timerConfig.enabled || gameStartTime === 0) {
       return;
     }
 
-    const timerInterval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerInterval);
-          if (!isGameOverRef.current) {
-            endGame();
-          }
-          return 0;
-        }
-        if (prev <= 6 && !isMuted) {
-          sound.playTimerTick(prev <= 3);
-        }
-        timeLeftRef.current = prev - 1;
-        return prev - 1;
-      });
-    }, 1000);
+    const totalDuration = timerConfig.duration || 60;
+    let lastTickSecond = -1;
+    let timerInterval: ReturnType<typeof setInterval> | null = null;
 
-    return () => clearInterval(timerInterval);
-  }, [countdown, isGameOver, isPaused, showEndGameConfirm, isTabHidden, timerConfig.enabled, isMuted, endGame]);
+    const updateTimer = () => {
+      if (isGameOverRef.current) return;
+      const realElapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+      const remaining = Math.max(0, totalDuration - realElapsed);
+
+      setTimeLeft(remaining);
+      timeLeftRef.current = remaining;
+
+      // Play tick sound once per second for the last 6 seconds
+      if (remaining <= 6 && remaining > 0 && remaining !== lastTickSecond && !isMuted) {
+        lastTickSecond = remaining;
+        sound.playTimerTick(remaining <= 3);
+      }
+
+      if (remaining <= 0) {
+        if (timerInterval) clearInterval(timerInterval);
+        if (!isGameOverRef.current) {
+          endGame();
+        }
+      }
+    };
+
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 200);
+
+    return () => {
+      if (timerInterval) clearInterval(timerInterval);
+    };
+  }, [countdown, isGameOver, isPaused, showEndGameConfirm, isTabHidden, timerConfig.enabled, timerConfig.duration, gameStartTime, isMuted, endGame]);
 
   // Request End Game (Pauses gameplay & opens custom confirmation dialog)
   const handleRequestEndGame = () => {
@@ -1724,7 +1742,7 @@ export default function GameCanvas({
               <div className="flex flex-col items-center justify-center">
                 <div className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Time</div>
                 <div className="text-lg sm:text-xl font-black text-cyan-400 mt-0.5">
-                  {Math.max(1, Math.round((Date.now() - gameStartTime - (Date.now() - (pauseStartTimeRef.current || Date.now()))) / 1000))}s
+                  {Math.min(timerConfig.duration || 60, Math.max(1, Math.round((Date.now() - gameStartTime - (Date.now() - (pauseStartTimeRef.current || Date.now()))) / 1000)))}s
                 </div>
               </div>
             </div>
